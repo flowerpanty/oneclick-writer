@@ -3,10 +3,10 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copy package files first for better caching
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 
-# Install dependencies (production only, skip optional like puppeteer)
-RUN npm install --omit=dev --ignore-scripts --no-optional
+# Install production dependencies only (skips optional like puppeteer)
+RUN npm ci --omit=dev --omit=optional
 
 # Copy application code
 COPY . .
