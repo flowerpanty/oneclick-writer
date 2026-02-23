@@ -2,11 +2,12 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files first for better caching
-COPY package.json package-lock.json ./
+# Copy package.json only (npm install will generate fresh lock)
+COPY package.json ./
 
 # Install production dependencies only (skips optional like puppeteer)
-RUN npm ci --omit=dev --omit=optional
+RUN npm install --omit=dev --omit=optional && \
+    ls -la node_modules/express/package.json
 
 # Copy application code
 COPY . .
