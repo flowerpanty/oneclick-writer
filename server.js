@@ -42,6 +42,12 @@ const WordPressVersionSchema = z.object({
   body: z.string()
 });
 
+const ThreadsVersionSchema = z.object({
+  text: z.string(),
+  hashtags: z.string(),
+  alt_text: z.string().optional().default("")
+});
+
 function buildOutputSchema(variantCount) {
   return z.object({
     instagram: z.object({
@@ -52,6 +58,9 @@ function buildOutputSchema(variantCount) {
     }),
     wordpress: z.object({
       versions: z.array(WordPressVersionSchema).length(variantCount)
+    }),
+    threads: z.object({
+      versions: z.array(ThreadsVersionSchema).length(variantCount)
     })
   });
 }
@@ -125,6 +134,7 @@ function buildSystemPrompt() {
 - 응답은 반드시 JSON 객체 1개만 출력한다.
 - 코드펜스(\`\`\`)와 설명문을 붙이지 않는다.
 - JSON 값에 템플릿용 값("string", "<...>", "example")을 넣지 않는다.
+- instagram/naver/wordpress/threads 각각에 versions 배열을 채운다. versions 개수는 사용자 지정과 정확히 일치해야 한다.
 
 [라인 선택 규칙(베이커리/가방)]
 - 원문/제품명/카테고리를 보고 어떤 라인인지 판단해 그 라인에 맞게 쓴다.
@@ -173,6 +183,17 @@ function buildSystemPrompt() {
 - Yoast/Rank Math 기준으로 제목/메타/슬러그를 최적화한다.
 - 본문 및 소제목에 핵심 키워드+연관 키워드(LSI)를 자연스럽게 배치하고 도배는 금지한다.
 
+[Threads 규칙]
+- 목표: 각잡고 쓴 티가 나지 않는, 지금 막 생각난 듯한 가벼운 텍스트.
+- 길이: 1~3문장 내외로 매우 짧게 쓴다. 문단 나누기(줄바꿈)를 적극 활용한다.
+- 문체: 친한 지인에게 말하듯 편안하고 무심한 '반말(~했어, ~함, ~할까?)'을 사용한다.
+- 태도(가장 중요): 절대 자랑하거나 과시하는 톤(예: "나 천재인가봐", "너무 완벽해")은 금지한다. 담백하고 겸손하게, 때론 혼자 일하는 1인 자영업자의 고충이나 '살짝 허당'스러운 면모를 솔직하게 드러낸다.
+- 내용: 원문 전체를 요약하려 하지 말고, 딱 하나의 포인트(예: 일정 지연 핑계, 샘플 완성, 혼자 일하는 막막함 등)만 골라 툭 던진다.
+- 해시태그: (공통 규칙 예외) 쓰레드는 반드시 딱 2개만 쓴다. (예: #작업일기 #신제품준비)
+- 버전 차별화:
+  - versions[0] (A버전 - 일상/고민형): 텍스트 위주. 혼자 일하며 느끼는 푸념, 고민, 솔직한 감정을 툭 던지는 톤.
+  - versions[1] (B버전 - 스포일러형): 작업물 사진이나 스케치 사진 1장과 함께 올리는 상황. 시각적 스포일러와 함께 약간의 기대감을 남기는 톤. (alt_text 포함)
+
 [업그레이드 규칙 v2.1 - 아래 규칙이 위 규칙보다 우선한다]
 - (브랜드 콘텍스트) 이 브랜드는 "디자이너가 직접 만들고 판매하는" 정체성이 있다.
   - 라인 A: 베이커리(빵/디저트)
@@ -180,15 +201,16 @@ function buildSystemPrompt() {
   - 원문/제품명/카테고리를 보고 어떤 라인인지 판단해 그 라인에 맞는 어휘를 사용한다.
   - 원문에 없는 디테일(재료/공정/소재 스펙/가격/마감/배송/효능 등)은 절대 추가하지 말고 [빈칸] 처리한다.
 - (출력 안정성) JSON은 반드시 "완전한 유효 JSON"이어야 한다.
-  - 최상단 키는 정확히 instagram, naver, wordpress 3개만 사용한다(다른 키 금지).
+  - 최상단 키는 정확히 instagram, naver, wordpress, threads 4개만 사용한다(다른 키 금지).
   - 문자열/키는 큰따옴표만 사용한다. trailing comma 금지.
 - (줄바꿈 규칙 - 매우 중요) JSON 문자열 값 안에는 "실제 개행(엔터)"을 넣지 마라.
   - 줄바꿈이 필요하면 반드시 "\\n" 또는 "\\n\\n" 으로 표현한다.
   - 예: 문단 사이 빈 줄 = "\\n\\n"
-- (해시태그 규칙 업그레이드) 해시태그는 각 채널마다 "강력한 3개만" 제공한다. (기존 8~15개 규칙보다 우선)
-  - 정확히 3개, 공백으로만 구분, 줄바꿈 금지.
-  - 3개 중 최소 1개는 한글, 최소 1개는 영문.
-  - 가능하면 1개는 브랜드명(입력된 경우)을 태그로 반영하되, 3개 규칙은 절대 넘기지 마라.
+- (해시태그 규칙 업그레이드) 해시태그는 instagram/naver/wordpress는 "강력한 3개만", threads는 "딱 2개만" 제공한다. (기존 8~15개 규칙보다 우선)
+  - instagram/naver/wordpress: 정확히 3개, 공백으로만 구분, 줄바꿈 금지.
+  - threads: 정확히 2개, 공백으로만 구분, 줄바꿈 금지.
+  - 3개 중 최소 1개는 한글, 최소 1개는 영문(쓰레드는 2개 중에서).
+  - 가능하면 1개는 브랜드명(입력된 경우)을 태그로 반영하되, 개수 규칙은 절대 넘기지 마라.
 - (WordPress 헤딩 표기 업그레이드) WordPress 본문 소제목(H2/H3/H4)은 Markdown(##/###)이 아니라 HTML 태그로 작성한다.
   - <h2>...</h2>, <h3>...</h3>, <h4>...</h4>
   - 최소 2개 이상의 <h2> 사용을 권장한다.
@@ -232,7 +254,7 @@ ${payload.includeFaq ? "- WordPress 본문에 `### 자주 묻는 질문` 섹션�
 function buildUserPrompt(payload) {
   const lsiLine = payload.lsiKeywords?.length ? payload.lsiKeywords.join(", ") : "[빈칸]";
 
-  return `아래 입력을 참고해 3채널 글을 만들어줘.
+  return `아래 입력을 참고해 4채널(Instagram, Naver Blog, WordPress, Threads) 글을 만들어줘.
 
 [입력]
 - 주제: ${payload.topic || "[빈칸]"}
@@ -265,8 +287,16 @@ ${buildSeoInstruction(payload)}
 - 본문 마지막 문단은 반드시 질문형 문장으로 끝내고, 그 다음 줄에 해시태그 한 줄을 넣는다.
 - 소제목(H2/H3/H4)에는 핵심/연관 키워드를 자연스럽게 포함한다.
 
+[쓰레드 지침서 고정 반영]
+- 쓰레드는 "지금 막 생각나서 툭 던진" 느낌이 핵심이다.
+- 원문 전체를 요약하지 말고 딱 하나의 포인트만 골라서 1~3문장으로 쓴다.
+- 반말 사용(~했어, ~함, ~할까?).
+- 절대 과시/자랑 금지. 담백하고 겸손하게.
+- A버전: 텍스트만. 혼자 일하는 푸념/고민/감정. B버전: 작업물 사진 1장과 함께 올리는 상황(alt_text 포함).
+- 해시태그는 정확히 2개만.
+
 [형식 우선 반영]
-- 형식 값이 입력되면 해당 톤(블로그/인스타/카드뉴스/릴스)을 더 강하게 반영하되, 3채널 결과는 모두 생성한다.
+- 형식 값이 입력되면 해당 톤(블로그/인스타/카드뉴스/릴스)을 더 강하게 반영하되, 4채널 결과는 모두 생성한다.
 
 [버전 차별화]
 - versions[0]은 A 버전(기본 톤), versions[1]은 B 버전(다른 훅/전개)으로 작성한다.
@@ -311,6 +341,15 @@ function buildJsonFormatGuide(variantCount) {
           "lsi_keywords": ["실제 LSI 1", "실제 LSI 2"]
         },
         "body": "실제 워드프레스 본문"
+      }
+    ]
+  },
+  "threads": {
+    "versions": [
+      {
+        "text": "실제 쓰레드 텍스트 (1~3문장, 반말, 가벼운 톤)",
+        "hashtags": "#해시태그1 #해시태그2",
+        "alt_text": "B버전(스포일러형)일 경우 사진 설명, A버전은 빈 문자열"
       }
     ]
   }
@@ -439,6 +478,9 @@ app.post("/api/parse", (req, res) => {
     for (const v of parsed.naver.versions) {
       v.hashtags = normalizeHashtagLine(v.hashtags);
     }
+    for (const v of parsed.threads.versions) {
+      v.hashtags = normalizeHashtagLine(v.hashtags);
+    }
 
     res.json(parsed);
   } catch (err) {
@@ -505,6 +547,9 @@ app.post("/api/auto-generate", async (req, res) => {
       v.hashtags = normalizeHashtagLine(v.hashtags);
     }
     for (const v of parsed.naver.versions) {
+      v.hashtags = normalizeHashtagLine(v.hashtags);
+    }
+    for (const v of parsed.threads.versions) {
       v.hashtags = normalizeHashtagLine(v.hashtags);
     }
 

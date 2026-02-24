@@ -204,6 +204,7 @@
       <button class="tab-btn active" data-tab="instagram">📸 Instagram</button>
       <button class="tab-btn" data-tab="naver">📗 Naver Blog</button>
       <button class="tab-btn" data-tab="wordpress">🌐 WordPress</button>
+      <button class="tab-btn" data-tab="threads">🧵 Threads</button>
     </div>
 
     <!-- ===== Instagram Panel ===== -->
@@ -308,6 +309,28 @@
       <div class="field">
         <label>SEO 체크</label>
         <div id="seoAudit" class="seo-audit">결과를 불러오면 핵심 키워드 기반 SEO 체크가 표시됩니다.</div>
+      </div>
+    </section>
+
+    <!-- ===== Threads Panel ===== -->
+    <section class="panel" id="panel-threads">
+      <h2><span class="channel-dot th"></span> Threads 결과</h2>
+      <div class="field">
+        <label>텍스트</label>
+        <textarea id="thText" style="min-height:120px;" placeholder="생성 결과가 여기에 표시됩니다."></textarea>
+        <div class="btn-row mt-8">
+          <button class="btn-copy" id="copyTh">📋 복사 (텍스트+해시태그)</button>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>해시태그</label>
+          <input id="thHashtags" type="text" />
+        </div>
+        <div class="field">
+          <label>ALT 텍스트 (B버전 사진 설명)</label>
+          <input id="thAlt" type="text" />
+        </div>
       </div>
     </section>
 

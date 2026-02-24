@@ -73,6 +73,12 @@ const els = {
   copyWpFocus: $("copyWpFocus"),
   copyWpLsi: $("copyWpLsi"),
   copyWpBody: $("copyWpBody"),
+
+  // Threads outputs
+  thText: $("thText"),
+  thHashtags: $("thHashtags"),
+  thAlt: $("thAlt"),
+  copyTh: $("copyTh"),
 };
 
 // ===== State =====
@@ -202,7 +208,7 @@ function activateTab(name) {
     b.classList.toggle("active", b.dataset.tab === name);
   });
 
-  ["instagram", "naver", "wordpress"].forEach((tab) => {
+  ["instagram", "naver", "wordpress", "threads"].forEach((tab) => {
     const panel = $(`panel-${tab}`);
     if (panel) panel.classList.toggle("active", tab === name);
   });
@@ -361,6 +367,7 @@ function fillOutputs() {
   const ig = getActiveVersion("instagram") || {};
   const nv = getActiveVersion("naver") || {};
   const wp = getActiveVersion("wordpress") || {};
+  const th = getActiveVersion("threads") || {};
   const seo = wp.seo || {};
 
   els.igCaption.value = ig.caption || "";
@@ -377,6 +384,10 @@ function fillOutputs() {
   els.wpFocus.value = seo.focus_keyphrase || "";
   els.wpLsi.value = (seo.lsi_keywords || []).join(", ");
   els.wpBody.value = wp.body || "";
+
+  els.thText.value = th.text || "";
+  els.thHashtags.value = th.hashtags || "";
+  els.thAlt.value = th.alt_text || "";
 
   runSeoAudit({ seo, body: wp.body || "" });
 }
@@ -619,6 +630,9 @@ function clearAll() {
     els.wpFocus,
     els.wpLsi,
     els.wpBody,
+    els.thText,
+    els.thHashtags,
+    els.thAlt,
   ].forEach((el) => {
     el.value = "";
   });
@@ -703,6 +717,13 @@ els.copyWpLsi.addEventListener("click", () =>
 els.copyWpBody.addEventListener("click", () =>
   copyToClipboard(els.wpBody.value.trim())
 );
+
+els.copyTh.addEventListener("click", () => {
+  const text = [els.thText.value.trim(), els.thHashtags.value.trim()]
+    .filter(Boolean)
+    .join("\n\n");
+  copyToClipboard(text);
+});
 
 // Ctrl/Cmd + Enter -> build prompt
 els.story.addEventListener("keydown", (e) => {

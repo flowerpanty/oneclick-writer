@@ -43,9 +43,17 @@
 }
 
 /* ===== Reset & Base ===== */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   background: var(--bg);
@@ -61,10 +69,22 @@ body {
 }
 
 /* ===== Scrollbar ===== */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
 
 /* ===== Header ===== */
 .header {
@@ -122,8 +142,15 @@ body {
 }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
 }
 
 /* ===== Layout ===== */
@@ -261,7 +288,7 @@ body {
     grid-template-columns: 1.3fr 1fr;
   }
 
-  .main-grid > .side-col {
+  .main-grid>.side-col {
     position: sticky;
     top: 90px;
     align-self: start;
@@ -385,7 +412,9 @@ summary:hover {
   background: rgba(255, 255, 255, 0.02);
 }
 
-summary::-webkit-details-marker { display: none; }
+summary::-webkit-details-marker {
+  display: none;
+}
 
 summary::after {
   content: "▸ 펼치기";
@@ -398,7 +427,7 @@ details[open] summary::after {
   content: "▾ 접기";
 }
 
-details > :not(summary) {
+details> :not(summary) {
   padding: 0 16px 16px;
 }
 
@@ -567,8 +596,13 @@ button:disabled {
 }
 
 @keyframes progress-slide {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(400%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(400%);
+  }
 }
 
 .progress-log {
@@ -592,8 +626,15 @@ button:disabled {
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ===== Tabs ===== */
@@ -645,8 +686,15 @@ button:disabled {
 }
 
 @keyframes panel-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .panel h2 {
@@ -666,9 +714,21 @@ button:disabled {
   flex-shrink: 0;
 }
 
-.panel h2 .channel-dot.ig { background: #e1306c; }
-.panel h2 .channel-dot.nv { background: #03c75a; }
-.panel h2 .channel-dot.wp { background: #21759b; }
+.panel h2 .channel-dot.ig {
+  background: #e1306c;
+}
+
+.panel h2 .channel-dot.nv {
+  background: #03c75a;
+}
+
+.panel h2 .channel-dot.wp {
+  background: #21759b;
+}
+
+.panel h2 .channel-dot.th {
+  background: #000000;
+}
 
 /* ===== Row (inline input + button) ===== */
 .input-row {
@@ -785,23 +845,33 @@ button:disabled {
 }
 
 /* ===== Utilities ===== */
-.hidden { display: none !important; }
-.mt-12 { margin-top: 12px; }
-.mt-8 { margin-top: 8px; }
+.hidden {
+  display: none !important;
+}
+
+.mt-12 {
+  margin-top: 12px;
+}
+
+.mt-8 {
+  margin-top: 8px;
+}
 
 /* ===== Spinner ===== */
 .spinner {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255,255,255,0.15);
+  border: 2px solid rgba(255, 255, 255, 0.15);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ===== Responsive — Tablet ===== */
@@ -845,6 +915,7 @@ button:disabled {
 
 /* ===== Responsive — Mobile ===== */
 @media (max-width: 480px) {
+
   /* -- iOS 자동 줌 방지: 모든 입력 폰트 16px 이상 -- */
   input[type="text"],
   textarea,
@@ -1009,12 +1080,15 @@ button:disabled {
     gap: 6px;
     margin: 16px 0 12px;
     padding-bottom: 4px;
-    scrollbar-width: none;        /* Firefox */
-    -ms-overflow-style: none;     /* IE/Edge */
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
   }
 
   .tabs::-webkit-scrollbar {
-    display: none;                /* Chrome/Safari */
+    display: none;
+    /* Chrome/Safari */
   }
 
   .tab-btn {
@@ -1031,7 +1105,7 @@ button:disabled {
     min-height: 48px;
   }
 
-  details > :not(summary) {
+  details> :not(summary) {
     padding: 0 14px 14px;
   }
 
@@ -1121,8 +1195,8 @@ button:disabled {
   }
 
   /* -- 사이드 컬럼 간격 -- */
-  .side-col > .card + .card,
-  .side-col > .card-tip + .card {
+  .side-col>.card+.card,
+  .side-col>.card-tip+.card {
     margin-top: 12px;
   }
 
