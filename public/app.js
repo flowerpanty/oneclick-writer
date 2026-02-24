@@ -751,6 +751,14 @@ els.story.addEventListener("keydown", (e) => {
   }
 });
 
+// Toggle A/B version tabs when checkbox changes
+els.twoVariants.addEventListener("change", () => {
+  const count = els.twoVariants.checked ? 2 : 1;
+  state.variantCount = count;
+  setVersionTabs(count);
+  if (state.parsed) fillOutputs();
+});
+
 // Init
 setStep(1);
 runSeoAudit(null);
