@@ -74,11 +74,14 @@ const els = {
   copyWpLsi: $("copyWpLsi"),
   copyWpBody: $("copyWpBody"),
 
-  // Threads outputs
-  thText: $("thText"),
-  thHashtags: $("thHashtags"),
-  thAlt: $("thAlt"),
-  copyTh: $("copyTh"),
+  // Threads outputs (A/B shown simultaneously)
+  thTextA: $("thTextA"),
+  thHashtagsA: $("thHashtagsA"),
+  copyThA: $("copyThA"),
+  thTextB: $("thTextB"),
+  thHashtagsB: $("thHashtagsB"),
+  thAltB: $("thAltB"),
+  copyThB: $("copyThB"),
 };
 
 // ===== State =====
@@ -367,8 +370,12 @@ function fillOutputs() {
   const ig = getActiveVersion("instagram") || {};
   const nv = getActiveVersion("naver") || {};
   const wp = getActiveVersion("wordpress") || {};
-  const th = getActiveVersion("threads") || {};
   const seo = wp.seo || {};
+
+  // Threads: always show both A and B simultaneously
+  const thVersions = state.parsed?.threads?.versions || [];
+  const thA = thVersions[0] || {};
+  const thB = thVersions[1] || {};
 
   els.igCaption.value = ig.caption || "";
   els.igHashtags.value = ig.hashtags || "";
@@ -385,9 +392,11 @@ function fillOutputs() {
   els.wpLsi.value = (seo.lsi_keywords || []).join(", ");
   els.wpBody.value = wp.body || "";
 
-  els.thText.value = th.text || "";
-  els.thHashtags.value = th.hashtags || "";
-  els.thAlt.value = th.alt_text || "";
+  els.thTextA.value = thA.text || "";
+  els.thHashtagsA.value = thA.hashtags || "";
+  els.thTextB.value = thB.text || "";
+  els.thHashtagsB.value = thB.hashtags || "";
+  els.thAltB.value = thB.alt_text || "";
 
   runSeoAudit({ seo, body: wp.body || "" });
 }
@@ -630,9 +639,11 @@ function clearAll() {
     els.wpFocus,
     els.wpLsi,
     els.wpBody,
-    els.thText,
-    els.thHashtags,
-    els.thAlt,
+    els.thTextA,
+    els.thHashtagsA,
+    els.thTextB,
+    els.thHashtagsB,
+    els.thAltB,
   ].forEach((el) => {
     el.value = "";
   });
@@ -718,8 +729,15 @@ els.copyWpBody.addEventListener("click", () =>
   copyToClipboard(els.wpBody.value.trim())
 );
 
-els.copyTh.addEventListener("click", () => {
-  const text = [els.thText.value.trim(), els.thHashtags.value.trim()]
+els.copyThA.addEventListener("click", () => {
+  const text = [els.thTextA.value.trim(), els.thHashtagsA.value.trim()]
+    .filter(Boolean)
+    .join("\n\n");
+  copyToClipboard(text);
+});
+
+els.copyThB.addEventListener("click", () => {
+  const text = [els.thTextB.value.trim(), els.thHashtagsB.value.trim()]
     .filter(Boolean)
     .join("\n\n");
   copyToClipboard(text);

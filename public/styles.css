@@ -730,6 +730,30 @@ button:disabled {
   background: #000000;
 }
 
+/* ===== Threads A/B version blocks ===== */
+.threads-version-block {
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-bottom: 16px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.threads-version-block:last-child {
+  margin-bottom: 0;
+}
+
+.threads-version-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-hover);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
 /* ===== Row (inline input + button) ===== */
 .input-row {
   display: flex;
