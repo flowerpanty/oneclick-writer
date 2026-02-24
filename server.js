@@ -51,16 +51,16 @@ const ThreadsVersionSchema = z.object({
 function buildOutputSchema(variantCount) {
   return z.object({
     instagram: z.object({
-      versions: z.array(InstagramVersionSchema).length(variantCount)
+      versions: z.array(InstagramVersionSchema).min(1).max(2)
     }),
     naver: z.object({
-      versions: z.array(NaverVersionSchema).length(variantCount)
+      versions: z.array(NaverVersionSchema).min(1).max(2)
     }),
     wordpress: z.object({
-      versions: z.array(WordPressVersionSchema).length(variantCount)
+      versions: z.array(WordPressVersionSchema).min(1).max(2)
     }),
     threads: z.object({
-      versions: z.array(ThreadsVersionSchema).length(variantCount)
+      versions: z.array(ThreadsVersionSchema).min(1).max(2)
     })
   });
 }
@@ -361,6 +361,58 @@ function normalizeHashtagLine(line) {
   return line.replace(/\s*\n\s*/g, " ").trim();
 }
 
+/**
+ * Sanitize malformed JSON text from ChatGPT:
+ * - Escape actual newlines/tabs inside JSON string values
+ * - Remove trailing commas before ] or }
+ * - Strip non-printable control characters
+ */
+function sanitizeJsonString(text) {
+  // 1. Remove non-printable control characters (keep \n, \r, \t for now)
+  let s = text.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
+
+  // 2. Fix actual newlines/tabs inside JSON string values
+  //    Walk through the string tracking whether we're inside quotes
+  let result = '';
+  let inString = false;
+  let i = 0;
+  while (i < s.length) {
+    const ch = s[i];
+
+    if (inString) {
+      if (ch === '\\') {
+        // Escaped character — keep both chars
+        result += ch + (s[i + 1] || '');
+        i += 2;
+        continue;
+      }
+      if (ch === '"') {
+        inString = false;
+        result += ch;
+        i++;
+        continue;
+      }
+      // Replace actual newlines/tabs inside string values
+      if (ch === '\n') { result += '\\n'; i++; continue; }
+      if (ch === '\r') { result += ''; i++; continue; }
+      if (ch === '\t') { result += '\\t'; i++; continue; }
+      result += ch;
+      i++;
+    } else {
+      if (ch === '"') {
+        inString = true;
+      }
+      result += ch;
+      i++;
+    }
+  }
+
+  // 3. Remove trailing commas before ] or }
+  result = result.replace(/,\s*([}\]])/g, '$1');
+
+  return result;
+}
+
 function extractJsonObject(raw) {
   const text = (raw || "").toString().trim();
   if (!text) {
@@ -375,22 +427,35 @@ function extractJsonObject(raw) {
     }
   };
 
+  // Attempt 1: direct parse
   const direct = tryParse(text);
   if (direct) return direct;
 
+  // Attempt 2: extract from code fence
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fenced?.[1]) {
     const parsed = tryParse(fenced[1].trim());
     if (parsed) return parsed;
   }
 
+  // Attempt 3: slice from first { to last }
   const firstBrace = text.indexOf("{");
   const lastBrace = text.lastIndexOf("}");
   if (firstBrace >= 0 && lastBrace > firstBrace) {
     const sliced = text.slice(firstBrace, lastBrace + 1);
     const parsed = tryParse(sliced);
     if (parsed) return parsed;
+
+    // Attempt 4: sanitize and retry
+    const sanitized = sanitizeJsonString(sliced);
+    const parsedSanitized = tryParse(sanitized);
+    if (parsedSanitized) return parsedSanitized;
   }
+
+  // Attempt 5: sanitize the entire text and retry
+  const fullSanitized = sanitizeJsonString(text);
+  const parsedFull = tryParse(fullSanitized);
+  if (parsedFull) return parsedFull;
 
   throw new Error("JSON 파싱에 실패했어요. ChatGPT 출력 전체를 그대로 붙여넣어 주세요.");
 }
@@ -484,7 +549,9 @@ app.post("/api/parse", (req, res) => {
 
     res.json(parsed);
   } catch (err) {
-    const message = err?.issues?.[0]?.message || err?.message || "결과 검증 중 오류가 발생했어요.";
+    const message = err?.issues
+      ? err.issues.map(i => `${i.path.join('.')}: ${i.message}`).join('; ')
+      : err?.message || "결과 검증 중 오류가 발생했어요.";
     res.status(400).json({ error: message });
   }
 });
@@ -556,10 +623,9 @@ app.post("/api/auto-generate", async (req, res) => {
     send({ type: "result", data: parsed });
     send({ type: "progress", percent: 100 });
   } catch (err) {
-    const message =
-      err?.issues?.[0]?.message ||
-      err?.message ||
-      "자동 생성 중 오류가 발생했어요.";
+    const message = err?.issues
+      ? err.issues.map(i => `${i.path.join('.')}: ${i.message}`).join('; ')
+      : err?.message || "자동 생성 중 오류가 발생했어요.";
     send({ type: "error", message });
   } finally {
     res.end();
