@@ -48,6 +48,12 @@ const ThreadsVersionSchema = z.object({
   alt_text: z.string().optional().default("")
 });
 
+const SnsSummaryVersionSchema = z.object({
+  threads_text: z.string(),
+  instagram_text: z.string(),
+  hashtags: z.string()
+});
+
 function buildOutputSchema(variantCount) {
   return z.object({
     instagram: z.object({
@@ -61,6 +67,9 @@ function buildOutputSchema(variantCount) {
     }),
     threads: z.object({
       versions: z.array(ThreadsVersionSchema).min(1).max(2)
+    }),
+    sns_summary: z.object({
+      versions: z.array(SnsSummaryVersionSchema).min(1).max(2)
     })
   });
 }
@@ -134,7 +143,7 @@ function buildSystemPrompt() {
 - 응답은 반드시 JSON 객체 1개만 출력한다.
 - 코드펜스(\`\`\`)와 설명문을 붙이지 않는다.
 - JSON 값에 템플릿용 값("string", "<...>", "example")을 넣지 않는다.
-- instagram/naver/wordpress/threads 각각에 versions 배열을 채운다. versions 개수는 사용자 지정과 정확히 일치해야 한다.
+- instagram/naver/wordpress/threads/sns_summary 각각에 versions 배열을 채운다. versions 개수는 사용자 지정과 정확히 일치해야 한다.
 
 [라인 선택 규칙(베이커리/가방)]
 - 원문/제품명/카테고리를 보고 어떤 라인인지 판단해 그 라인에 맞게 쓴다.
@@ -194,6 +203,18 @@ function buildSystemPrompt() {
   - versions[0] (A버전 - 일상/고민형): 텍스트 위주. 혼자 일하며 느끼는 푸념, 고민, 솔직한 감정을 툭 던지는 톤.
   - versions[1] (B버전 - 스포일러형): 작업물 사진이나 스케치 사진 1장과 함께 올리는 상황. 시각적 스포일러와 함께 약간의 기대감을 남기는 톤. (alt_text 포함)
 
+[SNS 요약 (sns_summary) 규칙]
+- 너는 센스 있고 트렌디한 SNS 카피라이터야. 내 이야기(원문)를 바탕으로, 인스타그램과 쓰레드(Threads)에 올릴 게시글 초안을 각각 만들어 줘.
+- 쓰레드용 (Threads): 짧고 위트 있게 작성해 주고, 글의 핵심을 아래 '3줄 요약 템플릿'을 활용해 재미있게 표현해 줘. 
+- 인스타그램용 (Instagram): 생생하고 자연스러운 일기 형식의 본문을 먼저 적고, 글 하단에 '3줄 요약 템플릿'을 깔끔하게 정리해 줘.
+- 3줄 요약 템플릿 양식: 반드시 아래 3가지 항목을 사용할 것.
+  [오늘한것]
+  [오늘꼬인것]
+  [내일할것]
+- threads_text 속성에 쓰레드용 글을 넣는다.
+- instagram_text 속성에 인스타그램용 글을 넣는다.
+- hashtags 추천: 오늘 내용과 어울리는 센스 있는 인스타그램/쓰레드용 해시태그를 5~8개 정도 제공한다. (예: #일상기록 #디저트만들기 등)
+
 [업그레이드 규칙 v2.1 - 아래 규칙이 위 규칙보다 우선한다]
 - (브랜드 콘텍스트) 이 브랜드는 "디자이너가 직접 만들고 판매하는" 정체성이 있다.
   - 라인 A: 베이커리(빵/디저트)
@@ -201,7 +222,7 @@ function buildSystemPrompt() {
   - 원문/제품명/카테고리를 보고 어떤 라인인지 판단해 그 라인에 맞는 어휘를 사용한다.
   - 원문에 없는 디테일(재료/공정/소재 스펙/가격/마감/배송/효능 등)은 절대 추가하지 말고 [빈칸] 처리한다.
 - (출력 안정성) JSON은 반드시 "완전한 유효 JSON"이어야 한다.
-  - 최상단 키는 정확히 instagram, naver, wordpress, threads 4개만 사용한다(다른 키 금지).
+  - 최상단 키는 정확히 instagram, naver, wordpress, threads, sns_summary 5개만 사용한다(다른 키 금지).
   - 문자열/키는 큰따옴표만 사용한다. trailing comma 금지.
 - (줄바꿈 규칙 - 매우 중요) JSON 문자열 값 안에는 "실제 개행(엔터)"을 넣지 마라.
   - 줄바꿈이 필요하면 반드시 "\\n" 또는 "\\n\\n" 으로 표현한다.
@@ -254,7 +275,7 @@ ${payload.includeFaq ? "- WordPress 본문에 `### 자주 묻는 질문` 섹션�
 function buildUserPrompt(payload) {
   const lsiLine = payload.lsiKeywords?.length ? payload.lsiKeywords.join(", ") : "[빈칸]";
 
-  return `아래 입력을 참고해 4채널(Instagram, Naver Blog, WordPress, Threads) 글을 만들어줘.
+  return `아래 입력을 참고해 5채널(Instagram, Naver Blog, WordPress, Threads, SNS 요약) 글을 만들어줘.
 
 [입력]
 - 주제: ${payload.topic || "[빈칸]"}
@@ -296,7 +317,7 @@ ${buildSeoInstruction(payload)}
 - 해시태그는 정확히 2개만.
 
 [형식 우선 반영]
-- 형식 값이 입력되면 해당 톤(블로그/인스타/카드뉴스/릴스)을 더 강하게 반영하되, 4채널 결과는 모두 생성한다.
+- 형식 값이 입력되면 해당 톤(블로그/인스타/카드뉴스/릴스)을 더 강하게 반영하되, 5채널 결과는 모두 생성한다.
 
 [버전 차별화]
 - versions[0]은 A 버전(기본 톤), versions[1]은 B 버전(다른 훅/전개)으로 작성한다.
@@ -350,6 +371,15 @@ function buildJsonFormatGuide(variantCount) {
         "text": "실제 쓰레드 텍스트 (1~3문장, 반말, 가벼운 톤)",
         "hashtags": "#해시태그1 #해시태그2",
         "alt_text": "B버전(스포일러형)일 경우 사진 설명, A버전은 빈 문자열"
+      }
+    ]
+  },
+  "sns_summary": {
+    "versions": [
+      {
+        "threads_text": "쓰레드용 짧고 위트있는 글 + 3줄 요약",
+        "instagram_text": "인스타그램용 일기 형식의 글 + 3줄 요약",
+        "hashtags": "해시태그 5~8개"
       }
     ]
   }
@@ -546,6 +576,9 @@ app.post("/api/parse", (req, res) => {
     for (const v of parsed.threads.versions) {
       v.hashtags = normalizeHashtagLine(v.hashtags);
     }
+    for (const v of parsed.sns_summary.versions) {
+      v.hashtags = normalizeHashtagLine(v.hashtags);
+    }
 
     res.json(parsed);
   } catch (err) {
@@ -617,6 +650,9 @@ app.post("/api/auto-generate", async (req, res) => {
       v.hashtags = normalizeHashtagLine(v.hashtags);
     }
     for (const v of parsed.threads.versions) {
+      v.hashtags = normalizeHashtagLine(v.hashtags);
+    }
+    for (const v of parsed.sns_summary.versions) {
       v.hashtags = normalizeHashtagLine(v.hashtags);
     }
 

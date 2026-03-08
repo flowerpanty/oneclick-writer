@@ -723,11 +723,15 @@ button:disabled {
 }
 
 .panel h2 .channel-dot.wp {
-  background: #21759b;
+  background: var(--c-wordpress);
 }
 
 .panel h2 .channel-dot.th {
-  background: #000000;
+  background: var(--c-threads);
+}
+
+.panel h2 .channel-dot.ss {
+  background: var(--c-pink);
 }
 
 /* ===== Threads A/B version blocks ===== */

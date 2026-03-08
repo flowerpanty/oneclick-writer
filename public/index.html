@@ -187,7 +187,7 @@
           <div class="field mt-12">
             <label for="resultJson">ChatGPT 결과 JSON (수동 모드)</label>
             <textarea id="resultJson" style="min-height:140px;"
-              placeholder='{"instagram":{...},"naver":{...},"wordpress":{...}}'></textarea>
+              placeholder='{"instagram":{...},"naver":{...},"wordpress":{...},"threads":{...},"sns_summary":{...}}'></textarea>
             <div class="btn-row" style="margin-top:8px;">
               <button id="applyJsonBtn" class="btn-primary">✅ 결과 불러오기</button>
             </div>
@@ -205,6 +205,7 @@
       <button class="tab-btn" data-tab="naver">📗 Naver Blog</button>
       <button class="tab-btn" data-tab="wordpress">🌐 WordPress</button>
       <button class="tab-btn" data-tab="threads">🧵 Threads</button>
+      <button class="tab-btn" data-tab="sns_summary">📱 SNS 요약</button>
     </div>
 
     <!-- ===== Instagram Panel ===== -->
@@ -354,6 +355,32 @@
         </div>
         <div class="btn-row mt-8">
           <button class="btn-copy" id="copyThB" type="button">📋 B버전 복사</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SNS Summary Panel ===== -->
+    <section class="panel" id="panel-sns_summary">
+      <h2><span class="channel-dot ss"></span> SNS 요약 결과</h2>
+      <div class="field">
+        <label>쓰레드용 (Threads)</label>
+        <textarea id="ssThreadsText" style="min-height:120px;" placeholder="쓰레드 요약이 여기에 표시됩니다."></textarea>
+        <div class="btn-row mt-8">
+          <button class="btn-copy" id="copySsThreads" type="button">📋 쓰레드용 복사</button>
+        </div>
+      </div>
+      <div class="field mt-12">
+        <label>인스타그램용 (Instagram)</label>
+        <textarea id="ssInstagramText" style="min-height:160px;" placeholder="인스타그램 요약이 여기에 표시됩니다."></textarea>
+        <div class="btn-row mt-8">
+          <button class="btn-copy" id="copySsInstagram" type="button">📋 인스타그램용 복사</button>
+        </div>
+      </div>
+      <div class="field mt-12">
+        <label>해시태그 추천</label>
+        <input id="ssHashtags" type="text" placeholder="#해시태그" />
+        <div class="btn-row mt-8">
+          <button class="btn-copy" id="copySsHashtags" type="button">📋 해시태그 복사</button>
         </div>
       </div>
     </section>

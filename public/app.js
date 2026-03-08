@@ -82,6 +82,14 @@ const els = {
   thHashtagsB: $("thHashtagsB"),
   thAltB: $("thAltB"),
   copyThB: $("copyThB"),
+
+  // SNS Summary outputs
+  ssThreadsText: $("ssThreadsText"),
+  copySsThreads: $("copySsThreads"),
+  ssInstagramText: $("ssInstagramText"),
+  copySsInstagram: $("copySsInstagram"),
+  ssHashtags: $("ssHashtags"),
+  copySsHashtags: $("copySsHashtags"),
 };
 
 // ===== State =====
@@ -211,7 +219,7 @@ function activateTab(name) {
     b.classList.toggle("active", b.dataset.tab === name);
   });
 
-  ["instagram", "naver", "wordpress", "threads"].forEach((tab) => {
+  ["instagram", "naver", "wordpress", "threads", "sns_summary"].forEach((tab) => {
     const panel = $(`panel-${tab}`);
     if (panel) panel.classList.toggle("active", tab === name);
   });
@@ -377,6 +385,10 @@ function fillOutputs() {
   const thA = thVersions[0] || {};
   const thB = thVersions[1] || {};
 
+  // SNS Summary: show the first version
+  const ssVersions = state.parsed?.sns_summary?.versions || [];
+  const ss = ssVersions[0] || {};
+
   els.igCaption.value = ig.caption || "";
   els.igHashtags.value = ig.hashtags || "";
   els.igAlt.value = ig.alt_text || "";
@@ -397,6 +409,10 @@ function fillOutputs() {
   els.thTextB.value = thB.text || "";
   els.thHashtagsB.value = thB.hashtags || "";
   els.thAltB.value = thB.alt_text || "";
+
+  els.ssThreadsText.value = ss.threads_text || "";
+  els.ssInstagramText.value = ss.instagram_text || "";
+  els.ssHashtags.value = ss.hashtags || "";
 
   runSeoAudit({ seo, body: wp.body || "" });
 }
@@ -644,6 +660,9 @@ function clearAll() {
     els.thTextB,
     els.thHashtagsB,
     els.thAltB,
+    els.ssThreadsText,
+    els.ssInstagramText,
+    els.ssHashtags,
   ].forEach((el) => {
     el.value = "";
   });
@@ -742,6 +761,16 @@ els.copyThB.addEventListener("click", () => {
     .join("\n\n");
   copyToClipboard(text);
 });
+
+els.copySsThreads.addEventListener("click", () =>
+  copyToClipboard(els.ssThreadsText.value.trim())
+);
+els.copySsInstagram.addEventListener("click", () =>
+  copyToClipboard(els.ssInstagramText.value.trim())
+);
+els.copySsHashtags.addEventListener("click", () =>
+  copyToClipboard(els.ssHashtags.value.trim())
+);
 
 // Ctrl/Cmd + Enter -> build prompt
 els.story.addEventListener("keydown", (e) => {
