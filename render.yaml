@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: oneclick-writer
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: DISABLE_BROWSER_AUTOMATION
+        value: "true"
+      - key: NAVER_CLIENT_ID
+        sync: false
+      - key: NAVER_CLIENT_SECRET
+        sync: false
+      - key: NAVER_DATALAB_CLIENT_ID
+        sync: false
+      - key: NAVER_DATALAB_CLIENT_SECRET
+        sync: false
+      - key: NAVER_SEARCHAD_CUSTOMER_ID
+        sync: false
+      - key: NAVER_SEARCHAD_ACCESS_LICENSE
+        sync: false
+      - key: NAVER_SEARCHAD_SECRET_KEY
+        sync: false

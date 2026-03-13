@@ -1,0 +1,384 @@
+.research-page .container,
+.research-page .header-inner {
+  max-width: 1080px;
+}
+
+.research-page .header-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.research-page .badge.ready {
+  background: rgba(52, 211, 153, 0.12);
+  border-color: rgba(52, 211, 153, 0.32);
+  color: #86efac;
+}
+
+.research-page .badge.missing {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.28);
+  color: #fca5a5;
+}
+
+.research-page .section-title,
+.research-page .section-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.research-page .section-actions {
+  justify-content: flex-end;
+}
+
+.research-page a.btn-secondary,
+.research-page a.btn-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.research-page .research-notice {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  background: rgba(248, 113, 113, 0.08);
+  color: #fca5a5;
+  line-height: 1.7;
+}
+
+.research-page .query-input {
+  min-height: 180px;
+}
+
+.research-page .research-grid {
+  margin-top: 8px;
+}
+
+.research-page .hint-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 6px;
+}
+
+.research-page .hint-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.research-page .focus-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(99, 102, 241, 0.08));
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.research-page .focus-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.research-page .focus-card strong {
+  font-size: clamp(20px, 3vw, 28px);
+  letter-spacing: -0.03em;
+}
+
+.research-page .research-metric-grid,
+.research-page .research-insight-grid,
+.research-page .headline-pick-grid,
+.research-page .headline-final-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.research-page .research-metric-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.research-page .research-insight-grid,
+.research-page .headline-pick-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.research-page .headline-final-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.research-page .metric-card,
+.research-page .insight-card,
+.research-page .headline-section,
+.research-page .headline-pick-card,
+.research-page .headline-final-card,
+.research-page .result-view-card,
+.research-page .result-card,
+.research-page .recent-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+}
+
+.research-page .metric-card,
+.research-page .insight-card,
+.research-page .headline-section,
+.research-page .headline-pick-card,
+.research-page .headline-final-card,
+.research-page .result-view-card,
+.research-page .result-card,
+.research-page .recent-card {
+  padding: 18px;
+}
+
+.research-page .metric-card h3,
+.research-page .insight-card h3,
+.research-page .result-view-head h3,
+.research-page .headline-section h4,
+.research-page .headline-pick-card h4 {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+
+.research-page .metric-big {
+  margin-top: 12px;
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.research-page .metric-lines {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.research-page .metric-lines strong {
+  color: var(--text);
+}
+
+.research-page .insight-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.research-page .insight-caption,
+.research-page .result-guide,
+.research-page #resultViewHint {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.research-page .chip-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.research-page .chip-cloud .chip {
+  margin: 0;
+}
+
+.research-page .chip-cloud .chip small {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.research-page .chip-cloud.empty,
+.research-page .headline-board.empty,
+.research-page .results-list.empty,
+.research-page .recent-strip.empty {
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-dim);
+}
+
+.research-page .headline-board {
+  display: grid;
+  gap: 16px;
+}
+
+.research-page .headline-list,
+.research-page .headline-pick-list {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding-left: 20px;
+}
+
+.research-page .headline-item strong,
+.research-page .headline-pick-list strong,
+.research-page .headline-final-card strong {
+  display: block;
+  line-height: 1.6;
+}
+
+.research-page .headline-final-card {
+  display: grid;
+  gap: 8px;
+}
+
+.research-page .headline-final-card span {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.research-page .result-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 14px;
+}
+
+.research-page .result-tab {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.research-page .result-tab.active {
+  background: rgba(59, 130, 246, 0.14);
+  border-color: rgba(59, 130, 246, 0.28);
+  color: var(--text);
+}
+
+.research-page .result-view-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.research-page #resultViewCount {
+  font-size: 14px;
+  color: var(--accent-hover);
+}
+
+.research-page .results-list,
+.research-page .recent-strip {
+  display: grid;
+  gap: 12px;
+}
+
+.research-page .result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.research-page .meta-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.research-page .meta-pill.blog {
+  color: #93c5fd;
+}
+
+.research-page .meta-pill.cafe {
+  color: #86efac;
+}
+
+.research-page .result-card h3,
+.research-page .recent-card strong {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.research-page .result-card p,
+.research-page .recent-card span {
+  margin: 10px 0 0;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.research-page .result-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.research-page .result-link {
+  color: var(--accent-hover);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.research-page .result-link:hover {
+  color: #93c5fd;
+}
+
+@media (max-width: 980px) {
+  .research-page .research-metric-grid,
+  .research-page .research-insight-grid,
+  .research-page .headline-pick-grid,
+  .research-page .headline-final-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .research-page .container,
+  .research-page .header-inner {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .research-page .section-actions,
+  .research-page .result-view-head,
+  .research-page .insight-card-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .research-page .result-tab {
+    width: 100%;
+    justify-content: center;
+  }
+}

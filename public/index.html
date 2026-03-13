@@ -4,8 +4,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>원클릭 글 생성기 — 3채널 자동 콘텐츠</title>
-  <meta name="description" content="ChatGPT 구독으로 Instagram, 네이버 블로그, WordPress 글을 한 번에 생성하는 로컬 도구" />
+  <title>원클릭 글 생성기 — 5채널 자동 콘텐츠</title>
+  <meta name="description" content="ChatGPT 구독으로 Instagram, 네이버 블로그, WordPress, Threads, SNS 요약 글을 한 번에 생성하는 로컬 도구" />
   <meta name="theme-color" content="#0b0e18" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
@@ -16,7 +16,11 @@
   <header class="header">
     <div class="header-inner">
       <h1>✦ 원클릭 글 생성기</h1>
-      <span class="badge"><span class="dot"></span> ChatGPT 구독 모드</span>
+      <div class="header-actions">
+        <a href="/research" class="header-link">네이버 리서치 툴</a>
+        <a href="/strategy" class="header-link">콘텐츠 기획 툴</a>
+        <span class="badge"><span class="dot"></span> ChatGPT 구독 모드</span>
+      </div>
     </div>
   </header>
 
@@ -41,348 +45,478 @@
       </div>
     </div>
 
-    <!-- Main Grid -->
-    <div class="main-grid">
+    <!-- ===== Quick Guide Banner ===== -->
+    <div class="guide-banner">
+      <span class="guide-icon">💡</span>
+      <span><strong>프롬프트 만들기</strong> → 클립보드 복사 → ChatGPT에 붙여넣기 → 결과 JSON 불러오기 &nbsp;|&nbsp; <strong>자동 생성</strong>으로 한 번에 완료</span>
+    </div>
 
-      <!-- ===== Left Column — Input ===== -->
-      <div>
-        <div class="card">
-          <div class="card-title"><span class="icon">📝</span> 콘텐츠 입력</div>
-
-          <div class="field">
-            <label for="topic">주제 (콘텐츠 제목)</label>
-            <input id="topic" type="text" placeholder="예: 여행 파우치 직접 써보고 놀란 후기" />
-            <div class="hint">비워도 되지만, 있으면 제목/키워드가 더 잘 잡혀요.</div>
-          </div>
-
-          <div class="field">
-            <label for="story">내 이야기 (에피소드/TMI, 한 줄 이상!)</label>
-            <textarea id="story" placeholder="예: 여행 갈 때마다 파우치가 없어서 화장품이랑 양말이랑 다 섞여…"></textarea>
-          </div>
-
-          <div class="field">
-            <label for="format">형식 (선택)</label>
-            <input id="format" type="text" placeholder="예: 블로그 / 인스타 / 카드뉴스 / 릴스" />
-            <div class="hint">입력하면 해당 채널 느낌을 더 강하게 반영합니다.</div>
-          </div>
-
-          <!-- Advanced Options -->
-          <details>
-            <summary>고급 옵션 + SEO 강화</summary>
-            <div class="grid-2 mt-12">
-              <div class="field">
-                <label for="brandName">브랜드명</label>
-                <input id="brandName" type="text" placeholder="예: 낫띵메터스" />
-              </div>
-              <div class="field">
-                <label for="productName">제품명/카테고리</label>
-                <input id="productName" type="text" placeholder="예: 여행 파우치 / 수제쿠키" />
-              </div>
-              <div class="field">
-                <label for="category">분류</label>
-                <select id="category">
-                  <option value="">(선택 안 함)</option>
-                  <option value="가방">가방</option>
-                  <option value="쿠키">쿠키</option>
-                  <option value="기타">기타</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="focusKeyword">핵심 키워드 (SEO 중심)</label>
-                <input id="focusKeyword" type="text" placeholder="예: 여행 파우치" />
-              </div>
-              <div class="field">
-                <label for="seoLevel">SEO 강도</label>
-                <select id="seoLevel">
-                  <option value="balanced">균형형 (자연스러움 우선)</option>
-                  <option value="strong">강화형 (노출 우선)</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="keywordIntent">키워드 의도</label>
-                <select id="keywordIntent">
-                  <option value="정보형">정보형</option>
-                  <option value="구매형">구매형</option>
-                  <option value="브랜드형">브랜드형</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="keywordMentions">본문 키워드 반복 목표</label>
-                <select id="keywordMentions">
-                  <option value="2-3">2-3회</option>
-                  <option value="3-5" selected>3-5회</option>
-                  <option value="5-7">5-7회</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="targetAudience">타겟 독자 (선택)</label>
-                <input id="targetAudience" type="text" placeholder="예: 30대 여성 직장인 / 육아맘" />
-              </div>
-            </div>
-
-            <div class="field mt-12">
-              <label for="lsiKeywords">연관 키워드 (콤마 구분, 선택)</label>
-              <input id="lsiKeywords" type="text" placeholder="예: 여행 짐 정리, 파우치 추천, 가방 속 정리" />
-            </div>
-
-            <div class="field">
-              <label for="mustInclude">꼭 포함할 정보 (사실만 / 선택)</label>
-              <textarea id="mustInclude" placeholder="예: 가격: [ ] / 주문마감: [ ] / 보관법: [ ]"
-                style="min-height: 80px;"></textarea>
-              <div class="hint">없으면 비워두세요. 모델이 지어내지 않고 [빈칸]으로 남겨요.</div>
-            </div>
-
-            <div class="field">
-              <label for="cta">CTA 선호 (선택)</label>
-              <input id="cta" type="text" placeholder="예: 댓글로 꿀템 공유해줘요 / DM 문의" />
-            </div>
-
-            <label class="chip"><input id="includeFaq" type="checkbox" /> WordPress FAQ 추가</label>
-            <label class="chip"><input id="twoVariants" type="checkbox" /> 버전 2개 (A/B)</label>
-          </details>
-
-          <!-- Action Buttons -->
-          <div class="btn-row">
-            <button id="generateBtn" class="btn-primary">📋 프롬프트 만들기</button>
-            <button id="autoGenerateBtn" class="btn-auto" type="button">🚀 자동 생성</button>
-            <button id="clearBtn" class="btn-secondary" type="button">↺ 초기화</button>
-          </div>
-
-          <!-- Progress -->
-          <div id="progressContainer" class="progress-container">
-            <div class="progress-bar-track">
-              <div id="progressBar" class="progress-bar-fill"></div>
-            </div>
-            <div id="progressLog" class="progress-log"></div>
-          </div>
-
-          <!-- Status -->
-          <div id="status" class="status-bar mt-8"></div>
-          <div id="error" class="status-bar error mt-8"></div>
-        </div>
+    <!-- ═══════════════════════════════════════════
+         SECTION 1: 콘텐츠 입력
+    ═══════════════════════════════════════════ -->
+    <section class="section-block">
+      <div class="section-header">
+        <span class="section-icon">📝</span>
+        <h2>콘텐츠 입력</h2>
       </div>
 
-      <!-- ===== Right Column — Prompt & JSON ===== -->
-      <div class="side-col">
-        <div class="card card-tip">
-          <div class="card-title"><span class="icon">💡</span> 사용 가이드</div>
-          <ul class="tips-list">
-            <li><span class="step-num">1</span> <strong>프롬프트 만들기</strong>를 누르면 클립보드에 자동 복사됩니다.</li>
-            <li><span class="step-num">2</span> <strong>자동 생성</strong>을 누르면 ChatGPT 브라우저가 열리고 자동으로 진행됩니다.</li>
-            <li><span class="step-num">3</span> 수동 모드: ChatGPT에 붙여넣고 → 결과 JSON을 아래에 붙여넣기하세요.</li>
-          </ul>
+      <div class="card">
+        <div class="field">
+          <label for="topic">주제 (콘텐츠 제목)</label>
+          <input id="topic" type="text" placeholder="예: 여행 파우치 직접 써보고 놀란 후기" />
+          <div class="hint">비워도 되지만, 있으면 제목/키워드가 더 잘 잡혀요.</div>
         </div>
 
-        <div class="card mt-12">
-          <div class="field">
-            <label for="generatedPrompt">생성된 프롬프트</label>
-            <textarea id="generatedPrompt" style="min-height:140px;" placeholder="프롬프트 만들기를 누르면 자동 채워집니다."
-              readonly></textarea>
-            <div class="btn-row" style="margin-top:8px;">
-              <button class="btn-copy" id="copyPromptBtn" type="button">📋 프롬프트 복사</button>
-              <button id="openChatgptBtn" class="btn-secondary" type="button">↗ ChatGPT 열기</button>
+        <div class="field">
+          <label for="story">내 이야기 (에피소드/TMI, 한 줄 이상!)</label>
+          <textarea id="story" placeholder="예: 여행 갈 때마다 파우치가 없어서 화장품이랑 양말이랑 다 섞여…"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="format">형식 (선택)</label>
+          <input id="format" type="text" placeholder="예: 블로그 / 인스타 / 카드뉴스 / 릴스" />
+          <div class="hint">입력하면 해당 채널 느낌을 더 강하게 반영합니다.</div>
+        </div>
+
+        <!-- Advanced Options -->
+        <details>
+          <summary>고급 옵션 + SEO 강화</summary>
+          <div class="grid-2 mt-12">
+            <div class="field">
+              <label for="brandName">브랜드명</label>
+              <input id="brandName" type="text" placeholder="예: 낫띵메터스" />
+            </div>
+            <div class="field">
+              <label for="productName">제품명/카테고리</label>
+              <input id="productName" type="text" placeholder="예: 여행 파우치 / 수제쿠키" />
+            </div>
+            <div class="field">
+              <label for="category">분류</label>
+              <select id="category">
+                <option value="">(선택 안 함)</option>
+                <option value="가방">가방</option>
+                <option value="쿠키">쿠키</option>
+                <option value="기타">기타</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="focusKeyword">핵심 키워드 (SEO 중심)</label>
+              <input id="focusKeyword" type="text" placeholder="예: 여행 파우치" />
+            </div>
+            <div class="field">
+              <label for="seoLevel">SEO 강도</label>
+              <select id="seoLevel">
+                <option value="balanced">균형형 (자연스러움 우선)</option>
+                <option value="strong">강화형 (노출 우선)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="keywordIntent">키워드 의도</label>
+              <select id="keywordIntent">
+                <option value="정보형">정보형</option>
+                <option value="구매형">구매형</option>
+                <option value="브랜드형">브랜드형</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="keywordMentions">본문 키워드 반복 목표</label>
+              <select id="keywordMentions">
+                <option value="2-3">2-3회</option>
+                <option value="3-5" selected>3-5회</option>
+                <option value="5-7">5-7회</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="targetAudience">타겟 독자 (선택)</label>
+              <input id="targetAudience" type="text" placeholder="예: 30대 여성 직장인 / 육아맘" />
             </div>
           </div>
 
           <div class="field mt-12">
-            <label for="resultJson">ChatGPT 결과 JSON (수동 모드)</label>
-            <textarea id="resultJson" style="min-height:140px;"
-              placeholder='{"instagram":{...},"naver":{...},"wordpress":{...},"threads":{...},"sns_summary":{...}}'></textarea>
+            <label for="lsiKeywords">연관 키워드 (콤마 구분, 선택)</label>
+            <input id="lsiKeywords" type="text" placeholder="예: 여행 짐 정리, 파우치 추천, 가방 속 정리" />
+          </div>
+
+          <div class="field">
+            <label for="mustInclude">꼭 포함할 정보 (사실만 / 선택)</label>
+            <textarea id="mustInclude" placeholder="예: 가격: [ ] / 주문마감: [ ] / 보관법: [ ]"
+              style="min-height: 80px;"></textarea>
+            <div class="hint">없으면 비워두세요. 모델이 지어내지 않고 [빈칸]으로 남겨요.</div>
+          </div>
+
+          <div class="field">
+            <label for="cta">CTA 선호 (선택)</label>
+            <input id="cta" type="text" placeholder="예: 댓글로 꿀템 공유해줘요 / DM 문의" />
+          </div>
+
+          <label class="chip"><input id="includeFaq" type="checkbox" /> WordPress FAQ 추가</label>
+          <label class="chip"><input id="twoVariants" type="checkbox" /> 버전 2개 (A/B)</label>
+        </details>
+
+        <!-- Action Buttons -->
+        <div class="btn-row btn-row-main">
+          <button id="generateBtn" class="btn-primary">📋 프롬프트 만들기</button>
+          <button id="autoGenerateBtn" class="btn-auto" type="button">🚀 자동 생성</button>
+          <button id="clearBtn" class="btn-secondary" type="button">↺ 초기화</button>
+        </div>
+
+        <!-- Progress -->
+        <div id="progressContainer" class="progress-container">
+          <div class="progress-bar-track">
+            <div id="progressBar" class="progress-bar-fill"></div>
+          </div>
+          <div id="progressLog" class="progress-log"></div>
+        </div>
+
+        <!-- Status -->
+        <div id="status" class="status-bar mt-8"></div>
+        <div id="error" class="status-bar error mt-8"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         SECTION 2: 프롬프트 & 결과 입력
+    ═══════════════════════════════════════════ -->
+    <section class="section-block">
+      <div class="section-header">
+        <span class="section-icon">⚡</span>
+        <h2>프롬프트 & 결과 입력</h2>
+      </div>
+
+      <div class="card">
+        <div class="field">
+          <label for="generatedPrompt">생성된 프롬프트</label>
+          <textarea id="generatedPrompt" style="min-height:120px;" placeholder="프롬프트 만들기를 누르면 자동 채워집니다."
+            readonly></textarea>
+          <div class="btn-row" style="margin-top:8px;">
+            <button class="btn-copy" id="copyPromptBtn" type="button">📋 프롬프트 복사</button>
+            <button id="openChatgptBtn" class="btn-secondary" type="button">↗ ChatGPT 열기</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <label for="resultJson">ChatGPT 결과 JSON (수동 모드)</label>
+          <textarea id="resultJson" style="min-height:120px;"
+            placeholder='{"instagram":{...},"naver":{...},"wordpress":{...},"threads":{...},"sns_summary":{...}}'></textarea>
+          <div class="btn-row" style="margin-top:8px;">
+            <button id="applyJsonBtn" class="btn-primary">✅ 결과 불러오기</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         SECTION 3: 스타일 메모리 (접힘 가능)
+    ═══════════════════════════════════════════ -->
+    <section class="section-block">
+      <details class="section-details" id="styleMemorySection">
+        <summary class="section-header section-header-toggle">
+          <span class="section-header-left">
+            <span class="section-icon">🧠</span>
+            <h2>스타일 메모리</h2>
+          </span>
+          <span class="toggle-hint">펼치기 ▸</span>
+        </summary>
+
+        <div class="card">
+          <div class="hint mb-12">내가 쓴 캡션/블로그 글이나 웹페이지 URL을 저장해 두면, 다음 프롬프트부터 말투와 글 리듬에 반영됩니다.</div>
+
+          <div class="field">
+            <label for="styleNotes">직접 적는 스타일 메모</label>
+            <textarea id="styleNotes" style="min-height:80px;"
+              placeholder="예: 과하게 광고처럼 쓰지 말고, 짧은 문장과 질문형 마무리를 선호함."></textarea>
             <div class="btn-row" style="margin-top:8px;">
-              <button id="applyJsonBtn" class="btn-primary">✅ 결과 불러오기</button>
+              <button id="saveStyleNotesBtn" class="btn-secondary" type="button">메모 저장</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label for="styleSampleSource">샘플 종류</label>
+              <select id="styleSampleSource">
+                <option value="manual">직접 쓴 글</option>
+                <option value="blog">블로그 글</option>
+                <option value="instagram">인스타 캡션</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="styleSampleLabel">샘플 라벨 (선택)</label>
+              <input id="styleSampleLabel" type="text" placeholder="예: 여행 파우치 후기" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="styleSampleText">샘플 글 붙여넣기</label>
+            <textarea id="styleSampleText" style="min-height:100px;"
+              placeholder="내가 실제로 쓴 글, 인스타 캡션, 블로그 본문 일부를 붙여넣으세요."></textarea>
+            <div class="btn-row" style="margin-top:8px;">
+              <button id="learnStyleTextBtn" class="btn-primary" type="button">샘플 학습</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="styleUrl">블로그/웹페이지 주소</label>
+            <input id="styleUrl" type="text" placeholder="예: https://blog.example.com/post-1" />
+            <div class="hint">인스타 URL은 캡션을 직접 붙여넣는 편이 안정적입니다.</div>
+            <div class="btn-row" style="margin-top:8px;">
+              <button id="learnStyleUrlBtn" class="btn-secondary" type="button">URL 가져와서 학습</button>
+              <button id="clearStyleMemoryBtn" class="btn-secondary" type="button">스타일 메모리 비우기</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label>현재 스타일 요약</label>
+              <div id="styleSummary" class="style-summary">
+                <div class="style-empty">아직 저장된 스타일 데이터가 없습니다.</div>
+              </div>
+            </div>
+            <div class="field">
+              <label>저장된 샘플</label>
+              <div id="styleSamples" class="style-samples">
+                <div class="style-empty">저장된 샘플이 없습니다.</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- ===== Version Tabs (A/B) ===== -->
-    <div id="versionTabs" class="tabs hidden" aria-label="버전 탭"></div>
-
-    <!-- ===== Channel Tabs ===== -->
-    <div class="tabs" aria-label="채널 탭">
-      <button class="tab-btn active" data-tab="instagram">📸 Instagram</button>
-      <button class="tab-btn" data-tab="naver">📗 Naver Blog</button>
-      <button class="tab-btn" data-tab="wordpress">🌐 WordPress</button>
-      <button class="tab-btn" data-tab="threads">🧵 Threads</button>
-      <button class="tab-btn" data-tab="sns_summary">📱 SNS 요약</button>
-    </div>
-
-    <!-- ===== Instagram Panel ===== -->
-    <section class="panel active" id="panel-instagram">
-      <h2><span class="channel-dot ig"></span> Instagram 결과</h2>
-      <div class="field">
-        <label>캡션</label>
-        <textarea id="igCaption" style="min-height:160px;" placeholder="생성 결과가 여기에 표시됩니다."></textarea>
-        <div class="btn-row mt-8">
-          <button class="btn-copy" id="copyIg">📋 복사 (캡션+해시태그)</button>
-        </div>
-      </div>
-      <div class="grid-2">
-        <div class="field">
-          <label>해시태그</label>
-          <input id="igHashtags" type="text" />
-        </div>
-        <div class="field">
-          <label>ALT 텍스트 (사진 설명)</label>
-          <input id="igAlt" type="text" />
-        </div>
-      </div>
+      </details>
     </section>
 
-    <!-- ===== Naver Panel ===== -->
-    <section class="panel" id="panel-naver">
-      <h2><span class="channel-dot nv"></span> 네이버 블로그 결과</h2>
-      <div class="field">
-        <label>제목</label>
-        <div class="input-row">
-          <input id="nvTitle" type="text" />
-          <button class="btn-copy" id="copyNvTitle" type="button">복사</button>
-        </div>
-      </div>
-      <div class="field">
-        <label>본문</label>
-        <textarea id="nvBody" style="min-height:200px;" placeholder="생성 결과가 여기에 표시됩니다."></textarea>
-        <div class="btn-row mt-8">
-          <button class="btn-copy" id="copyNvAll">📋 복사 (제목+본문+해시태그)</button>
-        </div>
-      </div>
-      <div class="field">
-        <label>해시태그</label>
-        <input id="nvHashtags" type="text" />
-      </div>
-    </section>
-
-    <!-- ===== WordPress Panel ===== -->
-    <section class="panel" id="panel-wordpress">
-      <h2><span class="channel-dot wp"></span> WordPress 결과</h2>
-
-      <div class="grid-2">
-        <div class="field">
-          <label>SEO Title</label>
-          <div class="input-row">
-            <input id="wpSeoTitle" type="text" />
-            <button class="btn-copy" id="copyWpSeoTitle" type="button">복사</button>
-          </div>
-        </div>
-        <div class="field">
-          <label>Slug</label>
-          <div class="input-row">
-            <input id="wpSlug" type="text" />
-            <button class="btn-copy" id="copyWpSlug" type="button">복사</button>
-          </div>
-        </div>
+    <!-- ═══════════════════════════════════════════
+         SECTION 4: 생성 결과
+    ═══════════════════════════════════════════ -->
+    <section class="section-block section-results" id="resultsSection">
+      <div class="section-header">
+        <span class="section-icon">📊</span>
+        <h2>생성 결과</h2>
       </div>
 
-      <div class="grid-2">
-        <div class="field">
-          <label>Focus Keyphrase</label>
-          <div class="input-row">
-            <input id="wpFocus" type="text" />
-            <button class="btn-copy" id="copyWpFocus" type="button">복사</button>
-          </div>
+      <!-- Version Tabs (A/B) -->
+      <div id="versionTabs" class="tabs hidden" aria-label="버전 탭"></div>
+
+      <!-- Channel Tabs -->
+      <div class="channel-tabs" aria-label="채널 탭">
+        <button class="channel-tab active" data-tab="instagram">
+          <span class="channel-tab-dot ig"></span>
+          <span>Instagram</span>
+        </button>
+        <button class="channel-tab" data-tab="naver">
+          <span class="channel-tab-dot nv"></span>
+          <span>Naver Blog</span>
+        </button>
+        <button class="channel-tab" data-tab="wordpress">
+          <span class="channel-tab-dot wp"></span>
+          <span>WordPress</span>
+        </button>
+        <button class="channel-tab" data-tab="threads">
+          <span class="channel-tab-dot th"></span>
+          <span>Threads</span>
+        </button>
+        <button class="channel-tab" data-tab="sns_summary">
+          <span class="channel-tab-dot ss"></span>
+          <span>SNS 요약</span>
+        </button>
+      </div>
+
+      <!-- ===== Instagram Panel ===== -->
+      <section class="panel active" id="panel-instagram">
+        <div class="panel-header">
+          <span class="channel-dot ig"></span>
+          <h3>Instagram 결과</h3>
         </div>
         <div class="field">
-          <label>LSI Keywords</label>
-          <div class="input-row">
-            <input id="wpLsi" type="text" placeholder="콤마 구분" />
-            <button class="btn-copy" id="copyWpLsi" type="button">복사</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Meta Description</label>
-        <div class="input-row">
-          <input id="wpMeta" type="text" />
-          <button class="btn-copy" id="copyWpMeta" type="button">복사</button>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>본문 (워드프레스 편집기에 붙여넣기)</label>
-        <textarea id="wpBody" style="min-height:240px;" placeholder="생성 결과가 여기에 표시됩니다."></textarea>
-        <div class="btn-row mt-8">
-          <button class="btn-copy" id="copyWpBody">📋 복사 (본문)</button>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>SEO 체크</label>
-        <div id="seoAudit" class="seo-audit">결과를 불러오면 핵심 키워드 기반 SEO 체크가 표시됩니다.</div>
-      </div>
-    </section>
-
-    <!-- ===== Threads Panel ===== -->
-    <section class="panel" id="panel-threads">
-      <h2><span class="channel-dot th"></span> Threads 결과</h2>
-
-      <!-- A Version -->
-      <div class="threads-version-block">
-        <div class="threads-version-label">A 버전 — 일상/고민형</div>
-        <div class="field">
-          <label>텍스트</label>
-          <textarea id="thTextA" style="min-height:100px;" placeholder="A버전 결과가 여기에 표시됩니다."></textarea>
+          <label>캡션</label>
+          <textarea id="igCaption" style="min-height:160px;" placeholder="생성 결과가 여기에 표시됩니다."></textarea>
         </div>
         <div class="grid-2">
           <div class="field">
             <label>해시태그</label>
-            <input id="thHashtagsA" type="text" />
-          </div>
-          <div class="field">
-            <label>&nbsp;</label>
-            <button class="btn-copy" id="copyThA" type="button">📋 A버전 복사</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- B Version -->
-      <div class="threads-version-block">
-        <div class="threads-version-label">B 버전 — 스포일러형</div>
-        <div class="field">
-          <label>텍스트</label>
-          <textarea id="thTextB" style="min-height:100px;" placeholder="B버전 결과가 여기에 표시됩니다."></textarea>
-        </div>
-        <div class="grid-2">
-          <div class="field">
-            <label>해시태그</label>
-            <input id="thHashtagsB" type="text" />
+            <input id="igHashtags" type="text" />
           </div>
           <div class="field">
             <label>ALT 텍스트 (사진 설명)</label>
-            <input id="thAltB" type="text" />
+            <input id="igAlt" type="text" />
           </div>
         </div>
         <div class="btn-row mt-8">
-          <button class="btn-copy" id="copyThB" type="button">📋 B버전 복사</button>
+          <button class="btn-copy" id="copyIg">📋 복사 (캡션+해시태그)</button>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ===== SNS Summary Panel ===== -->
-    <section class="panel" id="panel-sns_summary">
-      <h2><span class="channel-dot ss"></span> SNS 요약 결과</h2>
-      <div class="field">
-        <label>쓰레드용 (Threads)</label>
-        <textarea id="ssThreadsText" style="min-height:120px;" placeholder="쓰레드 요약이 여기에 표시됩니다."></textarea>
-        <div class="btn-row mt-8">
-          <button class="btn-copy" id="copySsThreads" type="button">📋 쓰레드용 복사</button>
+      <!-- ===== Naver Panel ===== -->
+      <section class="panel" id="panel-naver">
+        <div class="panel-header">
+          <span class="channel-dot nv"></span>
+          <h3>네이버 블로그 결과</h3>
         </div>
-      </div>
-      <div class="field mt-12">
-        <label>인스타그램용 (Instagram)</label>
-        <textarea id="ssInstagramText" style="min-height:160px;" placeholder="인스타그램 요약이 여기에 표시됩니다."></textarea>
-        <div class="btn-row mt-8">
-          <button class="btn-copy" id="copySsInstagram" type="button">📋 인스타그램용 복사</button>
+        <div class="field">
+          <label>제목</label>
+          <div class="input-row">
+            <input id="nvTitle" type="text" />
+            <button class="btn-copy" id="copyNvTitle" type="button">복사</button>
+          </div>
         </div>
-      </div>
-      <div class="field mt-12">
-        <label>해시태그 추천</label>
-        <input id="ssHashtags" type="text" placeholder="#해시태그" />
-        <div class="btn-row mt-8">
-          <button class="btn-copy" id="copySsHashtags" type="button">📋 해시태그 복사</button>
+        <div class="field">
+          <label>본문</label>
+          <textarea id="nvBody" style="min-height:200px;" placeholder="생성 결과가 여기에 표시됩니다."></textarea>
         </div>
-      </div>
+        <div class="field">
+          <label>해시태그</label>
+          <input id="nvHashtags" type="text" />
+        </div>
+        <div class="btn-row mt-8">
+          <button class="btn-copy" id="copyNvAll">📋 복사 (제목+본문+해시태그)</button>
+        </div>
+      </section>
+
+      <!-- ===== WordPress Panel ===== -->
+      <section class="panel" id="panel-wordpress">
+        <div class="panel-header">
+          <span class="channel-dot wp"></span>
+          <h3>WordPress 결과</h3>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label>SEO Title</label>
+            <div class="input-row">
+              <input id="wpSeoTitle" type="text" />
+              <button class="btn-copy" id="copyWpSeoTitle" type="button">복사</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Slug</label>
+            <div class="input-row">
+              <input id="wpSlug" type="text" />
+              <button class="btn-copy" id="copyWpSlug" type="button">복사</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label>Focus Keyphrase</label>
+            <div class="input-row">
+              <input id="wpFocus" type="text" />
+              <button class="btn-copy" id="copyWpFocus" type="button">복사</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>LSI Keywords</label>
+            <div class="input-row">
+              <input id="wpLsi" type="text" placeholder="콤마 구분" />
+              <button class="btn-copy" id="copyWpLsi" type="button">복사</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Meta Description</label>
+          <div class="input-row">
+            <input id="wpMeta" type="text" />
+            <button class="btn-copy" id="copyWpMeta" type="button">복사</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>본문 (워드프레스 편집기에 붙여넣기)</label>
+          <textarea id="wpBody" style="min-height:240px;" placeholder="생성 결과가 여기에 표시됩니다."></textarea>
+          <div class="btn-row mt-8">
+            <button class="btn-copy" id="copyWpBody">📋 복사 (본문)</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>SEO 체크</label>
+          <div id="seoAudit" class="seo-audit">결과를 불러오면 핵심 키워드 기반 SEO 체크가 표시됩니다.</div>
+        </div>
+      </section>
+
+      <!-- ===== Threads Panel ===== -->
+      <section class="panel" id="panel-threads">
+        <div class="panel-header">
+          <span class="channel-dot th"></span>
+          <h3>Threads 결과</h3>
+        </div>
+
+        <!-- A Version -->
+        <div class="threads-version-block">
+          <div class="threads-version-label">A 버전 — 일상/고민형</div>
+          <div class="field">
+            <label>텍스트</label>
+            <textarea id="thTextA" style="min-height:100px;" placeholder="A버전 결과가 여기에 표시됩니다."></textarea>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label>해시태그</label>
+              <input id="thHashtagsA" type="text" />
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button class="btn-copy" id="copyThA" type="button">📋 A버전 복사</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- B Version -->
+        <div class="threads-version-block">
+          <div class="threads-version-label">B 버전 — 스포일러형</div>
+          <div class="field">
+            <label>텍스트</label>
+            <textarea id="thTextB" style="min-height:100px;" placeholder="B버전 결과가 여기에 표시됩니다."></textarea>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label>해시태그</label>
+              <input id="thHashtagsB" type="text" />
+            </div>
+            <div class="field">
+              <label>ALT 텍스트 (사진 설명)</label>
+              <input id="thAltB" type="text" />
+            </div>
+          </div>
+          <div class="btn-row mt-8">
+            <button class="btn-copy" id="copyThB" type="button">📋 B버전 복사</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SNS Summary Panel ===== -->
+      <section class="panel" id="panel-sns_summary">
+        <div class="panel-header">
+          <span class="channel-dot ss"></span>
+          <h3>SNS 요약 결과</h3>
+        </div>
+        <div class="field">
+          <label>쓰레드용 (Threads)</label>
+          <textarea id="ssThreadsText" style="min-height:120px;" placeholder="쓰레드 요약이 여기에 표시됩니다."></textarea>
+          <div class="btn-row mt-8">
+            <button class="btn-copy" id="copySsThreads" type="button">📋 쓰레드용 복사</button>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="field">
+          <label>인스타그램용 (Instagram)</label>
+          <textarea id="ssInstagramText" style="min-height:160px;" placeholder="인스타그램 요약이 여기에 표시됩니다."></textarea>
+          <div class="btn-row mt-8">
+            <button class="btn-copy" id="copySsInstagram" type="button">📋 인스타그램용 복사</button>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="field">
+          <label>해시태그 추천</label>
+          <input id="ssHashtags" type="text" placeholder="#해시태그" />
+          <div class="btn-row mt-8">
+            <button class="btn-copy" id="copySsHashtags" type="button">📋 해시태그 복사</button>
+          </div>
+        </div>
+      </section>
     </section>
 
     <!-- Footer -->

@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>블로그 콘텐츠 기획 툴</title>
+  <meta name="description" content="리서치 결과를 바탕으로 네이버 블로그 콘텐츠 기획안과 본문 초안까지 설계하는 도구" />
+  <meta name="theme-color" content="#0b0e18" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/strategy.css" />
+</head>
+
+<body class="strategy-page">
+  <header class="header">
+    <div class="header-inner">
+      <h1>✦ 콘텐츠 기획 툴</h1>
+      <div class="header-actions">
+        <a href="/research" class="header-link">네이버 리서치 툴</a>
+        <a href="/" class="header-link">원클릭 글 생성기</a>
+        <span class="badge"><span class="dot"></span> 리서치 연동 모드</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="steps-bar">
+      <div class="step-item active" id="step1">
+        <span class="step-number">1</span>
+        <span class="step-label">브랜드 정보</span>
+      </div>
+      <div class="step-connector" id="conn1"></div>
+      <div class="step-item" id="step2">
+        <span class="step-number">2</span>
+        <span class="step-label">리서치 불러오기</span>
+      </div>
+      <div class="step-connector" id="conn2"></div>
+      <div class="step-item" id="step3">
+        <span class="step-number">3</span>
+        <span class="step-label">프롬프트 생성</span>
+      </div>
+      <div class="step-connector" id="conn3"></div>
+      <div class="step-item" id="step4">
+        <span class="step-number">4</span>
+        <span class="step-label">기획안 확인</span>
+      </div>
+    </div>
+
+    <div class="guide-banner">
+      <span class="guide-icon">💡</span>
+      <span><strong>리서치 결과 불러오기</strong> → <strong>프롬프트 만들기</strong> → <strong>자동 생성 또는 ChatGPT 붙여넣기</strong> → 결과 복사까지 한 화면에서 이어서 진행할 수 있습니다.</span>
+    </div>
+
+    <section class="section-block">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">🧾</span>
+          <h2>브랜드 정보 입력</h2>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="grid-2 strategy-grid">
+          <div class="field">
+            <label for="brandNameInput">브랜드명</label>
+            <input id="brandNameInput" type="text" placeholder="예: 시논감성" />
+          </div>
+
+          <div class="field">
+            <label for="blogTypeInput">블로그 성격</label>
+            <input id="blogTypeInput" type="text" placeholder="예: 브랜드 블로그 / 정보형 블로그" />
+          </div>
+
+          <div class="field">
+            <label for="primaryCategoryInput">주력 카테고리</label>
+            <input id="primaryCategoryInput" type="text" placeholder="예: 수제쿠키, 답례품, 디저트선물" />
+          </div>
+
+          <div class="field">
+            <label for="targetAudienceInput">타겟 독자</label>
+            <input id="targetAudienceInput" type="text" placeholder="예: 답례품 찾는 고객 / 20~40대 여성" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="toneInput">원하는 톤앤매너</label>
+          <input id="toneInput" type="text" placeholder="예: 자연스럽고 감각적 / 친근한 정보형" />
+        </div>
+
+        <div class="field">
+          <label for="avoidInput">피하고 싶은 방향</label>
+          <input id="avoidInput" type="text" placeholder="예: 광고 티 강한 글 / 기계적인 SEO 말투" />
+        </div>
+
+        <div class="field">
+          <label for="goalsInput">이번 작업 목적</label>
+          <textarea id="goalsInput" class="compact-textarea" placeholder="예:&#10;블로그 글감 발굴&#10;네이버 유입형 제목 찾기&#10;실제 발행 가능한 글 3개 초안 만들기"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">📥</span>
+          <h2>리서치 결과 불러오기</h2>
+        </div>
+        <div class="section-actions">
+          <button id="loadResearchBtn" class="btn-secondary" type="button">최근 결과 불러오기</button>
+          <a href="/research" class="header-link">리서치 툴 열기</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="snapshot-card">
+          <strong>최근 수집 결과</strong>
+          <p id="snapshotMeta" class="snapshot-meta">리서치툴에서 먼저 검색하면 최근 수집 결과를 자동으로 가져올 수 있습니다.</p>
+        </div>
+
+        <div class="field">
+          <label for="researchDataInput">리서치 수집 결과</label>
+          <textarea id="researchDataInput" class="research-textarea" placeholder="리서치툴에서 가져온 수집 결과가 여기에 들어옵니다. 직접 붙여넣어도 됩니다."></textarea>
+          <div class="hint">리서치툴에서 저장한 최신 결과를 불러오거나, 다른 수집 결과를 직접 붙여넣어도 됩니다.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">⚡</span>
+          <h2>프롬프트 생성 및 실행</h2>
+        </div>
+        <div class="section-actions">
+          <button id="buildPromptBtn" class="btn-primary" type="button">📋 프롬프트 만들기</button>
+          <button id="autoGenerateBtn" class="btn-auto" type="button">🚀 자동 생성</button>
+          <button id="resetBtn" class="btn-secondary" type="button">↺ 입력 초기화</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="btn-row">
+          <button id="copyPromptBtn" class="btn-copy" type="button" disabled>📋 프롬프트 복사</button>
+        </div>
+
+        <div id="progressContainer" class="progress-container">
+          <div class="progress-bar-track">
+            <div id="progressBar" class="progress-bar-fill"></div>
+          </div>
+          <div id="progressLog" class="progress-log"></div>
+        </div>
+
+        <div id="statusText" class="status-bar mt-8"></div>
+        <div id="errorText" class="status-bar error mt-8"></div>
+
+        <div class="field">
+          <label for="promptOutput">생성된 프롬프트</label>
+          <textarea id="promptOutput" class="prompt-textarea" readonly placeholder="프롬프트 만들기를 누르면 여기에 채워집니다."></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">🧠</span>
+          <h2>콘텐츠 기획 결과</h2>
+        </div>
+        <div class="section-actions">
+          <button id="copyResultBtn" class="btn-copy" type="button" disabled>📋 결과 복사</button>
+          <button id="clearResultBtn" class="btn-secondary" type="button">🧹 결과 지우기</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="result-note">
+          자동 생성이 어렵다면 프롬프트를 복사해 ChatGPT에 붙여넣은 뒤, JSON 결과를 아래 칸에 붙여넣어도 됩니다.
+        </div>
+
+        <div class="field">
+          <label for="resultOutput">콘텐츠 기획안 결과</label>
+          <textarea id="resultOutput" class="result-textarea" placeholder="여기에 기획안 결과가 표시됩니다."></textarea>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <div class="preview-toolbar">
+            <label for="resultPreview">보기 좋게 정리된 결과</label>
+            <div class="preview-toolbar-actions">
+              <button id="expandAllStepsBtn" class="btn-copy" type="button" disabled>전체 펼치기</button>
+              <button id="collapseAllStepsBtn" class="btn-copy" type="button" disabled>전체 접기</button>
+            </div>
+          </div>
+          <p id="resultPreviewHint" class="field-hint">JSON 결과를 붙여넣으면 카드형으로, 일반 텍스트면 STEP 기준으로 정리해서 보여줍니다.</p>
+          <div id="resultPreview" class="result-preview empty">GPT 결과를 붙여넣으면 JSON이면 카드형으로, 일반 텍스트면 STEP 기준으로 정리해서 보여줍니다.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/strategy.js" type="module"></script>
+</body>
+
+</html>

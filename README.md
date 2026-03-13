@@ -44,7 +44,84 @@ npm start
 ## 참고
 - ChatGPT가 샘플 JSON 값(`string`)을 그대로 반환하면 앱에서 자동으로 거절하고 재생성을 안내합니다.
 
+## 네이버 리서치 툴
+패션 가방처럼 네이버 블로그/카페 기반으로 글감을 모을 때는 `/research` 화면을 사용할 수 있습니다.
+
+### 준비
+1) [네이버 개발자센터](https://developers.naver.com/)에서 애플리케이션 생성
+2) 검색 API 사용 설정
+3) `.env`에 아래 값 추가
+
+```bash
+NAVER_CLIENT_ID=...
+NAVER_CLIENT_SECRET=...
+NAVER_DATALAB_CLIENT_ID=...
+NAVER_DATALAB_CLIENT_SECRET=...
+NAVER_SEARCHAD_CUSTOMER_ID=...
+NAVER_SEARCHAD_ACCESS_LICENSE=...
+NAVER_SEARCHAD_SECRET_KEY=...
+```
+
+### 기능
+- 네이버 블로그/카페 공개 검색 결과 수집
+- 검색 깊이(페이지 수) 확장
+- 제목/요약/날짜/출처 정리
+- 중복 링크 제거
+- 반복 키워드/연관 구문/추천 글감 각도 자동 정리
+- 검색광고 API 기반 연관검색어 / 세부 연관검색어 추천
+- 카페 질문 추출 / 콘텐츠 공백 / 토픽 군집 / 검색어별 진단
+- CSV 다운로드
+- 블로그 초안 작성용 프롬프트 복사
+
+### 참고
+- 데이터랩 검색어 트렌드 API 권한까지 켜면 `/research`의 트렌드 보드가 활성화됩니다.
+- 검색 API 키와 데이터랩 키를 분리해서 넣어도 됩니다.
+- 검색광고 API 키까지 넣으면 제목 후보와 후속 검색어가 연관검색어 데이터 기반으로 더 좋아집니다.
+- 데이터랩 권한이 없으면 검색 결과 기반 인사이트만 표시하고, 트렌드 보드는 안내 메시지로 대체됩니다.
+
+### 열기
+- 글 생성기: http://localhost:8787
+- 리서치 툴: http://localhost:8787/research
+
 ## 개발 모드
 ```bash
 npm run dev
 ```
+
+## 아이폰에서 쓰는 방법 (Render 배포)
+맥을 계속 켜두지 않고 아이폰 Safari에서도 쓰려면, 이 앱을 Render 같은 클라우드 웹 서비스로 배포하면 됩니다.
+
+### 중요한 차이
+- 클라우드 배포에서는 `DISABLE_BROWSER_AUTOMATION=true`로 실행하도록 설정했습니다.
+- 따라서 **자동 생성 버튼은 숨겨지고**, 대신 **프롬프트 복사 → ChatGPT 앱/웹에 붙여넣기 → 결과 붙여넣기** 방식으로 사용합니다.
+- `/research`와 `/strategy`는 아이폰에서도 그대로 사용할 수 있습니다.
+
+### 빠른 배포 순서
+1) 이 저장소를 GitHub에 올립니다.
+2) Render에서 새 Web Service를 만듭니다.
+3) 이 저장소를 연결합니다.
+4) `render.yaml`을 사용해 배포하거나, 아래 값으로 수동 설정합니다.
+
+### Render 설정값
+- Build Command: `npm install`
+- Start Command: `npm start`
+- Health Check Path: `/api/health`
+- Node Version: `22.22.0`
+
+### Render 환경변수
+```bash
+DISABLE_BROWSER_AUTOMATION=true
+NAVER_CLIENT_ID=...
+NAVER_CLIENT_SECRET=...
+NAVER_DATALAB_CLIENT_ID=...
+NAVER_DATALAB_CLIENT_SECRET=...
+NAVER_SEARCHAD_CUSTOMER_ID=...
+NAVER_SEARCHAD_ACCESS_LICENSE=...
+NAVER_SEARCHAD_SECRET_KEY=...
+```
+
+### 참고 문서
+- [Deploy a Node Express App on Render](https://render.com/docs/deploy-node-express-app)
+- [Web Services](https://render.com/docs/web-services)
+- [Render Blueprints (IaC)](https://render.com/docs/infrastructure-as-code)
+- [Blueprint YAML Reference](https://render.com/docs/blueprint-spec)

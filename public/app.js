@@ -19,6 +19,17 @@ const els = {
   targetAudience: $("targetAudience"),
   includeFaq: $("includeFaq"),
   twoVariants: $("twoVariants"),
+  styleNotes: $("styleNotes"),
+  saveStyleNotesBtn: $("saveStyleNotesBtn"),
+  styleSampleSource: $("styleSampleSource"),
+  styleSampleLabel: $("styleSampleLabel"),
+  styleSampleText: $("styleSampleText"),
+  learnStyleTextBtn: $("learnStyleTextBtn"),
+  styleUrl: $("styleUrl"),
+  learnStyleUrlBtn: $("learnStyleUrlBtn"),
+  clearStyleMemoryBtn: $("clearStyleMemoryBtn"),
+  styleSummary: $("styleSummary"),
+  styleSamples: $("styleSamples"),
 
   generateBtn: $("generateBtn"),
   autoGenerateBtn: $("autoGenerateBtn"),
@@ -98,6 +109,7 @@ const state = {
   variantCount: 1,
   activeVersion: 0,
   prompt: "",
+  styleMemory: null,
 };
 
 // ===== Toast Notification =====
@@ -191,6 +203,223 @@ function attachCopyFeedback(btn) {
   });
 }
 
+function escapeHtml(value) {
+  return (value || "")
+    .toString()
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function setButtonBusy(btn, isBusy, busyLabel) {
+  if (!btn) return;
+  if (!btn.dataset.labelDefault) {
+    btn.dataset.labelDefault = btn.textContent;
+  }
+  btn.disabled = isBusy;
+  btn.textContent = isBusy ? busyLabel : btn.dataset.labelDefault;
+}
+
+function renderStyleMemory(data) {
+  state.styleMemory = data || null;
+  const profile = data?.profile;
+  const samples = Array.isArray(data?.samples) ? data.samples : [];
+
+  els.styleNotes.value = data?.notes || "";
+
+  if (!profile?.hasData) {
+    els.styleSummary.innerHTML =
+      '<div class="style-empty">아직 저장된 스타일 데이터가 없습니다. 샘플 글이나 URL을 넣으면 다음 프롬프트부터 반영됩니다.</div>';
+    els.styleSamples.innerHTML =
+      '<div class="style-empty">저장된 샘플이 없습니다.</div>';
+    return;
+  }
+
+  const summaryItems = [
+    profile.toneLabel ? `말투: ${profile.toneLabel}` : "",
+    profile.sentenceRhythm ? `문장 호흡: ${profile.sentenceRhythm}` : "",
+    profile.paragraphStyle ? `문단 리듬: ${profile.paragraphStyle}` : "",
+    profile.closingStyle ? `마무리 습관: ${profile.closingStyle}` : "",
+    profile.emojiStyle ? `이모지 습관: ${profile.emojiStyle}` : "",
+  ].filter(Boolean);
+
+  const termsHtml =
+    profile.frequentTerms?.length
+      ? `<div class="style-tags">${profile.frequentTerms
+        .map((term) => `<span class="style-tag">${escapeHtml(term)}</span>`)
+        .join("")}</div>`
+      : '<div class="style-empty">자주 쓰는 표현은 샘플이 더 쌓이면 표시됩니다.</div>';
+
+  els.styleSummary.innerHTML = [
+    `<div class="style-meta">저장 샘플 ${profile.sampleCount}개</div>`,
+    `<ul class="style-list">${summaryItems
+      .map((item) => `<li>${escapeHtml(item)}</li>`)
+      .join("")}</ul>`,
+    termsHtml,
+  ].join("");
+
+  els.styleSamples.innerHTML = samples.length
+    ? samples
+      .slice()
+      .reverse()
+      .map((sample) => {
+        const metaBits = [
+          sample.sourceType === "url" ? "URL" : sample.sourceType,
+          sample.charCount ? `${sample.charCount}자` : "",
+        ].filter(Boolean);
+        const linkHtml = sample.sourceUrl
+          ? `<a href="${escapeHtml(sample.sourceUrl)}" target="_blank" rel="noopener noreferrer">원문 열기</a>`
+          : "";
+        return [
+          '<div class="style-sample-card">',
+          `<div class="style-sample-head"><strong>${escapeHtml(sample.sourceLabel || "샘플")}</strong><span>${escapeHtml(metaBits.join(" · "))}</span></div>`,
+          `<div class="style-sample-text">${escapeHtml(sample.excerpt || "")}</div>`,
+          linkHtml ? `<div class="style-sample-link">${linkHtml}</div>` : "",
+          "</div>",
+        ].join("");
+      })
+      .join("")
+    : '<div class="style-empty">저장된 샘플이 없습니다.</div>';
+}
+
+async function loadStyleMemory() {
+  try {
+    const res = await fetch("/api/style-memory");
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json?.error || "스타일 메모리를 불러오지 못했어요.");
+    }
+    renderStyleMemory(json);
+  } catch (err) {
+    setError(err?.message || "스타일 메모리를 불러오지 못했어요.");
+  }
+}
+
+async function saveStyleNotes() {
+  setError("");
+  setStatus("");
+  setButtonBusy(els.saveStyleNotesBtn, true, "저장 중...");
+
+  try {
+    const res = await fetch("/api/style-memory/notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes: els.styleNotes.value || "" }),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json?.error || "스타일 메모 저장 실패");
+    }
+    renderStyleMemory(json);
+    setStatus("스타일 메모를 저장했습니다.");
+    showToast("스타일 메모 저장 완료");
+  } catch (err) {
+    setError(err?.message || "스타일 메모 저장 중 오류가 발생했어요.");
+  } finally {
+    setButtonBusy(els.saveStyleNotesBtn, false, "저장 중...");
+  }
+}
+
+async function learnStyleFromText() {
+  setError("");
+  setStatus("");
+
+  const text = (els.styleSampleText.value || "").trim();
+  if (!text) {
+    setError("학습할 샘플 글을 붙여넣어 주세요.");
+    return;
+  }
+
+  setButtonBusy(els.learnStyleTextBtn, true, "학습 중...");
+
+  try {
+    const res = await fetch("/api/style-memory/sample", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sourceType: els.styleSampleSource.value || "manual",
+        sourceLabel: (els.styleSampleLabel.value || "").trim() || "직접 입력 샘플",
+        text,
+      }),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json?.error || "샘플 학습 실패");
+    }
+    renderStyleMemory(json);
+    els.styleSampleText.value = "";
+    els.styleSampleLabel.value = "";
+    setStatus("스타일 샘플을 저장했습니다. 다음 프롬프트부터 반영됩니다.");
+    showToast("샘플 학습 완료");
+  } catch (err) {
+    setError(err?.message || "샘플 학습 중 오류가 발생했어요.");
+  } finally {
+    setButtonBusy(els.learnStyleTextBtn, false, "학습 중...");
+  }
+}
+
+async function learnStyleFromUrl() {
+  setError("");
+  setStatus("");
+
+  const url = (els.styleUrl.value || "").trim();
+  if (!url) {
+    setError("학습할 URL을 입력해 주세요.");
+    return;
+  }
+
+  setButtonBusy(els.learnStyleUrlBtn, true, "가져오는 중...");
+
+  try {
+    const res = await fetch("/api/style-memory/import-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json?.error || "URL 학습 실패");
+    }
+    renderStyleMemory(json);
+    els.styleUrl.value = "";
+    const importedTitle = json?.imported?.title ? ` (${json.imported.title})` : "";
+    setStatus(`URL에서 스타일 샘플을 저장했습니다${importedTitle}.`);
+    showToast("URL 학습 완료");
+  } catch (err) {
+    setError(err?.message || "URL 학습 중 오류가 발생했어요.");
+  } finally {
+    setButtonBusy(els.learnStyleUrlBtn, false, "가져오는 중...");
+  }
+}
+
+async function clearStyleMemory() {
+  setError("");
+  setStatus("");
+  setButtonBusy(els.clearStyleMemoryBtn, true, "비우는 중...");
+
+  try {
+    const res = await fetch("/api/style-memory", {
+      method: "DELETE",
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json?.error || "스타일 메모리 초기화 실패");
+    }
+    renderStyleMemory(json);
+    els.styleSampleText.value = "";
+    els.styleSampleLabel.value = "";
+    els.styleUrl.value = "";
+    setStatus("스타일 메모리를 비웠습니다.");
+    showToast("스타일 메모리 초기화");
+  } catch (err) {
+    setError(err?.message || "스타일 메모리를 비우지 못했어요.");
+  } finally {
+    setButtonBusy(els.clearStyleMemoryBtn, false, "비우는 중...");
+  }
+}
+
 // ===== Gather form input =====
 function gatherInput() {
   return {
@@ -215,7 +444,7 @@ function gatherInput() {
 
 // ===== Tab Switching =====
 function activateTab(name) {
-  document.querySelectorAll(".tab-btn[data-tab]").forEach((b) => {
+  document.querySelectorAll(".channel-tab[data-tab]").forEach((b) => {
     b.classList.toggle("active", b.dataset.tab === name);
   });
 
@@ -449,7 +678,11 @@ async function buildPrompt() {
     els.generatedPrompt.value = state.prompt;
 
     await copyToClipboard(state.prompt);
-    setStatus("프롬프트 준비 완료! ChatGPT에 붙여넣고 생성하세요.");
+    const styleMessage =
+      json?.styleApplied && json?.styleSampleCount
+        ? ` 스타일 메모리 ${json.styleSampleCount}개도 반영됐습니다.`
+        : "";
+    setStatus(`프롬프트 준비 완료! ChatGPT에 붙여넣고 생성하세요.${styleMessage}`);
     setStep(2);
   } catch (err) {
     setError(err?.message || "오류가 발생했어요.");
@@ -538,6 +771,9 @@ async function autoGenerate() {
     els.generatedPrompt.value = state.prompt;
 
     addProgressLog("프롬프트 생성 완료 ✓");
+    if (promptJson?.styleApplied && promptJson?.styleSampleCount) {
+      addProgressLog(`스타일 메모리 ${promptJson.styleSampleCount}개 반영 ✓`);
+    }
     setProgress(15);
 
     // Step 2: Call auto-generate API with SSE
@@ -663,6 +899,9 @@ function clearAll() {
     els.ssThreadsText,
     els.ssInstagramText,
     els.ssHashtags,
+    els.styleSampleLabel,
+    els.styleSampleText,
+    els.styleUrl,
   ].forEach((el) => {
     el.value = "";
   });
@@ -671,6 +910,7 @@ function clearAll() {
   els.seoLevel.value = "balanced";
   els.keywordIntent.value = "정보형";
   els.keywordMentions.value = "3-5";
+  els.styleSampleSource.value = "manual";
   els.includeFaq.checked = false;
   els.twoVariants.checked = false;
 
@@ -699,11 +939,26 @@ els.clearBtn.addEventListener("click", clearAll);
 els.copyPromptBtn.addEventListener("click", () =>
   copyToClipboard(els.generatedPrompt.value || "")
 );
+els.saveStyleNotesBtn.addEventListener("click", saveStyleNotes);
+els.learnStyleTextBtn.addEventListener("click", learnStyleFromText);
+els.learnStyleUrlBtn.addEventListener("click", learnStyleFromUrl);
+els.clearStyleMemoryBtn.addEventListener("click", clearStyleMemory);
 
 // Channel tabs
-Array.from(document.querySelectorAll(".tab-btn[data-tab]")).forEach((btn) => {
+Array.from(document.querySelectorAll(".channel-tab[data-tab]")).forEach((btn) => {
   btn.addEventListener("click", () => activateTab(btn.dataset.tab));
 });
+
+// Style memory section toggle hint text
+const styleSection = document.getElementById("styleMemorySection");
+if (styleSection) {
+  const toggleHint = styleSection.querySelector(".toggle-hint");
+  if (toggleHint) {
+    styleSection.addEventListener("toggle", () => {
+      toggleHint.textContent = styleSection.open ? "접기 ▾" : "펼치기 ▸";
+    });
+  }
+}
 
 // Copy buttons with feedback animation
 document.querySelectorAll(".btn-copy").forEach(attachCopyFeedback);
@@ -791,6 +1046,7 @@ els.twoVariants.addEventListener("change", () => {
 // Init
 setStep(1);
 runSeoAudit(null);
+loadStyleMemory();
 
 // Check server capabilities (hide auto-generate if Puppeteer not available)
 fetch("/api/health")

@@ -3,3 +3,6 @@ node_modules
 browser-data/
 browser-profile/
 .DS_Store
+.local/
+.runtime/
+data/

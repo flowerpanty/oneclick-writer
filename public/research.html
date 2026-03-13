@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>네이버 블로그/카페 글감 리서치 툴</title>
+  <meta name="description" content="네이버 블로그와 네이버 카페 공개 검색 결과를 모아 글감과 검색 인사이트를 빠르게 정리하는 리서치 앱" />
+  <meta name="theme-color" content="#0b0e18" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/research.css" />
+</head>
+
+<body class="research-page">
+  <header class="header">
+    <div class="header-inner">
+      <h1>✦ 네이버 리서치 툴</h1>
+      <div class="header-actions">
+        <a href="/" class="header-link">원클릭 글 생성기</a>
+        <a href="/strategy" class="header-link">콘텐츠 기획 툴</a>
+        <a href="https://developers.naver.com/docs/serviceapi/search/blog/blog.md" class="header-link" target="_blank" rel="noopener noreferrer">공식 API</a>
+        <span id="configBadge" class="badge">API 확인 중...</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="steps-bar">
+      <div class="step-item active" id="step1">
+        <span class="step-number">1</span>
+        <span class="step-label">검색어 입력</span>
+      </div>
+      <div class="step-connector" id="conn1"></div>
+      <div class="step-item" id="step2">
+        <span class="step-number">2</span>
+        <span class="step-label">인사이트 확인</span>
+      </div>
+      <div class="step-connector" id="conn2"></div>
+      <div class="step-item" id="step3">
+        <span class="step-number">3</span>
+        <span class="step-label">수집 결과 보기</span>
+      </div>
+    </div>
+
+    <div class="guide-banner">
+      <span class="guide-icon">💡</span>
+      <span><strong>검색어 입력</strong> → <strong>리서치 시작</strong> → 연관검색어와 제목 추천 확인 → 블로그 글, 카페 질문, 카페 글을 필요한 탭만 골라서 보세요.</span>
+    </div>
+
+    <section class="section-block">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">🔎</span>
+          <h2>검색어 입력</h2>
+        </div>
+      </div>
+
+      <div class="card">
+        <div id="configNotice" class="research-notice hidden"></div>
+
+        <div class="field">
+          <label for="queryInput">검색어</label>
+          <textarea id="queryInput" class="query-input" placeholder="예:&#10;출근 가방&#10;직장인 숄더백&#10;보부상 가방&#10;20대 데일리백"></textarea>
+          <div class="hint">한 줄에 하나씩 입력하면 블로그와 카페 결과를 함께 가져옵니다.</div>
+        </div>
+
+        <div class="hint-strip" aria-label="고정 옵션">
+          <span class="hint-pill">블로그 + 카페 수집</span>
+          <span class="hint-pill">검색어당 20개</span>
+          <span class="hint-pill">검색 깊이 3페이지</span>
+          <span class="hint-pill">중복 링크 제거</span>
+        </div>
+
+        <div class="grid-2 research-grid">
+          <div class="field">
+            <label for="sortSelect">정렬</label>
+            <select id="sortSelect">
+              <option value="sim">정확도순</option>
+              <option value="date">최신순</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="recentDaysSelect">최신성 기준</label>
+            <select id="recentDaysSelect">
+              <option value="30">최근 30일</option>
+              <option value="90" selected>최근 90일</option>
+              <option value="180">최근 180일</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="btn-row btn-row-main">
+          <button id="searchBtn" class="btn-primary" type="button">🔍 리서치 시작</button>
+          <button id="resetBtn" class="btn-secondary" type="button">↺ 초기화</button>
+        </div>
+
+        <div id="statusText" class="status-bar mt-8"></div>
+        <div id="errorText" class="status-bar error mt-8"></div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">📌</span>
+          <h2>핵심 인사이트</h2>
+        </div>
+        <div class="section-actions">
+          <button id="copySummaryBtn" class="btn-copy" type="button" disabled>📋 요약 복사</button>
+          <button id="copyPromptBtn" class="btn-copy" type="button" disabled>📝 글쓰기 프롬프트</button>
+          <button id="exportCsvBtn" class="btn-copy" type="button" disabled>💾 CSV 저장</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <article class="focus-card">
+          <span class="focus-label">기준 키워드</span>
+          <strong id="statQueries">-</strong>
+        </article>
+
+        <div class="research-metric-grid">
+          <article class="metric-card">
+            <h3>월간 검색량</h3>
+            <div class="metric-big" id="metricSearchTotal">-</div>
+            <div class="metric-lines">
+              <div>PC <strong id="metricSearchPc">-</strong></div>
+              <div>Mobile <strong id="metricSearchMobile">-</strong></div>
+            </div>
+          </article>
+
+          <article class="metric-card">
+            <h3>네이버 블로그 문서수</h3>
+            <div class="metric-big" id="metricContentTotal">-</div>
+            <div class="metric-lines">
+              <div>블로그 탭 누적 문서 기준</div>
+            </div>
+          </article>
+
+          <article class="metric-card">
+            <h3>상위 노출 가능성</h3>
+            <div class="metric-big" id="metricSaturationTotal">-</div>
+            <div class="metric-lines">
+              <div>블로그 경쟁도 <strong id="metricSaturationBlog">-</strong></div>
+              <div>문서/검색 비율 <strong id="metricSaturationCafe">-</strong></div>
+            </div>
+          </article>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="research-insight-grid">
+          <article class="insight-card">
+            <div class="insight-card-head">
+              <h3>연관검색어</h3>
+              <span class="insight-caption">월간 검색량 높은 순</span>
+            </div>
+            <div id="keywordChips" class="chip-cloud empty">검색광고 API 기반 연관검색어가 여기에 나옵니다.</div>
+          </article>
+
+          <article class="insight-card">
+            <div class="insight-card-head">
+              <h3>블로그 제목 추천</h3>
+              <span class="insight-caption">수집 결과 중심 추천</span>
+            </div>
+            <div id="headlineList" class="headline-board empty">더 자연스럽고 쉬운 제목 후보가 여기에 나옵니다.</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">🗂️</span>
+          <h2>수집 결과</h2>
+        </div>
+        <div class="section-actions">
+          <a href="/strategy" class="header-link">콘텐츠 기획 툴</a>
+          <a href="/" class="header-link">원클릭 글 생성기</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="result-guide">한 번에 섞어 보지 않고, 필요한 결과만 골라서 보세요.</p>
+
+        <div class="result-tabs" role="tablist" aria-label="수집 결과 보기">
+          <button id="resultTabBlog" class="result-tab active" type="button" aria-selected="true">블로그 글</button>
+          <button id="resultTabCafeQuestion" class="result-tab" type="button" aria-selected="false">카페 질문</button>
+          <button id="resultTabCafe" class="result-tab" type="button" aria-selected="false">카페 글</button>
+          <button id="resultTabRecent" class="result-tab" type="button" aria-selected="false">최신 글</button>
+        </div>
+
+        <article class="result-view-card">
+          <div class="result-view-head">
+            <div>
+              <h3 id="resultViewTitle">블로그 글</h3>
+              <p id="resultViewHint">검색을 하면 선택한 결과만 이 영역에 정리됩니다.</p>
+            </div>
+            <strong id="resultViewCount">0건</strong>
+          </div>
+          <div id="resultViewList" class="results-list empty">검색 결과 카드가 여기 쌓입니다.</div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script src="/research.js" type="module"></script>
+</body>
+
+</html>
