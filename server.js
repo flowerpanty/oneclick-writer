@@ -3893,6 +3893,10 @@ app.get("/strategy", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "strategy.html"));
 });
 
+app.get("/step7-writer", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "step7-writer.html"));
+});
+
 app.get("/api/health", (req, res) => {
   res.json({
     ok: true,

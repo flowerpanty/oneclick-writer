@@ -1,0 +1,26 @@
+.step7-writer-page .container,
+.step7-writer-page .header-inner {
+  max-width: 960px;
+}
+
+.step7-writer-page .compact-area {
+  min-height: 220px;
+}
+
+.step7-writer-page .result-textarea {
+  min-height: 360px;
+}
+
+.step7-writer-page .step7-context-details {
+  margin-bottom: 16px;
+}
+
+.step7-writer-page .step7-context-details summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.step7-writer-page .step7-context-details[open] summary {
+  margin-bottom: 14px;
+}

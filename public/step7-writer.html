@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>STEP 7 전용 글 생성기</title>
+  <meta name="description" content="콘텐츠 기획 툴의 STEP 1~6 선택 내용만 바탕으로 STEP 7 블로그 글을 만드는 전용 도구" />
+  <meta name="theme-color" content="#0b0e18" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/strategy.css" />
+  <link rel="stylesheet" href="/step7-writer.css" />
+</head>
+
+<body class="strategy-page step7-writer-page">
+  <header class="header">
+    <div class="header-inner">
+      <h1>✦ STEP 7 전용 글 생성기</h1>
+      <div class="header-actions">
+        <a href="/strategy" class="header-link">콘텐츠 기획 툴</a>
+        <a href="/research" class="header-link">네이버 리서치 툴</a>
+        <a href="/" class="header-link">원클릭 글 생성기</a>
+        <span class="badge"><span class="dot"></span> 선택형 글 작성 모드</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="steps-bar">
+      <div class="step-item active">
+        <span class="step-number">1</span>
+        <span class="step-label">전략 결과 불러오기</span>
+      </div>
+      <div class="step-connector done"></div>
+      <div class="step-item active">
+        <span class="step-number">2</span>
+        <span class="step-label">STEP 1~6 선택</span>
+      </div>
+      <div class="step-connector done"></div>
+      <div class="step-item active">
+        <span class="step-number">3</span>
+        <span class="step-label">STEP 7 글 생성</span>
+      </div>
+    </div>
+
+    <div class="guide-banner">
+      <span class="guide-icon">💡</span>
+      <span><strong>최근 전략 결과 불러오기</strong> 또는 JSON 붙여넣기 → <strong>STEP 1~6 선택</strong> → <strong>STEP 7 블로그 글 생성</strong>만 빠르게 진행하는 전용 화면입니다.</span>
+    </div>
+
+    <section class="section-block">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">📥</span>
+          <h2>전략 결과 불러오기</h2>
+        </div>
+        <div class="section-actions">
+          <button id="loadRecentStrategyBtn" class="btn-secondary" type="button">최근 전략 결과 불러오기</button>
+          <a href="/strategy" class="header-link">콘텐츠 기획 툴 열기</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="snapshot-card">
+          <strong>최근 전략 세션</strong>
+          <p id="sessionMeta" class="snapshot-meta">콘텐츠 기획 툴에서 결과를 만든 뒤 여기서 바로 불러올 수 있습니다.</p>
+        </div>
+
+        <details class="step7-context-details">
+          <summary>기본 정보 / 리서치 데이터 수정</summary>
+          <div class="grid-2 strategy-grid mt-12">
+            <div class="field">
+              <label for="brandNameInput">브랜드명</label>
+              <input id="brandNameInput" type="text" placeholder="예: 시논감성" />
+            </div>
+            <div class="field">
+              <label for="blogTypeInput">블로그 성격</label>
+              <input id="blogTypeInput" type="text" placeholder="예: 브랜드 블로그 / 정보형 블로그" />
+            </div>
+            <div class="field">
+              <label for="primaryCategoryInput">주력 카테고리</label>
+              <input id="primaryCategoryInput" type="text" placeholder="예: 수제쿠키, 답례품, 가방" />
+            </div>
+            <div class="field">
+              <label for="targetAudienceInput">타겟 독자</label>
+              <input id="targetAudienceInput" type="text" placeholder="예: 20~40대 여성 / 답례품 찾는 고객" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="toneInput">원하는 톤앤매너</label>
+            <input id="toneInput" type="text" placeholder="예: 자연스럽고 감각적 / 친근한 정보형" />
+          </div>
+
+          <div class="field">
+            <label for="avoidInput">피하고 싶은 방향</label>
+            <input id="avoidInput" type="text" placeholder="예: 광고 티 강한 글 / 기계적인 SEO 말투" />
+          </div>
+
+          <div class="field">
+            <label for="goalsInput">이번 작업 목적</label>
+            <textarea id="goalsInput" class="compact-textarea" placeholder="예:&#10;실제 발행 가능한 글 1개 완성&#10;STEP 7 전용 블로그 글 만들기"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="researchDataInput">리서치 수집 결과</label>
+            <textarea id="researchDataInput" class="research-textarea compact-area" placeholder="최근 전략 세션에서 자동으로 불러오거나, 필요할 때만 직접 붙여넣으세요."></textarea>
+          </div>
+        </details>
+
+        <div class="field">
+          <label for="strategyResultInput">콘텐츠 기획 JSON 결과</label>
+          <textarea id="strategyResultInput" class="result-textarea compact-area" placeholder="콘텐츠 기획 툴의 STEP 1~8 JSON 결과를 붙여넣으면 아래 선택 보드가 바로 열립니다."></textarea>
+          <div class="hint">최근 전략 결과를 불러오거나, 다른 JSON 결과를 직접 붙여넣어도 됩니다.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">🧩</span>
+          <h2>STEP 1~6 선택 보드</h2>
+        </div>
+        <div class="section-actions">
+          <button id="autoSelectBtn" class="btn-secondary" type="button">추천 선택</button>
+          <button id="clearSelectionBtn" class="btn-secondary" type="button">선택 초기화</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="snapshot-card">
+          <strong>선택 상태</strong>
+          <p id="selectionMeta" class="snapshot-meta">콘텐츠 기획 결과 JSON을 넣으면 여기서 STEP 1~6 항목을 골라 STEP 7에 넘길 수 있습니다.</p>
+        </div>
+
+        <div id="selectionBoard" class="step7-selection-board empty">
+          콘텐츠 기획 결과 JSON을 붙여넣거나 최근 전략 결과를 불러오면 선택 보드가 열립니다.
+        </div>
+
+        <div class="field">
+          <label for="selectionSummary">STEP 7에 넘길 선택 요약</label>
+          <textarea id="selectionSummary" class="compact-textarea" readonly placeholder="선택한 항목이 여기에 자동으로 정리됩니다."></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">✍️</span>
+          <h2>STEP 7 전용 글 생성기</h2>
+        </div>
+        <div class="section-actions">
+          <button id="buildPromptBtn" class="btn-primary" type="button">STEP 7 프롬프트 만들기</button>
+          <button id="autoGenerateBtn" class="btn-auto" type="button">STEP 7 자동 생성</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div id="statusText" class="status-bar"></div>
+        <div id="errorText" class="status-bar error mt-8"></div>
+
+        <div id="progressContainer" class="progress-container">
+          <div class="progress-bar-track">
+            <div id="progressBar" class="progress-bar-fill"></div>
+          </div>
+          <div id="progressLog" class="progress-log"></div>
+        </div>
+
+        <div class="btn-row">
+          <button id="copyPromptBtn" class="btn-copy" type="button" disabled>📋 STEP 7 프롬프트 복사</button>
+          <button id="clearPromptBtn" class="btn-secondary" type="button">🧹 프롬프트 비우기</button>
+        </div>
+
+        <div class="field">
+          <label for="promptOutput">STEP 7 전용 프롬프트</label>
+          <textarea id="promptOutput" class="prompt-textarea" readonly placeholder="STEP 1~6에서 고른 내용을 바탕으로 STEP 7 전용 프롬프트가 여기에 생성됩니다."></textarea>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section-actions">
+          <button id="copyResultBtn" class="btn-copy" type="button" disabled>📋 STEP 7 결과 복사</button>
+          <button id="clearResultBtn" class="btn-secondary" type="button">🧹 STEP 7 결과 지우기</button>
+        </div>
+
+        <div class="field">
+          <label for="resultOutput">STEP 7 글 결과</label>
+          <textarea id="resultOutput" class="result-textarea" placeholder="여기에 STEP 7 전용 글 결과가 표시됩니다."></textarea>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <label for="resultPreview">STEP 7 보기 좋게 정리된 결과</label>
+          <p id="resultPreviewHint" class="field-hint">STEP 7 결과를 붙여넣으면 제목 후보, 메타 정보, HTML 본문까지 보기 좋게 정리해서 보여줍니다.</p>
+          <div id="resultPreview" class="result-preview empty">STEP 7 결과가 들어오면 여기서 최종 블로그 글 구조를 확인할 수 있습니다.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/step7-writer.js" type="module"></script>
+</body>
+
+</html>

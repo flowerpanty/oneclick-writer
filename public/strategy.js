@@ -1,5 +1,6 @@
 const RESEARCH_SNAPSHOT_STORAGE_KEY = "naverResearch:lastSnapshot";
 const STRATEGY_SETTINGS_STORAGE_KEY = "naverStrategy:settings";
+const STRATEGY_SESSION_STORAGE_KEY = "naverStrategy:lastSession";
 
 const $ = (id) => document.getElementById(id);
 
@@ -1261,6 +1262,7 @@ function setResultValue(value = "", options = {}) {
   renderResultPreview(value);
   const parsed = tryParseStrategyJson(value || "");
   syncStep7BuilderFromStrategyJson(parsed.data);
+  saveStrategySession();
   syncStep();
 }
 
@@ -1342,6 +1344,28 @@ function saveSettings() {
   }
 }
 
+function saveStrategySession() {
+  try {
+    localStorage.setItem(
+      STRATEGY_SESSION_STORAGE_KEY,
+      JSON.stringify({
+        brandName: els.brandNameInput.value,
+        blogType: els.blogTypeInput.value,
+        primaryCategory: els.primaryCategoryInput.value,
+        targetAudience: els.targetAudienceInput.value,
+        toneAndManner: els.toneInput.value,
+        avoidDirection: els.avoidInput.value,
+        workGoals: els.goalsInput.value,
+        researchData: els.researchDataInput.value,
+        resultText: els.resultOutput.value,
+        savedAt: new Date().toISOString(),
+      })
+    );
+  } catch {
+    // ignore storage errors
+  }
+}
+
 function loadSettings() {
   try {
     const raw = localStorage.getItem(STRATEGY_SETTINGS_STORAGE_KEY);
@@ -1403,6 +1427,7 @@ function applyResearchSnapshot(snapshot) {
     : "건수 확인 어려움";
 
   els.snapshotMeta.textContent = `${savedAt || "방금"} 저장된 리서치 결과입니다. 기준 키워드: ${queryLine} · 정리된 결과 ${countLine}`;
+  saveStrategySession();
   syncStep();
 }
 
@@ -1428,6 +1453,7 @@ async function buildPrompt() {
   state.prompt = json.prompt || "";
   els.promptOutput.value = state.prompt;
   els.copyPromptBtn.disabled = !state.prompt;
+  saveStrategySession();
   setStatus(`콘텐츠 기획 프롬프트를 만들었습니다. 리서치 데이터 ${json.researchLength?.toLocaleString?.("ko-KR") || json.researchLength || 0}자를 반영했습니다.`);
   syncStep();
   return state.prompt;
@@ -1647,6 +1673,7 @@ function resetAll() {
 
   try {
     localStorage.removeItem(STRATEGY_SETTINGS_STORAGE_KEY);
+    localStorage.removeItem(STRATEGY_SESSION_STORAGE_KEY);
   } catch {
     // ignore storage errors
   }
@@ -1664,7 +1691,10 @@ function bindEvents() {
     els.avoidInput,
     els.goalsInput,
   ].forEach((input) => {
-    input.addEventListener("change", saveSettings);
+    input.addEventListener("change", () => {
+      saveSettings();
+      saveStrategySession();
+    });
   });
 
   els.loadResearchBtn.addEventListener("click", () => {
@@ -1745,7 +1775,10 @@ function bindEvents() {
     setStep7ResultValue(els.step7ResultOutput.value, { writeToField: false });
   });
 
-  els.researchDataInput.addEventListener("input", syncStep);
+  els.researchDataInput.addEventListener("input", () => {
+    syncStep();
+    saveStrategySession();
+  });
 
   els.step7SelectionBoard.addEventListener("click", (event) => {
     const button = event.target.closest("[data-step7-choice]");
