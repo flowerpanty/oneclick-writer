@@ -225,6 +225,15 @@ function renderParagraphs(items) {
     .join("");
 }
 
+function renderCodeBlock(value) {
+  const text = toText(value);
+  if (!text) {
+    return '<div class="result-json-empty">내용이 없습니다.</div>';
+  }
+
+  return `<pre class="result-code-block"><code>${escapeHtml(text)}</code></pre>`;
+}
+
 function renderInfoRows(rows) {
   const safeRows = rows.filter((row) => row.value);
   if (!safeRows.length) {
@@ -434,6 +443,8 @@ function renderStrategyJsonPreview(data) {
     : '<div class="result-json-empty">내용이 없습니다.</div>';
 
   const featuredDraft = isPlainObject(step7.featuredDraft) ? step7.featuredDraft : {};
+  const seoMeta = isPlainObject(featuredDraft.seoMeta) ? featuredDraft.seoMeta : {};
+  const imageGuide = isPlainObject(featuredDraft.imageGuide) ? featuredDraft.imageGuide : {};
   const step7Html = `
     <article class="result-json-topic-card">
       <div class="result-json-topic-head">
@@ -442,11 +453,42 @@ function renderStrategyJsonPreview(data) {
       ${toText(featuredDraft.subtitle)
         ? `<p class="result-preview-text result-json-subtitle">${renderInlineText(toText(featuredDraft.subtitle))}</p>`
         : ""}
-      ${renderInfoRows([
-        { label: "슬러그", value: toText(featuredDraft.slug) },
-        { label: "메타 설명", value: toText(featuredDraft.metaDescription) }
-      ])}
-      ${renderTagRow("태그", featuredDraft.tags)}
+      <div class="result-json-split-grid">
+        <div class="result-preview-panel">
+          <h5>제목 후보 5개</h5>
+          ${renderSimpleList(featuredDraft.titleOptions, true)}
+        </div>
+        <div class="result-preview-panel">
+          <h5>메타 정보</h5>
+          ${renderInfoRows([
+            { label: "SEO 제목", value: toText(seoMeta.seoTitle) || toText(featuredDraft.title) },
+            { label: "추천 슬러그", value: toText(seoMeta.slug) || toText(featuredDraft.slug) },
+            { label: "메타 설명", value: toText(seoMeta.metaDescription) || toText(featuredDraft.metaDescription) },
+            { label: "메인 키워드", value: toText(seoMeta.mainKeyword) },
+            { label: "검색 의도 유형", value: toText(seoMeta.searchIntentType) },
+            { label: "예상 독자 고민", value: toText(seoMeta.readerConcern) }
+          ])}
+          ${renderTagRow("서브 키워드", seoMeta.subKeywords)}
+          ${renderTagRow("태그", featuredDraft.tags)}
+        </div>
+      </div>
+      <div class="result-json-split-grid">
+        <div class="result-preview-panel">
+          <h5>내부링크 추천 문구</h5>
+          ${renderSimpleList(featuredDraft.internalLinks)}
+        </div>
+        <div class="result-preview-panel">
+          <h5>이미지 삽입 가이드</h5>
+          ${renderInfoRows([
+            { label: "추천 이미지 구간", value: toText(imageGuide.recommendedSection) }
+          ])}
+          ${renderSimpleList(imageGuide.altExamples)}
+        </div>
+      </div>
+      <div class="result-preview-panel">
+        <h5>외부 참고자료 제안</h5>
+        ${renderSimpleList(featuredDraft.externalReferenceSuggestions)}
+      </div>
       <div class="result-preview-panel">
         <h5>도입</h5>
         ${renderParagraphs(featuredDraft.intro)}
@@ -457,6 +499,9 @@ function renderStrategyJsonPreview(data) {
           ? featuredDraft.bodySections.map((section) => `
             <div class="result-json-draft-section">
               <h6>${renderInlineText(toText(section?.heading) || "-")}</h6>
+              ${toText(section?.subHeading)
+                ? `<p class="result-preview-text result-json-subtitle">${renderInlineText(toText(section?.subHeading))}</p>`
+                : ""}
               ${renderTagRow("연관 키워드", [toText(section?.subKeyword)].filter(Boolean))}
               ${renderInfoRows([
                 { label: "제품이름", value: toText(section?.productName) },
@@ -464,7 +509,40 @@ function renderStrategyJsonPreview(data) {
                 { label: "사이즈", value: toText(section?.size) },
                 { label: "한줄평", value: toText(section?.oneLineSummary) }
               ])}
+              ${isPlainObject(section?.summaryBox)
+                ? `
+                  <div class="result-preview-panel">
+                    <h5>요약 박스</h5>
+                    ${renderInfoRows([
+                      { label: "브랜드", value: toText(section.summaryBox.brand) },
+                      { label: "제품명", value: toText(section.summaryBox.productName) },
+                      { label: "가격", value: toText(section.summaryBox.price) },
+                      { label: "사이즈", value: toText(section.summaryBox.size) },
+                      { label: "소재", value: toText(section.summaryBox.material) },
+                      { label: "컬러", value: toText(section.summaryBox.color) }
+                    ])}
+                    ${renderTagRow("특징", section.summaryBox.features)}
+                    ${renderTagRow("추천 포인트", section.summaryBox.recommendPoints)}
+                  </div>
+                `
+                : ""}
+              ${toText(section?.betterComment)
+                ? `
+                  <div class="result-preview-panel">
+                    <h5>베러의 한마디😎</h5>
+                    <p class="result-preview-text">${renderInlineText(toText(section.betterComment))}</p>
+                  </div>
+                `
+                : ""}
               ${renderParagraphs(section?.paragraphs)}
+              ${toText(section?.cta)
+                ? `
+                  <div class="result-preview-panel">
+                    <h5>섹션 CTA</h5>
+                    <p class="result-preview-text">${renderInlineText(toText(section.cta))}</p>
+                  </div>
+                `
+                : ""}
             </div>
           `).join("")
           : '<div class="result-json-empty">내용이 없습니다.</div>'}
@@ -477,6 +555,16 @@ function renderStrategyJsonPreview(data) {
         <div class="result-preview-panel">
           <h5>CTA</h5>
           <p class="result-preview-text">${renderInlineText(toText(featuredDraft.cta) || "내용이 없습니다.")}</p>
+        </div>
+      </div>
+      <div class="result-json-split-grid">
+        <div class="result-preview-panel">
+          <h5>해시태그 / 키워드 한 줄</h5>
+          <p class="result-preview-text">${renderInlineText(toText(featuredDraft.hashtagsLine) || "내용이 없습니다.")}</p>
+        </div>
+        <div class="result-preview-panel">
+          <h5>HTML 최종 본문</h5>
+          ${renderCodeBlock(featuredDraft.htmlBody)}
         </div>
       </div>
     </article>

@@ -251,6 +251,20 @@
   padding-top: 4px;
 }
 
+.strategy-page .result-code-block {
+  margin: 0;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.72);
+  color: #dbeafe;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
 .strategy-page .result-step-block {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
