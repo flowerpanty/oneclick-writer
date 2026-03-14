@@ -1274,7 +1274,6 @@ async function fetchHealth() {
 
     if (!json?.automationAvailable) {
       els.autoGenerateBtn.style.display = "none";
-      els.step7AutoGenerateBtn.style.display = "none";
       setStatus("이 배포 환경에서는 자동 생성 대신 프롬프트 복사 방식으로 사용할 수 있습니다.");
     }
   } catch {
@@ -1709,33 +1708,18 @@ function bindEvents() {
   });
 
   els.buildPromptBtn.addEventListener("click", handleBuildPrompt);
-  els.step7BuildPromptBtn.addEventListener("click", handleBuildStep7Prompt);
-
   els.copyPromptBtn.addEventListener("click", async () => {
     if (!els.promptOutput.value.trim()) return;
     await copyText(els.promptOutput.value);
     setStatus("콘텐츠 기획 프롬프트를 복사했습니다.");
   });
 
-  els.step7CopyPromptBtn.addEventListener("click", async () => {
-    if (!els.step7PromptOutput.value.trim()) return;
-    await copyText(els.step7PromptOutput.value);
-    setStatus("STEP 7 전용 프롬프트를 복사했습니다.");
-  });
-
   els.autoGenerateBtn.addEventListener("click", handleAutoGenerate);
-  els.step7AutoGenerateBtn.addEventListener("click", handleStep7AutoGenerate);
 
   els.copyResultBtn.addEventListener("click", async () => {
     if (!els.resultOutput.value.trim()) return;
     await copyText(els.resultOutput.value);
     setStatus("기획 결과를 복사했습니다.");
-  });
-
-  els.step7CopyResultBtn.addEventListener("click", async () => {
-    if (!els.step7ResultOutput.value.trim()) return;
-    await copyText(els.step7ResultOutput.value);
-    setStatus("STEP 7 결과를 복사했습니다.");
   });
 
   els.expandAllStepsBtn.addEventListener("click", () => {
@@ -1757,53 +1741,13 @@ function bindEvents() {
     setStatus("기획 결과를 비웠습니다.");
   });
 
-  els.step7ClearPromptBtn.addEventListener("click", () => {
-    clearStep7Prompt();
-    setStatus("STEP 7 프롬프트를 비웠습니다.");
-  });
-
-  els.step7ClearResultBtn.addEventListener("click", () => {
-    clearStep7Result();
-    setStatus("STEP 7 결과를 비웠습니다.");
-  });
-
   els.resultOutput.addEventListener("input", () => {
     setResultValue(els.resultOutput.value, { writeToField: false });
-  });
-
-  els.step7ResultOutput.addEventListener("input", () => {
-    setStep7ResultValue(els.step7ResultOutput.value, { writeToField: false });
   });
 
   els.researchDataInput.addEventListener("input", () => {
     syncStep();
     saveStrategySession();
-  });
-
-  els.step7SelectionBoard.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-step7-choice]");
-    if (!button) return;
-    toggleStep7Selection(
-      button.getAttribute("data-step7-choice"),
-      button.getAttribute("data-step7-group"),
-      button.getAttribute("data-step7-mode")
-    );
-  });
-
-  els.step7AutoSelectBtn.addEventListener("click", () => {
-    if (!state.step7SelectionGroups.length) {
-      setError("먼저 콘텐츠 기획 결과 JSON을 넣어 주세요.");
-      return;
-    }
-    applyDefaultStep7Selections();
-  });
-
-  els.step7ClearSelectionBtn.addEventListener("click", () => {
-    if (!state.step7SelectionGroups.length) {
-      setError("비울 선택 항목이 아직 없습니다.");
-      return;
-    }
-    clearStep7Selections();
   });
 
   els.resetBtn.addEventListener("click", resetAll);
