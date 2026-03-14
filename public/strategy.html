@@ -197,6 +197,85 @@
         </div>
       </div>
     </section>
+
+    <section class="section-block">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">🧩</span>
+          <h2>STEP 1~6 선택 보드</h2>
+        </div>
+        <div class="section-actions">
+          <button id="step7AutoSelectBtn" class="btn-secondary" type="button">추천 선택</button>
+          <button id="step7ClearSelectionBtn" class="btn-secondary" type="button">선택 초기화</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="result-note">
+          콘텐츠 기획 결과에서 STEP 1~6 항목을 직접 골라서, 그 선택 내용만 바탕으로 STEP 7 전용 블로그 글을 만들 수 있습니다.
+        </div>
+
+        <div class="snapshot-card">
+          <strong>선택 상태</strong>
+          <p id="step7SelectionMeta" class="snapshot-meta">먼저 콘텐츠 기획 결과 JSON을 넣으면 여기서 STEP 1~6 항목을 고를 수 있습니다.</p>
+        </div>
+
+        <div id="step7SelectionBoard" class="step7-selection-board empty">
+          콘텐츠 기획 결과 JSON을 붙여넣거나 자동 생성한 뒤, STEP 1~6 선택 보드가 열립니다.
+        </div>
+
+        <div class="field">
+          <label for="step7SelectionSummary">STEP 7에 넘길 선택 요약</label>
+          <textarea id="step7SelectionSummary" class="compact-textarea" readonly placeholder="선택한 항목이 여기에 자동으로 정리됩니다."></textarea>
+          <div class="hint">선택한 내용만 STEP 7 전용 프롬프트에 들어갑니다.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">✍️</span>
+          <h2>STEP 7 전용 글 생성기</h2>
+        </div>
+        <div class="section-actions">
+          <button id="step7BuildPromptBtn" class="btn-primary" type="button">STEP 7 프롬프트 만들기</button>
+          <button id="step7AutoGenerateBtn" class="btn-auto" type="button">STEP 7 자동 생성</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="btn-row">
+          <button id="step7CopyPromptBtn" class="btn-copy" type="button" disabled>📋 STEP 7 프롬프트 복사</button>
+          <button id="step7ClearPromptBtn" class="btn-secondary" type="button">🧹 프롬프트 비우기</button>
+        </div>
+
+        <div class="field">
+          <label for="step7PromptOutput">STEP 7 전용 프롬프트</label>
+          <textarea id="step7PromptOutput" class="prompt-textarea" readonly placeholder="STEP 1~6에서 고른 내용을 바탕으로 STEP 7 전용 프롬프트가 여기에 생성됩니다."></textarea>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section-actions">
+          <button id="step7CopyResultBtn" class="btn-copy" type="button" disabled>📋 STEP 7 결과 복사</button>
+          <button id="step7ClearResultBtn" class="btn-secondary" type="button">🧹 STEP 7 결과 지우기</button>
+        </div>
+
+        <div class="field">
+          <label for="step7ResultOutput">STEP 7 글 결과</label>
+          <textarea id="step7ResultOutput" class="result-textarea" placeholder="여기에 STEP 7 전용 글 결과가 표시됩니다."></textarea>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <label for="step7Preview">STEP 7 보기 좋게 정리된 결과</label>
+          <p id="step7PreviewHint" class="field-hint">STEP 7 결과를 붙여넣으면 제목 후보, 메타 정보, HTML 본문까지 보기 좋게 정리해서 보여줍니다.</p>
+          <div id="step7Preview" class="result-preview empty">STEP 7 결과가 들어오면 여기서 최종 블로그 글 구조를 확인할 수 있습니다.</div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script src="/strategy.js" type="module"></script>

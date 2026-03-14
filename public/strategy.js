@@ -33,6 +33,21 @@ const els = {
   collapseAllStepsBtn: $("collapseAllStepsBtn"),
   copyResultBtn: $("copyResultBtn"),
   clearResultBtn: $("clearResultBtn"),
+  step7SelectionMeta: $("step7SelectionMeta"),
+  step7SelectionBoard: $("step7SelectionBoard"),
+  step7SelectionSummary: $("step7SelectionSummary"),
+  step7AutoSelectBtn: $("step7AutoSelectBtn"),
+  step7ClearSelectionBtn: $("step7ClearSelectionBtn"),
+  step7BuildPromptBtn: $("step7BuildPromptBtn"),
+  step7AutoGenerateBtn: $("step7AutoGenerateBtn"),
+  step7CopyPromptBtn: $("step7CopyPromptBtn"),
+  step7ClearPromptBtn: $("step7ClearPromptBtn"),
+  step7PromptOutput: $("step7PromptOutput"),
+  step7CopyResultBtn: $("step7CopyResultBtn"),
+  step7ClearResultBtn: $("step7ClearResultBtn"),
+  step7ResultOutput: $("step7ResultOutput"),
+  step7Preview: $("step7Preview"),
+  step7PreviewHint: $("step7PreviewHint"),
   statusText: $("statusText"),
   errorText: $("errorText"),
   progressContainer: $("progressContainer"),
@@ -45,6 +60,12 @@ const state = {
   result: "",
   snapshot: null,
   health: null,
+  strategyJson: null,
+  step7SelectionGroups: [],
+  step7SelectionLookup: new Map(),
+  step7SelectedIds: new Set(),
+  step7Prompt: "",
+  step7Result: "",
 };
 
 function escapeHtml(value) {
@@ -265,6 +286,433 @@ function renderTagRow(label, items) {
   `;
 }
 
+function shortenText(value, maxLength = 160) {
+  const text = toText(value);
+  if (!text) return "";
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1).trim()}…` : text;
+}
+
+function extractFeaturedDraftPayload(data) {
+  if (isPlainObject(data?.featuredDraft)) return data.featuredDraft;
+  if (isPlainObject(data?.step7?.featuredDraft)) return data.step7.featuredDraft;
+  return null;
+}
+
+function renderFeaturedDraftCard(featuredDraftInput) {
+  const featuredDraft = isPlainObject(featuredDraftInput) ? featuredDraftInput : {};
+  const seoMeta = isPlainObject(featuredDraft.seoMeta) ? featuredDraft.seoMeta : {};
+  const imageGuide = isPlainObject(featuredDraft.imageGuide) ? featuredDraft.imageGuide : {};
+
+  return `
+    <article class="result-json-topic-card">
+      <div class="result-json-topic-head">
+        <h4>${renderInlineText(toText(featuredDraft.title) || "-")}</h4>
+      </div>
+      ${toText(featuredDraft.subtitle)
+        ? `<p class="result-preview-text result-json-subtitle">${renderInlineText(toText(featuredDraft.subtitle))}</p>`
+        : ""}
+      <div class="result-json-split-grid">
+        <div class="result-preview-panel">
+          <h5>제목 후보 5개</h5>
+          ${renderSimpleList(featuredDraft.titleOptions, true)}
+        </div>
+        <div class="result-preview-panel">
+          <h5>메타 정보</h5>
+          ${renderInfoRows([
+            { label: "SEO 제목", value: toText(seoMeta.seoTitle) || toText(featuredDraft.title) },
+            { label: "추천 슬러그", value: toText(seoMeta.slug) || toText(featuredDraft.slug) },
+            { label: "메타 설명", value: toText(seoMeta.metaDescription) || toText(featuredDraft.metaDescription) },
+            { label: "메인 키워드", value: toText(seoMeta.mainKeyword) },
+            { label: "검색 의도 유형", value: toText(seoMeta.searchIntentType) },
+            { label: "예상 독자 고민", value: toText(seoMeta.readerConcern) }
+          ])}
+          ${renderTagRow("서브 키워드", seoMeta.subKeywords)}
+          ${renderTagRow("태그", featuredDraft.tags)}
+        </div>
+      </div>
+      <div class="result-json-split-grid">
+        <div class="result-preview-panel">
+          <h5>내부링크 추천 문구</h5>
+          ${renderSimpleList(featuredDraft.internalLinks)}
+        </div>
+        <div class="result-preview-panel">
+          <h5>이미지 삽입 가이드</h5>
+          ${renderInfoRows([
+            { label: "추천 이미지 구간", value: toText(imageGuide.recommendedSection) }
+          ])}
+          ${renderSimpleList(imageGuide.altExamples)}
+        </div>
+      </div>
+      <div class="result-preview-panel">
+        <h5>외부 참고자료 제안</h5>
+        ${renderSimpleList(featuredDraft.externalReferenceSuggestions)}
+      </div>
+      <div class="result-preview-panel">
+        <h5>도입</h5>
+        ${renderParagraphs(featuredDraft.intro)}
+      </div>
+      <div class="result-preview-panel">
+        <h5>본문</h5>
+        ${Array.isArray(featuredDraft.bodySections) && featuredDraft.bodySections.length
+          ? featuredDraft.bodySections.map((section) => `
+            <div class="result-json-draft-section">
+              <h6>${renderInlineText(toText(section?.heading) || "-")}</h6>
+              ${toText(section?.subHeading)
+                ? `<p class="result-preview-text result-json-subtitle">${renderInlineText(toText(section?.subHeading))}</p>`
+                : ""}
+              ${renderTagRow("연관 키워드", [toText(section?.subKeyword)].filter(Boolean))}
+              ${renderInfoRows([
+                { label: "제품이름", value: toText(section?.productName) },
+                { label: "가격", value: toText(section?.price) },
+                { label: "사이즈", value: toText(section?.size) },
+                { label: "한줄평", value: toText(section?.oneLineSummary) }
+              ])}
+              ${isPlainObject(section?.summaryBox)
+                ? `
+                  <div class="result-preview-panel">
+                    <h5>요약 박스</h5>
+                    ${renderInfoRows([
+                      { label: "브랜드", value: toText(section.summaryBox.brand) },
+                      { label: "제품명", value: toText(section.summaryBox.productName) },
+                      { label: "가격", value: toText(section.summaryBox.price) },
+                      { label: "사이즈", value: toText(section.summaryBox.size) },
+                      { label: "소재", value: toText(section.summaryBox.material) },
+                      { label: "컬러", value: toText(section.summaryBox.color) }
+                    ])}
+                    ${renderTagRow("특징", section.summaryBox.features)}
+                    ${renderTagRow("추천 포인트", section.summaryBox.recommendPoints)}
+                  </div>
+                `
+                : ""}
+              ${toText(section?.betterComment)
+                ? `
+                  <div class="result-preview-panel">
+                    <h5>베러의 한마디😎</h5>
+                    <p class="result-preview-text">${renderInlineText(toText(section.betterComment))}</p>
+                  </div>
+                `
+                : ""}
+              ${renderParagraphs(section?.paragraphs)}
+              ${toText(section?.cta)
+                ? `
+                  <div class="result-preview-panel">
+                    <h5>섹션 CTA</h5>
+                    <p class="result-preview-text">${renderInlineText(toText(section.cta))}</p>
+                  </div>
+                `
+                : ""}
+            </div>
+          `).join("")
+          : '<div class="result-json-empty">내용이 없습니다.</div>'}
+      </div>
+      <div class="result-json-split-grid">
+        <div class="result-preview-panel">
+          <h5>마무리</h5>
+          ${renderParagraphs(featuredDraft.closing)}
+        </div>
+        <div class="result-preview-panel">
+          <h5>CTA</h5>
+          <p class="result-preview-text">${renderInlineText(toText(featuredDraft.cta) || "내용이 없습니다.")}</p>
+        </div>
+      </div>
+      <div class="result-json-split-grid">
+        <div class="result-preview-panel">
+          <h5>해시태그 / 키워드 한 줄</h5>
+          <p class="result-preview-text">${renderInlineText(toText(featuredDraft.hashtagsLine) || "내용이 없습니다.")}</p>
+        </div>
+        <div class="result-preview-panel">
+          <h5>HTML 최종 본문</h5>
+          ${renderCodeBlock(featuredDraft.htmlBody)}
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function createSelectionItem(groupId, index, title, description, summaryLines) {
+  return {
+    id: `${groupId}-${index}`,
+    title: toText(title) || `항목 ${index + 1}`,
+    description: toText(description),
+    summaryLines: Array.isArray(summaryLines)
+      ? summaryLines.map((line) => shortenText(line, 220)).filter(Boolean)
+      : [],
+  };
+}
+
+function buildStep7SelectionGroups(data) {
+  if (!isPlainObject(data)) return [];
+
+  const groups = [];
+  const step1 = isPlainObject(data.step1) ? data.step1 : {};
+  const step2 = isPlainObject(data.step2) ? data.step2 : {};
+  const step3 = isPlainObject(data.step3) ? data.step3 : {};
+  const step4 = isPlainObject(data.step4) ? data.step4 : {};
+  const step5 = isPlainObject(data.step5) ? data.step5 : {};
+  const step6 = isPlainObject(data.step6) ? data.step6 : {};
+
+  const coreKeywords = Array.isArray(step1.coreKeywords) ? step1.coreKeywords : [];
+  if (coreKeywords.length) {
+    groups.push({
+      id: "step1-coreKeywords",
+      title: "STEP 1 핵심 키워드",
+      helper: "글의 메인 키워드와 중요한 보조 키워드를 고르세요.",
+      mode: "multi",
+      recommendedCount: 3,
+      items: coreKeywords.map((item, index) => createSelectionItem(
+        "step1-coreKeywords",
+        index,
+        item?.keyword,
+        item?.reason,
+        [`키워드: ${toText(item?.keyword)}`, `중요한 이유: ${toText(item?.reason)}`]
+      ))
+    });
+  }
+
+  const questions = Array.isArray(step1.questions) ? step1.questions : [];
+  if (questions.length) {
+    groups.push({
+      id: "step1-questions",
+      title: "STEP 1 질문 / 고민 포인트",
+      helper: "독자가 실제로 궁금해하는 질문을 골라 글의 공감 포인트로 씁니다.",
+      mode: "multi",
+      recommendedCount: 2,
+      items: questions.map((item, index) => createSelectionItem(
+        "step1-questions",
+        index,
+        item?.question,
+        item?.intent,
+        [`질문: ${toText(item?.question)}`, `검색 의도: ${toText(item?.intent)}`]
+      ))
+    });
+  }
+
+  const perspectives = Array.isArray(step1.perspectives) ? step1.perspectives : [];
+  if (perspectives.length) {
+    groups.push({
+      id: "step1-perspectives",
+      title: "STEP 1 발전 관점",
+      helper: "이 글을 어떤 각도로 풀지 정하는 보조 관점입니다.",
+      mode: "multi",
+      recommendedCount: 1,
+      items: perspectives.map((item, index) => createSelectionItem(
+        "step1-perspectives",
+        index,
+        item?.type,
+        item?.direction,
+        [`관점: ${toText(item?.type)}`, `활용 방향: ${toText(item?.direction)}`]
+      ))
+    });
+  }
+
+  const topics = Array.isArray(step2.topics) ? step2.topics : [];
+  if (topics.length) {
+    groups.push({
+      id: "step2-topics",
+      title: "STEP 2 글감 TOP 10",
+      helper: "최종 글의 큰 주제는 여기서 1개를 먼저 고르는 게 가장 안정적입니다.",
+      mode: "single",
+      recommendedCount: 1,
+      items: topics.map((item, index) => createSelectionItem(
+        "step2-topics",
+        index,
+        item?.title || item?.topic,
+        item?.reason,
+        [
+          `글감 주제: ${toText(item?.topic)}`,
+          `추천 제목: ${toText(item?.title)}`,
+          `검색 의도: ${toText(item?.intent)}`,
+          `추천 이유: ${toText(item?.reason)}`,
+          `핵심 키워드: ${toStringArray(item?.keywords).join(", ")}`,
+          `추천 목차: ${toStringArray(item?.outline).join(" / ")}`
+        ]
+      ))
+    });
+  }
+
+  const priorities = Array.isArray(step3.priorities) ? step3.priorities : [];
+  if (priorities.length) {
+    groups.push({
+      id: "step3-priorities",
+      title: "STEP 3 우선 발행 추천",
+      helper: "STEP 7의 주제 방향은 보통 여기서 1개 고른 내용이 가장 강하게 반영됩니다.",
+      mode: "single",
+      recommendedCount: 1,
+      items: priorities.map((item, index) => createSelectionItem(
+        "step3-priorities",
+        index,
+        item?.title || item?.topic,
+        item?.whyNow,
+        [
+          `우선 주제: ${toText(item?.topic)}`,
+          `추천 제목: ${toText(item?.title)}`,
+          `왜 먼저 써야 하는지: ${toText(item?.whyNow)}`,
+          `예상 장점: ${toStringArray(item?.advantages).join(", ")}`,
+          `우선순위 점수: ${toText(item?.score)}`
+        ]
+      ))
+    });
+  }
+
+  const titles = Array.isArray(step4.titles) ? step4.titles : [];
+  if (titles.length) {
+    groups.push({
+      id: "step4-titles",
+      title: "STEP 4 제목 후보",
+      helper: "최종 SEO 제목과 대안 제목을 만들 때 참고할 제목을 여러 개 골라둘 수 있습니다.",
+      mode: "multi",
+      recommendedCount: 3,
+      items: titles.map((title, index) => createSelectionItem(
+        "step4-titles",
+        index,
+        title,
+        "",
+        [`제목 후보: ${toText(title)}`]
+      ))
+    });
+  }
+
+  const outlines = Array.isArray(step5.detailedOutlines) ? step5.detailedOutlines : [];
+  if (outlines.length) {
+    groups.push({
+      id: "step5-outlines",
+      title: "STEP 5 상세 목차",
+      helper: "글 구조를 정하는 핵심 단계라서 보통 1개만 고르는 걸 추천합니다.",
+      mode: "single",
+      recommendedCount: 1,
+      items: outlines.map((item, index) => createSelectionItem(
+        "step5-outlines",
+        index,
+        item?.title,
+        item?.planningIntent,
+        [
+          `기획 의도: ${toText(item?.planningIntent)}`,
+          `예상 독자 반응: ${toText(item?.expectedReaction)}`,
+          `상세 목차: ${[
+            toText(item?.outline?.intro),
+            toText(item?.outline?.body1),
+            toText(item?.outline?.body2),
+            toText(item?.outline?.body3),
+            toText(item?.outline?.body4),
+            toText(item?.outline?.conclusion)
+          ].filter(Boolean).join(" / ")}`,
+          `녹일 키워드: ${toStringArray(item?.keywords).join(", ")}`,
+          `피해야 할 표현: ${toStringArray(item?.avoidExpressions).join(", ")}`
+        ]
+      ))
+    });
+  }
+
+  const intros = Array.isArray(step6.introDrafts) ? step6.introDrafts : [];
+  if (intros.length) {
+    groups.push({
+      id: "step6-intros",
+      title: "STEP 6 도입문 초안",
+      helper: "도입 톤과 공감 멘트 흐름을 고르는 단계입니다.",
+      mode: "single",
+      recommendedCount: 1,
+      items: intros.map((item, index) => createSelectionItem(
+        "step6-intros",
+        index,
+        item?.title,
+        shortenText(toStringArray(item?.introA)[0] || toStringArray(item?.introB)[0], 120),
+        [
+          `도입문 A: ${toStringArray(item?.introA).join(" / ")}`,
+          `도입문 B: ${toStringArray(item?.introB).join(" / ")}`
+        ]
+      ))
+    });
+  }
+
+  return groups.filter((group) => Array.isArray(group.items) && group.items.length);
+}
+
+function getDefaultStep7SelectedIds(groups) {
+  const selected = new Set();
+  groups.forEach((group) => {
+    group.items.slice(0, Math.max(1, group.recommendedCount || 1)).forEach((item) => {
+      selected.add(item.id);
+    });
+  });
+  return selected;
+}
+
+function renderStep7SelectionBoard() {
+  if (!els.step7SelectionBoard) return;
+
+  const groups = state.step7SelectionGroups || [];
+  if (!groups.length) {
+    els.step7SelectionBoard.className = "step7-selection-board empty";
+    els.step7SelectionBoard.textContent = "콘텐츠 기획 결과 JSON을 붙여넣거나 자동 생성한 뒤, STEP 1~6 선택 보드가 열립니다.";
+    return;
+  }
+
+  els.step7SelectionBoard.className = "step7-selection-board";
+  els.step7SelectionBoard.innerHTML = groups.map((group) => `
+    <article class="step7-selection-group">
+      <div class="step7-selection-group-head">
+        <div>
+          <h3>${renderInlineText(group.title)}</h3>
+          <p>${renderInlineText(group.helper || "")}</p>
+        </div>
+        <span class="step7-selection-mode">${group.mode === "single" ? "1개 선택 권장" : "여러 개 선택 가능"}</span>
+      </div>
+      <div class="step7-selection-items">
+        ${group.items.map((item) => {
+          const isActive = state.step7SelectedIds.has(item.id);
+          return `
+            <button
+              type="button"
+              class="step7-choice${isActive ? " active" : ""}"
+              data-step7-choice="${escapeHtml(item.id)}"
+              data-step7-group="${escapeHtml(group.id)}"
+              data-step7-mode="${escapeHtml(group.mode)}"
+            >
+              <strong>${renderInlineText(item.title)}</strong>
+              ${item.description ? `<span>${renderInlineText(item.description)}</span>` : ""}
+            </button>
+          `;
+        }).join("")}
+      </div>
+    </article>
+  `).join("");
+}
+
+function buildStep7SelectionSummary() {
+  const groups = state.step7SelectionGroups || [];
+  const lines = ["[STEP 1~6 선택 요약]"];
+
+  groups.forEach((group) => {
+    const selectedItems = group.items.filter((item) => state.step7SelectedIds.has(item.id));
+    if (!selectedItems.length) return;
+
+    lines.push("");
+    lines.push(`## ${group.title}`);
+    selectedItems.forEach((item, index) => {
+      lines.push(`${index + 1}. ${item.title}`);
+      item.summaryLines.forEach((line) => {
+        lines.push(`- ${line}`);
+      });
+    });
+  });
+
+  return lines.length > 1 ? lines.join("\n") : "";
+}
+
+function syncStep7SelectionSummary() {
+  const summary = buildStep7SelectionSummary();
+  if (els.step7SelectionSummary) {
+    els.step7SelectionSummary.value = summary;
+  }
+
+  const totalSelected = state.step7SelectedIds.size;
+  if (els.step7SelectionMeta) {
+    els.step7SelectionMeta.textContent = totalSelected
+      ? `선택된 항목 ${totalSelected}개를 STEP 7 전용 글 생성기로 넘길 준비가 됐습니다.`
+      : "선택된 항목이 아직 없습니다. STEP 1~6에서 글에 쓸 항목을 골라주세요.";
+  }
+}
+
 function renderStepBlock(label, bodyHtml, open = false) {
   return [
     `<details class="result-step-block"${open ? " open" : ""}>`,
@@ -442,133 +890,7 @@ function renderStrategyJsonPreview(data) {
     `).join("")
     : '<div class="result-json-empty">내용이 없습니다.</div>';
 
-  const featuredDraft = isPlainObject(step7.featuredDraft) ? step7.featuredDraft : {};
-  const seoMeta = isPlainObject(featuredDraft.seoMeta) ? featuredDraft.seoMeta : {};
-  const imageGuide = isPlainObject(featuredDraft.imageGuide) ? featuredDraft.imageGuide : {};
-  const step7Html = `
-    <article class="result-json-topic-card">
-      <div class="result-json-topic-head">
-        <h4>${renderInlineText(toText(featuredDraft.title) || "-")}</h4>
-      </div>
-      ${toText(featuredDraft.subtitle)
-        ? `<p class="result-preview-text result-json-subtitle">${renderInlineText(toText(featuredDraft.subtitle))}</p>`
-        : ""}
-      <div class="result-json-split-grid">
-        <div class="result-preview-panel">
-          <h5>제목 후보 5개</h5>
-          ${renderSimpleList(featuredDraft.titleOptions, true)}
-        </div>
-        <div class="result-preview-panel">
-          <h5>메타 정보</h5>
-          ${renderInfoRows([
-            { label: "SEO 제목", value: toText(seoMeta.seoTitle) || toText(featuredDraft.title) },
-            { label: "추천 슬러그", value: toText(seoMeta.slug) || toText(featuredDraft.slug) },
-            { label: "메타 설명", value: toText(seoMeta.metaDescription) || toText(featuredDraft.metaDescription) },
-            { label: "메인 키워드", value: toText(seoMeta.mainKeyword) },
-            { label: "검색 의도 유형", value: toText(seoMeta.searchIntentType) },
-            { label: "예상 독자 고민", value: toText(seoMeta.readerConcern) }
-          ])}
-          ${renderTagRow("서브 키워드", seoMeta.subKeywords)}
-          ${renderTagRow("태그", featuredDraft.tags)}
-        </div>
-      </div>
-      <div class="result-json-split-grid">
-        <div class="result-preview-panel">
-          <h5>내부링크 추천 문구</h5>
-          ${renderSimpleList(featuredDraft.internalLinks)}
-        </div>
-        <div class="result-preview-panel">
-          <h5>이미지 삽입 가이드</h5>
-          ${renderInfoRows([
-            { label: "추천 이미지 구간", value: toText(imageGuide.recommendedSection) }
-          ])}
-          ${renderSimpleList(imageGuide.altExamples)}
-        </div>
-      </div>
-      <div class="result-preview-panel">
-        <h5>외부 참고자료 제안</h5>
-        ${renderSimpleList(featuredDraft.externalReferenceSuggestions)}
-      </div>
-      <div class="result-preview-panel">
-        <h5>도입</h5>
-        ${renderParagraphs(featuredDraft.intro)}
-      </div>
-      <div class="result-preview-panel">
-        <h5>본문</h5>
-        ${Array.isArray(featuredDraft.bodySections) && featuredDraft.bodySections.length
-          ? featuredDraft.bodySections.map((section) => `
-            <div class="result-json-draft-section">
-              <h6>${renderInlineText(toText(section?.heading) || "-")}</h6>
-              ${toText(section?.subHeading)
-                ? `<p class="result-preview-text result-json-subtitle">${renderInlineText(toText(section?.subHeading))}</p>`
-                : ""}
-              ${renderTagRow("연관 키워드", [toText(section?.subKeyword)].filter(Boolean))}
-              ${renderInfoRows([
-                { label: "제품이름", value: toText(section?.productName) },
-                { label: "가격", value: toText(section?.price) },
-                { label: "사이즈", value: toText(section?.size) },
-                { label: "한줄평", value: toText(section?.oneLineSummary) }
-              ])}
-              ${isPlainObject(section?.summaryBox)
-                ? `
-                  <div class="result-preview-panel">
-                    <h5>요약 박스</h5>
-                    ${renderInfoRows([
-                      { label: "브랜드", value: toText(section.summaryBox.brand) },
-                      { label: "제품명", value: toText(section.summaryBox.productName) },
-                      { label: "가격", value: toText(section.summaryBox.price) },
-                      { label: "사이즈", value: toText(section.summaryBox.size) },
-                      { label: "소재", value: toText(section.summaryBox.material) },
-                      { label: "컬러", value: toText(section.summaryBox.color) }
-                    ])}
-                    ${renderTagRow("특징", section.summaryBox.features)}
-                    ${renderTagRow("추천 포인트", section.summaryBox.recommendPoints)}
-                  </div>
-                `
-                : ""}
-              ${toText(section?.betterComment)
-                ? `
-                  <div class="result-preview-panel">
-                    <h5>베러의 한마디😎</h5>
-                    <p class="result-preview-text">${renderInlineText(toText(section.betterComment))}</p>
-                  </div>
-                `
-                : ""}
-              ${renderParagraphs(section?.paragraphs)}
-              ${toText(section?.cta)
-                ? `
-                  <div class="result-preview-panel">
-                    <h5>섹션 CTA</h5>
-                    <p class="result-preview-text">${renderInlineText(toText(section.cta))}</p>
-                  </div>
-                `
-                : ""}
-            </div>
-          `).join("")
-          : '<div class="result-json-empty">내용이 없습니다.</div>'}
-      </div>
-      <div class="result-json-split-grid">
-        <div class="result-preview-panel">
-          <h5>마무리</h5>
-          ${renderParagraphs(featuredDraft.closing)}
-        </div>
-        <div class="result-preview-panel">
-          <h5>CTA</h5>
-          <p class="result-preview-text">${renderInlineText(toText(featuredDraft.cta) || "내용이 없습니다.")}</p>
-        </div>
-      </div>
-      <div class="result-json-split-grid">
-        <div class="result-preview-panel">
-          <h5>해시태그 / 키워드 한 줄</h5>
-          <p class="result-preview-text">${renderInlineText(toText(featuredDraft.hashtagsLine) || "내용이 없습니다.")}</p>
-        </div>
-        <div class="result-preview-panel">
-          <h5>HTML 최종 본문</h5>
-          ${renderCodeBlock(featuredDraft.htmlBody)}
-        </div>
-      </div>
-    </article>
-  `;
+  const step7Html = renderFeaturedDraftCard(step7.featuredDraft);
 
   const seriesDirection = isPlainObject(step8.seriesDirection) ? step8.seriesDirection : {};
   const step8Html = `
@@ -786,6 +1108,149 @@ function renderResultPreview(text = "") {
   );
 }
 
+function renderStep7ResultPreview(text = "") {
+  const normalized = (text || "").replace(/\r\n/g, "\n").trim();
+
+  if (!els.step7Preview) return;
+
+  if (!normalized) {
+    els.step7Preview.className = "result-preview empty";
+    els.step7Preview.textContent = "STEP 7 결과가 들어오면 여기서 최종 블로그 글 구조를 확인할 수 있습니다.";
+    if (els.step7PreviewHint) {
+      els.step7PreviewHint.textContent = "STEP 7 결과를 붙여넣으면 제목 후보, 메타 정보, HTML 본문까지 보기 좋게 정리해서 보여줍니다.";
+    }
+    return;
+  }
+
+  const parsed = tryParseStrategyJson(normalized);
+  const featuredDraft = extractFeaturedDraftPayload(parsed.data || {});
+
+  if (featuredDraft) {
+    els.step7Preview.className = "result-preview";
+    els.step7Preview.innerHTML = renderFeaturedDraftCard(featuredDraft);
+    if (els.step7PreviewHint) {
+      els.step7PreviewHint.textContent = parsed.repaired
+        ? "STEP 7 JSON의 작은 오류를 자동 보정해서 정리했습니다."
+        : "STEP 7 JSON 결과를 보기 좋게 정리해서 보여주고 있습니다.";
+    }
+    return;
+  }
+
+  els.step7Preview.className = "result-preview empty";
+  els.step7Preview.textContent = normalized;
+  if (els.step7PreviewHint) {
+    els.step7PreviewHint.textContent = "JSON 형식이 아니어서 원문 그대로 보여주고 있습니다. 가능하면 JSON 결과를 붙여넣어 주세요.";
+  }
+}
+
+function clearStep7Prompt() {
+  state.step7Prompt = "";
+  if (els.step7PromptOutput) {
+    els.step7PromptOutput.value = "";
+  }
+  if (els.step7CopyPromptBtn) {
+    els.step7CopyPromptBtn.disabled = true;
+  }
+}
+
+function setStep7ResultValue(value = "", options = {}) {
+  const { writeToField = true } = options;
+  state.step7Result = value;
+  if (writeToField && els.step7ResultOutput) {
+    els.step7ResultOutput.value = value;
+  }
+  if (els.step7CopyResultBtn) {
+    els.step7CopyResultBtn.disabled = !value.trim();
+  }
+  renderStep7ResultPreview(value);
+}
+
+function clearStep7Result() {
+  setStep7ResultValue("");
+}
+
+function clearStep7Builder() {
+  state.step7SelectionGroups = [];
+  state.step7SelectionLookup = new Map();
+  state.step7SelectedIds = new Set();
+  if (els.step7SelectionMeta) {
+    els.step7SelectionMeta.textContent = "먼저 콘텐츠 기획 결과 JSON을 넣으면 여기서 STEP 1~6 항목을 고를 수 있습니다.";
+  }
+  if (els.step7SelectionBoard) {
+    els.step7SelectionBoard.className = "step7-selection-board empty";
+    els.step7SelectionBoard.textContent = "콘텐츠 기획 결과 JSON을 붙여넣거나 자동 생성한 뒤, STEP 1~6 선택 보드가 열립니다.";
+  }
+  if (els.step7SelectionSummary) {
+    els.step7SelectionSummary.value = "";
+  }
+  clearStep7Prompt();
+  clearStep7Result();
+}
+
+function syncStep7BuilderFromStrategyJson(data) {
+  const hasSteps = isPlainObject(data)
+    && [1, 2, 3, 4, 5, 6].some((stepNumber) => isPlainObject(data[`step${stepNumber}`]));
+
+  state.strategyJson = hasSteps ? data : null;
+
+  if (!hasSteps) {
+    clearStep7Builder();
+    return;
+  }
+
+  const groups = buildStep7SelectionGroups(data);
+  state.step7SelectionGroups = groups;
+  state.step7SelectionLookup = new Map();
+  groups.forEach((group) => {
+    group.items.forEach((item) => {
+      state.step7SelectionLookup.set(item.id, { ...item, groupId: group.id, mode: group.mode });
+    });
+  });
+  state.step7SelectedIds = getDefaultStep7SelectedIds(groups);
+
+  renderStep7SelectionBoard();
+  syncStep7SelectionSummary();
+  clearStep7Prompt();
+  clearStep7Result();
+}
+
+function toggleStep7Selection(itemId, groupId, mode) {
+  if (!itemId) return;
+
+  if (mode === "single") {
+    [...state.step7SelectedIds].forEach((selectedId) => {
+      if (selectedId.startsWith(`${groupId}-`)) {
+        state.step7SelectedIds.delete(selectedId);
+      }
+    });
+    state.step7SelectedIds.add(itemId);
+  } else if (state.step7SelectedIds.has(itemId)) {
+    state.step7SelectedIds.delete(itemId);
+  } else {
+    state.step7SelectedIds.add(itemId);
+  }
+
+  renderStep7SelectionBoard();
+  syncStep7SelectionSummary();
+  clearStep7Prompt();
+}
+
+function applyDefaultStep7Selections() {
+  state.step7SelectedIds = getDefaultStep7SelectedIds(state.step7SelectionGroups);
+  renderStep7SelectionBoard();
+  syncStep7SelectionSummary();
+  clearStep7Prompt();
+  setStatus("STEP 7 추천 선택을 다시 적용했습니다.");
+}
+
+function clearStep7Selections() {
+  state.step7SelectedIds = new Set();
+  renderStep7SelectionBoard();
+  syncStep7SelectionSummary();
+  clearStep7Prompt();
+  setStatus("STEP 7 선택 항목을 비웠습니다.");
+}
+
 function setResultValue(value = "", options = {}) {
   const { writeToField = true } = options;
   state.result = value;
@@ -794,6 +1259,8 @@ function setResultValue(value = "", options = {}) {
   }
   els.copyResultBtn.disabled = !value.trim();
   renderResultPreview(value);
+  const parsed = tryParseStrategyJson(value || "");
+  syncStep7BuilderFromStrategyJson(parsed.data);
   syncStep();
 }
 
@@ -805,6 +1272,7 @@ async function fetchHealth() {
 
     if (!json?.automationAvailable) {
       els.autoGenerateBtn.style.display = "none";
+      els.step7AutoGenerateBtn.style.display = "none";
       setStatus("이 배포 환경에서는 자동 생성 대신 프롬프트 복사 방식으로 사용할 수 있습니다.");
     }
   } catch {
@@ -838,6 +1306,20 @@ function gatherPayload() {
     avoidDirection: els.avoidInput.value.trim(),
     workGoals: els.goalsInput.value.trim(),
     researchData: els.researchDataInput.value.trim(),
+  };
+}
+
+function gatherStep7Payload() {
+  return {
+    brandName: els.brandNameInput.value.trim(),
+    blogType: els.blogTypeInput.value.trim(),
+    primaryCategory: els.primaryCategoryInput.value.trim(),
+    targetAudience: els.targetAudienceInput.value.trim(),
+    toneAndManner: els.toneInput.value.trim(),
+    avoidDirection: els.avoidInput.value.trim(),
+    workGoals: els.goalsInput.value.trim(),
+    researchData: els.researchDataInput.value.trim(),
+    selectedPlan: els.step7SelectionSummary?.value.trim() || "",
   };
 }
 
@@ -951,6 +1433,36 @@ async function buildPrompt() {
   return state.prompt;
 }
 
+async function buildStep7Prompt() {
+  setError("");
+  const payload = gatherStep7Payload();
+
+  if (!payload.selectedPlan) {
+    throw new Error("STEP 1~6에서 글에 쓸 항목을 먼저 선택해 주세요.");
+  }
+
+  const response = await fetch("/api/research-strategy/step7-prompt", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const json = await response.json();
+
+  if (!response.ok) {
+    throw new Error(json?.error || "STEP 7 전용 프롬프트 생성에 실패했어요.");
+  }
+
+  state.step7Prompt = json.prompt || "";
+  if (els.step7PromptOutput) {
+    els.step7PromptOutput.value = state.step7Prompt;
+  }
+  if (els.step7CopyPromptBtn) {
+    els.step7CopyPromptBtn.disabled = !state.step7Prompt;
+  }
+  setStatus(`STEP 7 전용 프롬프트를 만들었습니다. 선택 요약 ${json.selectedLength?.toLocaleString?.("ko-KR") || json.selectedLength || 0}자를 반영했습니다.`);
+  return state.step7Prompt;
+}
+
 async function handleBuildPrompt() {
   try {
     setProgressLines([]);
@@ -958,6 +1470,16 @@ async function handleBuildPrompt() {
     await buildPrompt();
   } catch (error) {
     setError(error?.message || "프롬프트 생성 중 오류가 발생했어요.");
+  }
+}
+
+async function handleBuildStep7Prompt() {
+  try {
+    setProgressLines([]);
+    saveSettings();
+    await buildStep7Prompt();
+  } catch (error) {
+    setError(error?.message || "STEP 7 전용 프롬프트 생성 중 오류가 발생했어요.");
   }
 }
 
@@ -1032,6 +1554,77 @@ async function handleAutoGenerate() {
   }
 }
 
+async function handleStep7AutoGenerate() {
+  setError("");
+  saveSettings();
+  els.step7AutoGenerateBtn.disabled = true;
+  els.step7BuildPromptBtn.disabled = true;
+  setProgressLines(["STEP 7 전용 프롬프트 생성 중…"]);
+  setProgress(8);
+
+  try {
+    const prompt = await buildStep7Prompt();
+    setProgressLines(["STEP 7 전용 프롬프트 생성 완료 ✓", "ChatGPT 자동화 시작…"]);
+    setProgress(18);
+
+    const response = await fetch("/api/research-strategy/auto-generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+    });
+
+    if (!response.ok) {
+      const errorJson = await response.json().catch(() => ({}));
+      throw new Error(errorJson?.error || "STEP 7 자동 생성에 실패했어요.");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    const logs = ["STEP 7 전용 프롬프트 생성 완료 ✓", "ChatGPT 자동화 시작…"];
+    let resultText = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const payload = JSON.parse(line.slice(6));
+
+        if (payload.type === "log" && payload.message) {
+          logs.push(payload.message);
+          setProgressLines(logs);
+        } else if (payload.type === "progress") {
+          setProgress(payload.percent || 0);
+        } else if (payload.type === "result") {
+          resultText = payload.text || "";
+        } else if (payload.type === "error") {
+          throw new Error(payload.message || "STEP 7 자동 생성 중 오류가 발생했어요.");
+        }
+      }
+    }
+
+    if (!resultText) {
+      throw new Error("STEP 7 결과를 받지 못했어요. 프롬프트 복사 방식으로 다시 시도해 주세요.");
+    }
+
+    setStep7ResultValue(resultText);
+    setProgress(100);
+    setProgressLines([...logs, "STEP 7 글 생성 완료 ✓"]);
+    setStatus("STEP 7 전용 블로그 글 결과를 받아왔습니다.");
+  } catch (error) {
+    setError(error?.message || "STEP 7 자동 생성 중 오류가 발생했어요.");
+  } finally {
+    els.step7AutoGenerateBtn.disabled = false;
+    els.step7BuildPromptBtn.disabled = false;
+  }
+}
+
 function resetAll() {
   els.brandNameInput.value = "";
   els.blogTypeInput.value = "";
@@ -1050,6 +1643,7 @@ function resetAll() {
   setProgressLines([]);
   els.snapshotMeta.textContent = "리서치툴에서 먼저 검색하면 최근 수집 결과를 자동으로 가져올 수 있습니다.";
   setResultValue("");
+  clearStep7Builder();
 
   try {
     localStorage.removeItem(STRATEGY_SETTINGS_STORAGE_KEY);
@@ -1085,6 +1679,7 @@ function bindEvents() {
   });
 
   els.buildPromptBtn.addEventListener("click", handleBuildPrompt);
+  els.step7BuildPromptBtn.addEventListener("click", handleBuildStep7Prompt);
 
   els.copyPromptBtn.addEventListener("click", async () => {
     if (!els.promptOutput.value.trim()) return;
@@ -1092,12 +1687,25 @@ function bindEvents() {
     setStatus("콘텐츠 기획 프롬프트를 복사했습니다.");
   });
 
+  els.step7CopyPromptBtn.addEventListener("click", async () => {
+    if (!els.step7PromptOutput.value.trim()) return;
+    await copyText(els.step7PromptOutput.value);
+    setStatus("STEP 7 전용 프롬프트를 복사했습니다.");
+  });
+
   els.autoGenerateBtn.addEventListener("click", handleAutoGenerate);
+  els.step7AutoGenerateBtn.addEventListener("click", handleStep7AutoGenerate);
 
   els.copyResultBtn.addEventListener("click", async () => {
     if (!els.resultOutput.value.trim()) return;
     await copyText(els.resultOutput.value);
     setStatus("기획 결과를 복사했습니다.");
+  });
+
+  els.step7CopyResultBtn.addEventListener("click", async () => {
+    if (!els.step7ResultOutput.value.trim()) return;
+    await copyText(els.step7ResultOutput.value);
+    setStatus("STEP 7 결과를 복사했습니다.");
   });
 
   els.expandAllStepsBtn.addEventListener("click", () => {
@@ -1119,11 +1727,51 @@ function bindEvents() {
     setStatus("기획 결과를 비웠습니다.");
   });
 
+  els.step7ClearPromptBtn.addEventListener("click", () => {
+    clearStep7Prompt();
+    setStatus("STEP 7 프롬프트를 비웠습니다.");
+  });
+
+  els.step7ClearResultBtn.addEventListener("click", () => {
+    clearStep7Result();
+    setStatus("STEP 7 결과를 비웠습니다.");
+  });
+
   els.resultOutput.addEventListener("input", () => {
     setResultValue(els.resultOutput.value, { writeToField: false });
   });
 
+  els.step7ResultOutput.addEventListener("input", () => {
+    setStep7ResultValue(els.step7ResultOutput.value, { writeToField: false });
+  });
+
   els.researchDataInput.addEventListener("input", syncStep);
+
+  els.step7SelectionBoard.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-step7-choice]");
+    if (!button) return;
+    toggleStep7Selection(
+      button.getAttribute("data-step7-choice"),
+      button.getAttribute("data-step7-group"),
+      button.getAttribute("data-step7-mode")
+    );
+  });
+
+  els.step7AutoSelectBtn.addEventListener("click", () => {
+    if (!state.step7SelectionGroups.length) {
+      setError("먼저 콘텐츠 기획 결과 JSON을 넣어 주세요.");
+      return;
+    }
+    applyDefaultStep7Selections();
+  });
+
+  els.step7ClearSelectionBtn.addEventListener("click", () => {
+    if (!state.step7SelectionGroups.length) {
+      setError("비울 선택 항목이 아직 없습니다.");
+      return;
+    }
+    clearStep7Selections();
+  });
 
   els.resetBtn.addEventListener("click", resetAll);
 }
@@ -1137,6 +1785,7 @@ function init() {
   bindEvents();
   setStepToggleAvailability(false);
   renderResultPreview("");
+  clearStep7Builder();
   syncStep();
   fetchHealth();
 }

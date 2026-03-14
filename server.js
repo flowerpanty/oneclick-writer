@@ -375,6 +375,18 @@ const ResearchStrategySchema = z.object({
   researchData: z.string().min(20).max(120000),
 });
 
+const Step7WriterSchema = z.object({
+  brandName: z.string().max(120).optional().default(""),
+  blogType: z.string().max(120).optional().default(""),
+  primaryCategory: z.string().max(160).optional().default(""),
+  targetAudience: z.string().max(200).optional().default(""),
+  toneAndManner: z.string().max(200).optional().default(""),
+  avoidDirection: z.string().max(240).optional().default(""),
+  workGoals: z.string().max(2000).optional().default(""),
+  researchData: z.string().max(120000).optional().default(""),
+  selectedPlan: z.string().min(20).max(50000),
+});
+
 function buildOutputSchema(variantCount) {
   return z.object({
     instagram: z.object({
@@ -2346,6 +2358,158 @@ function buildResearchStrategyPrompt(payload) {
   ].join("\n");
 }
 
+function buildStep7WriterPrompt(payload) {
+  return [
+    "당신은 네이버 SEO에 강한 전문 블로그 에디터이자, 실제 발행까지 고려하는 콘텐츠 전략가다.",
+    "지금부터는 전체 전략안이 아니라, 사용자가 STEP 1~6에서 직접 고른 내용만 바탕으로 STEP 7 전용 블로그 글을 작성한다.",
+    "",
+    "가장 중요한 원칙:",
+    "1. 사용자가 고른 STEP 1~6 내용이 이 글의 뼈대다.",
+    "2. 선택되지 않은 방향을 임의로 추가하거나, 주제를 멋대로 바꾸지 마라.",
+    "3. 수집결과와 선택 요약에 없는 사실은 절대 지어내지 마라.",
+    "4. 문장이 로봇처럼 딱딱하거나 설명서/리포트처럼 느껴지면 실패다. 사람이 정리해서 들려주는 자연스러운 한국어 블로그 문장으로 다시 다듬어라.",
+    "",
+    "---",
+    "",
+    "## 0. 기본 정보",
+    `- 브랜드명: ${payload.brandName || "[미입력]"}`,
+    `- 블로그 성격: ${payload.blogType || "[미입력]"}`,
+    `- 주력 카테고리: ${payload.primaryCategory || "[미입력]"}`,
+    `- 타겟 독자: ${payload.targetAudience || "[미입력]"}`,
+    `- 원하는 톤앤매너: ${payload.toneAndManner || "[미입력]"}`,
+    `- 피하고 싶은 방향: ${payload.avoidDirection || "[미입력]"}`,
+    "",
+    "### 이번 작업 목적",
+    formatStrategyGoalLines(payload.workGoals),
+    "",
+    "---",
+    "",
+    "## 1. 원본 리서치 수집 결과",
+    "",
+    payload.researchData?.trim() || "[미입력]",
+    "",
+    "---",
+    "",
+    "## 2. 사용자가 선택한 STEP 1~6 핵심 내용",
+    "",
+    payload.selectedPlan.trim(),
+    "",
+    "---",
+    "",
+    "## 3. 선택 내용 반영 우선순위",
+    "",
+    "- STEP 3에서 고른 우선 발행 추천이 있으면 그 주제와 제목 방향을 최우선으로 따른다.",
+    "- STEP 5에서 고른 상세 목차가 있으면 본문 구조의 기본 뼈대로 사용한다.",
+    "- STEP 6에서 고른 도입문이 있으면 도입부 톤과 공감 포인트의 기준으로 사용한다.",
+    "- STEP 2에서 고른 글감은 주제 확장과 검색 의도 정리에 반영한다.",
+    "- STEP 1에서 고른 핵심 키워드/질문/관점은 키워드 운영과 소제목 설계에 반영한다.",
+    "- STEP 4에서 고른 제목 후보는 SEO 제목과 대안 제목을 다듬을 때만 보조로 사용한다.",
+    "- 서로 충돌하면 STEP 3 > STEP 5 > STEP 6 > STEP 2 > STEP 1/4 순서로 우선 적용한다.",
+    "",
+    "---",
+    "",
+    "## 4. STEP 7 최우선 작성 규칙",
+    "",
+    "[자연스러운 문체 규칙]",
+    "- 후기, 체험, 감상형 글처럼 쓰지 말고 정보성 설명, 비교, 구조, 소재, 특징 중심으로 풀어쓸 것.",
+    "- 정보만 건조하게 나열하지 말고 사람이 옆에서 정리해서 들려주는 듯한 자연스러운 채팅체와 부드러운 말투를 사용할 것.",
+    "- `공식적으로`, `자료에 따르면`, `명시되어 있다`, `스펙상`, `요약하면` 같은 보고서식 표현은 금지할 것.",
+    "- 표, 리포트, 설명서, AI 답변처럼 반듯한 문장만 반복하지 말고 짧은 문장과 조금 긴 문장을 섞어서 인간적인 리듬으로 쓸 것.",
+    "- 첫 문단만 읽어도 사람이 쓴 네이버 블로그 글처럼 느껴져야 한다.",
+    "",
+    "[네이버 SEO / 전환 규칙]",
+    "- 메인 키워드는 제목, 첫 문장, H2, 결론에 자연스럽게 포함할 것.",
+    "- 연관 키워드는 H3와 중간 문단에 자연스럽게 녹이되, 키워드 나열처럼 보이지 않게 할 것.",
+    "- 제목은 검색 유입형이면서도 사람이 실제로 클릭하고 싶게 만들 것.",
+    "- 브랜드/제품/서비스 언급은 광고처럼 밀어붙이지 말고 정보 흐름 속에 부드럽게 삽입할 것.",
+    "- 문단 흐름은 체류시간을 높일 수 있게 매끄럽게 이어가고, 다음 문단을 읽고 싶게 설계할 것.",
+    "- CTA는 자연스럽게만 넣고 판매 압박은 금지할 것.",
+    "",
+    "[본문 구조 규칙]",
+    "- 서론은 독자의 고민이나 상황으로 시작하고, 첫 문단 안에 메인 키워드를 자연스럽게 포함할 것.",
+    "- H2는 4~5개 이내, H3는 꼭 필요한 곳에만 사용하고 실제 독자가 궁금해할 질문형/정보형 소제목으로 작성할 것.",
+    "- 제품 또는 항목 소개 파트는 `H2 또는 H3 → 요약 박스 → 베러의 한마디😎 → 본문 설명` 순서를 기본으로 할 것.",
+    "- 요약 박스에는 브랜드, 제품명, 가격, 사이즈를 필수로 넣고, 있으면 소재, 컬러, 특징, 추천 포인트를 추가할 것.",
+    "- `베러의 한마디😎`는 한 줄 코멘트로 짧고 자연스럽게 쓰되 과한 이모지나 과장 없이 정보성과 감성을 한 줄에 담을 것.",
+    "- 본문은 공백 포함 최소 2300자 이상으로 풍성하게 작성할 것.",
+    "- 최종 본문은 HTML 형식으로도 함께 제공해야 하며 `H2`, `H3`, `p` 태그를 사용해 네이버 블로그 / 워드프레스 / 티스토리에 복붙 가능한 수준으로 정리할 것.",
+    "",
+    "[금지사항]",
+    "- 선택 요약과 리서치 수집결과에 없는 사실 지어내기 금지",
+    "- 가격, 소재, 사이즈, 기능, 후기, 인증 등 추측 작성 금지",
+    "- 키워드 도배 금지",
+    "- 광고티 나는 과장 표현 금지",
+    "- AI 티 나는 템플릿식 반복 문장 금지",
+    "",
+    "---",
+    "",
+    "## 5. 출력 형식",
+    "",
+    "- 반드시 유효한 JSON 객체 하나만 반환할 것",
+    "- JSON 앞뒤에 설명 문장, 마크다운, 코드블록을 붙이지 말 것",
+    "- 최상위 키는 `featuredDraft` 하나만 사용할 것",
+    "- 값이 없으면 빈 문자열(`\"\"`) 또는 빈 배열(`[]`)을 넣을 것",
+    "- 모든 문장은 한국어로 작성할 것",
+    "",
+    "{",
+    '  "featuredDraft": {',
+    '    "titleOptions": ["", "", "", "", ""],',
+    '    "seoMeta": {',
+    '      "seoTitle": "",',
+    '      "slug": "",',
+    '      "metaDescription": "",',
+    '      "mainKeyword": "",',
+    '      "subKeywords": [""],',
+    '      "searchIntentType": "",',
+    '      "readerConcern": ""',
+    "    },",
+    '    "internalLinks": ["", "", ""],',
+    '    "imageGuide": {',
+    '      "recommendedSection": "",',
+    '      "altExamples": ["", "", ""]',
+    "    },",
+    '    "externalReferenceSuggestions": [""],',
+    '    "title": "",',
+    '    "subtitle": "",',
+    '    "slug": "",',
+    '    "metaDescription": "",',
+    '    "tags": [""],',
+    '    "intro": ["", ""],',
+    '    "bodySections": [',
+    '      {',
+    '        "heading": "",',
+    '        "subHeading": "",',
+    '        "subKeyword": "",',
+    '        "summaryBox": {',
+    '          "brand": "",',
+    '          "productName": "",',
+    '          "price": "",',
+    '          "size": "",',
+    '          "material": "",',
+    '          "color": "",',
+    '          "features": [""],',
+    '          "recommendPoints": [""]',
+    "        },",
+    '        "betterComment": "",',
+    '        "productName": "",',
+    '        "price": "",',
+    '        "size": "",',
+    '        "oneLineSummary": "",',
+    '        "paragraphs": ["", ""],',
+    '        "cta": ""',
+    '      }',
+    "    ],",
+    '    "closing": ["", ""],',
+    '    "cta": "",',
+    '    "htmlBody": "",',
+    '    "hashtagsLine": ""',
+    "  }",
+    "}",
+    "",
+    "위 JSON 객체 하나만 반환하라."
+  ].join("\n");
+}
+
 function buildEasySummary(metrics, relatedKeywordReport, communityQuestions, trendReport) {
   const summary = [];
 
@@ -3825,6 +3989,23 @@ app.post("/api/research-strategy/prompt", async (req, res) => {
     const message = err?.issues
       ? err.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ")
       : err?.message || "콘텐츠 기획 프롬프트 생성 중 오류가 발생했어요.";
+    res.status(400).json({ error: message });
+  }
+});
+
+app.post("/api/research-strategy/step7-prompt", async (req, res) => {
+  try {
+    const payload = Step7WriterSchema.parse(req.body || {});
+    const prompt = buildStep7WriterPrompt(payload);
+
+    res.json({
+      prompt,
+      selectedLength: payload.selectedPlan.length
+    });
+  } catch (err) {
+    const message = err?.issues
+      ? err.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ")
+      : err?.message || "STEP 7 전용 프롬프트 생성 중 오류가 발생했어요.";
     res.status(400).json({ error: message });
   }
 });
