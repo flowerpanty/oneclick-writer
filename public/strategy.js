@@ -256,6 +256,81 @@ function renderCodeBlock(value) {
   return `<pre class="result-code-block"><code>${escapeHtml(text)}</code></pre>`;
 }
 
+function toHtmlParagraphs(items) {
+  return toStringArray(items)
+    .map((item) => `<p>${escapeHtml(item)}</p>`)
+    .join("\n");
+}
+
+function buildStructuredHtmlBody(featuredDraftInput) {
+  const featuredDraft = isPlainObject(featuredDraftInput) ? featuredDraftInput : {};
+  const chunks = [];
+
+  if (toText(featuredDraft.title)) {
+    chunks.push(`<p><strong>${escapeHtml(toText(featuredDraft.title))}</strong></p>`);
+  }
+
+  if (toText(featuredDraft.subtitle)) {
+    chunks.push(`<p><strong>${escapeHtml(toText(featuredDraft.subtitle))}</strong></p>`);
+  }
+
+  const introHtml = toHtmlParagraphs(featuredDraft.intro);
+  if (introHtml) chunks.push(introHtml);
+
+  (Array.isArray(featuredDraft.bodySections) ? featuredDraft.bodySections : []).forEach((section) => {
+    if (toText(section?.heading)) {
+      chunks.push(`<h2>${escapeHtml(toText(section.heading))}</h2>`);
+    }
+    if (toText(section?.subHeading)) {
+      chunks.push(`<h3>${escapeHtml(toText(section.subHeading))}</h3>`);
+    }
+
+    const summaryBox = isPlainObject(section?.summaryBox) ? section.summaryBox : {};
+    const summaryLines = [
+      ["브랜드", toText(summaryBox.brand)],
+      ["제품명", toText(summaryBox.productName) || toText(section?.productName)],
+      ["가격", toText(summaryBox.price) || toText(section?.price)],
+      ["사이즈", toText(summaryBox.size) || toText(section?.size)],
+      ["소재", toText(summaryBox.material)],
+      ["컬러", toText(summaryBox.color)],
+      ["특징", toStringArray(summaryBox.features).join(", ")],
+      ["추천 포인트", toStringArray(summaryBox.recommendPoints).join(", ")],
+    ].filter(([, value]) => value);
+
+    if (summaryLines.length) {
+      chunks.push([
+        "<div>",
+        ...summaryLines.map(([label, value]) => `<p><strong>${escapeHtml(label)}</strong> ${escapeHtml(value)}</p>`),
+        "</div>",
+      ].join("\n"));
+    }
+
+    if (toText(section?.betterComment)) {
+      chunks.push(`<p><strong>베러의 한마디😎</strong> ${escapeHtml(toText(section.betterComment))}</p>`);
+    }
+
+    const bodyHtml = toHtmlParagraphs(section?.paragraphs);
+    if (bodyHtml) chunks.push(bodyHtml);
+
+    if (toText(section?.cta)) {
+      chunks.push(`<p>${escapeHtml(toText(section.cta))}</p>`);
+    }
+  });
+
+  const closingHtml = toHtmlParagraphs(featuredDraft.closing);
+  if (closingHtml) chunks.push(closingHtml);
+
+  if (toText(featuredDraft.cta)) {
+    chunks.push(`<p>${escapeHtml(toText(featuredDraft.cta))}</p>`);
+  }
+
+  if (toText(featuredDraft.hashtagsLine)) {
+    chunks.push(`<p>${escapeHtml(toText(featuredDraft.hashtagsLine))}</p>`);
+  }
+
+  return chunks.filter(Boolean).join("\n\n").trim();
+}
+
 function renderInfoRows(rows) {
   const safeRows = rows.filter((row) => row.value);
   if (!safeRows.length) {
@@ -303,6 +378,8 @@ function renderFeaturedDraftCard(featuredDraftInput) {
   const featuredDraft = isPlainObject(featuredDraftInput) ? featuredDraftInput : {};
   const seoMeta = isPlainObject(featuredDraft.seoMeta) ? featuredDraft.seoMeta : {};
   const imageGuide = isPlainObject(featuredDraft.imageGuide) ? featuredDraft.imageGuide : {};
+  const normalizedHtmlBody = buildStructuredHtmlBody(featuredDraft);
+  const displayedHtmlBody = normalizedHtmlBody || toText(featuredDraft.htmlBody);
 
   return `
     <article class="result-json-topic-card">
@@ -423,7 +500,7 @@ function renderFeaturedDraftCard(featuredDraftInput) {
         </div>
         <div class="result-preview-panel">
           <h5>HTML 최종 본문</h5>
-          ${renderCodeBlock(featuredDraft.htmlBody)}
+          ${renderCodeBlock(displayedHtmlBody)}
         </div>
       </div>
     </article>
