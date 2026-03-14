@@ -102,10 +102,17 @@
             <textarea id="goalsInput" class="compact-textarea" placeholder="예:&#10;실제 발행 가능한 글 1개 완성&#10;STEP 7 전용 블로그 글 만들기"></textarea>
           </div>
 
-          <div class="field">
-            <label for="researchDataInput">리서치 수집 결과</label>
-            <textarea id="researchDataInput" class="research-textarea compact-area" placeholder="최근 전략 세션에서 자동으로 불러오거나, 필요할 때만 직접 붙여넣으세요."></textarea>
+          <div class="compact-action-card">
+            리서치 수집결과는 최근 전략 세션 값을 자동으로 사용합니다. 직접 수정이 필요할 때만 아래를 펼치면 됩니다.
           </div>
+
+          <details class="research-edit-details">
+            <summary>리서치 수집결과 직접 수정</summary>
+            <div class="field mt-12">
+              <label for="researchDataInput">리서치 수집 결과</label>
+              <textarea id="researchDataInput" class="research-textarea compact-area" placeholder="최근 전략 세션에서 자동으로 불러오거나, 필요할 때만 직접 붙여넣으세요."></textarea>
+            </div>
+          </details>
         </details>
 
         <div class="field">

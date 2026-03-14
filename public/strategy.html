@@ -118,11 +118,18 @@
           <p id="snapshotMeta" class="snapshot-meta">리서치툴에서 먼저 검색하면 최근 수집 결과를 자동으로 가져올 수 있습니다.</p>
         </div>
 
-        <div class="field">
-          <label for="researchDataInput">리서치 수집 결과</label>
-          <textarea id="researchDataInput" class="research-textarea" placeholder="리서치툴에서 가져온 수집 결과가 여기에 들어옵니다. 직접 붙여넣어도 됩니다."></textarea>
-          <div class="hint">리서치툴에서 저장한 최신 결과를 불러오거나, 다른 수집 결과를 직접 붙여넣어도 됩니다.</div>
+        <div class="compact-action-card">
+          리서치 수집결과는 화면에 길게 보여주지 않고 자동으로 사용합니다. 직접 수정이 필요할 때만 아래를 펼치면 됩니다.
         </div>
+
+        <details class="research-edit-details">
+          <summary>리서치 수집결과 직접 수정</summary>
+          <div class="field mt-12">
+            <label for="researchDataInput">리서치 수집 결과</label>
+            <textarea id="researchDataInput" class="research-textarea" placeholder="리서치툴에서 가져온 수집 결과가 여기에 들어옵니다. 직접 붙여넣어도 됩니다."></textarea>
+            <div class="hint">리서치툴에서 저장한 최신 결과를 불러오거나, 다른 수집 결과를 직접 붙여넣어도 됩니다.</div>
+          </div>
+        </details>
       </div>
     </section>
 

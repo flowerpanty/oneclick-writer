@@ -208,6 +208,20 @@
   white-space: pre;
 }
 
+.strategy-page .research-edit-details {
+  margin-top: 14px;
+}
+
+.strategy-page .research-edit-details summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.strategy-page .research-edit-details[open] summary {
+  margin-bottom: 12px;
+}
+
 .strategy-page .result-preview {
   display: grid;
   gap: 14px;
