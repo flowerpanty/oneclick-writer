@@ -1,6 +1,7 @@
 import express from "express";
 import crypto from "node:crypto";
 import dotenv from "dotenv";
+import { jsonrepair } from "jsonrepair";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
@@ -3576,6 +3577,8 @@ function buildSystemPrompt() {
 - (줄바꿈 규칙 - 매우 중요) JSON 문자열 값 안에는 "실제 개행(엔터)"을 넣지 마라.
   - 줄바꿈이 필요하면 반드시 "\\n" 또는 "\\n\\n" 으로 표현한다.
   - 예: 문단 사이 빈 줄 = "\\n\\n"
+- (따옴표 규칙 - 매우 중요) 본문/캡션/설명 문자열 안에 큰따옴표(")를 직접 쓰지 말고, 가능하면 작은따옴표(')나 괄호로 바꿔라.
+  - 정말 큰따옴표가 필요하면 반드시 \\\" 형태로 escape 한다.
 - (해시태그 규칙 업그레이드) 해시태그는 instagram/naver/wordpress는 "강력한 3개만", threads는 "딱 2개만" 제공한다. (기존 8~15개 규칙보다 우선)
   - instagram/naver/wordpress: 정확히 3개, 공백으로만 구분, 줄바꿈 금지.
   - threads: 정확히 2개, 공백으로만 구분, 줄바꿈 금지.
@@ -3758,6 +3761,179 @@ function buildStyleMemoryResponse(memory, extra = {}) {
   };
 }
 
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeJsonCandidateText(text) {
+  return (text || "")
+    .toString()
+    .replace(/^\uFEFF/, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/[“”]/g, "\"")
+    .replace(/[‘’]/g, "'")
+    .trim();
+}
+
+function collectBalancedJsonCandidates(text) {
+  const source = normalizeJsonCandidateText(text);
+  if (!source) return [];
+
+  const slices = [];
+  let start = -1;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = 0; index < source.length; index += 1) {
+    const ch = source[index];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (ch === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (ch === "\"") {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (ch === "\"") {
+      inString = true;
+      continue;
+    }
+
+    if (ch === "{") {
+      if (depth === 0) {
+        start = index;
+      }
+      depth += 1;
+      continue;
+    }
+
+    if (ch === "}" && depth > 0) {
+      depth -= 1;
+      if (depth === 0 && start >= 0) {
+        slices.push(source.slice(start, index + 1));
+        start = -1;
+      }
+    }
+  }
+
+  return slices.sort((a, b) => b.length - a.length);
+}
+
+function normalizeStringArray(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => (item || "").toString().trim()).filter(Boolean);
+  }
+
+  return (value || "")
+    .toString()
+    .split(/\r?\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function normalizeChannelVersions(channelValue, knownFields, normalizeVersion) {
+  if (Array.isArray(channelValue)) {
+    return channelValue.map((version) => normalizeVersion(version));
+  }
+
+  if (isPlainObject(channelValue) && Array.isArray(channelValue.versions)) {
+    return channelValue.versions.map((version) => normalizeVersion(version));
+  }
+
+  if (
+    isPlainObject(channelValue) &&
+    knownFields.some((field) => Object.prototype.hasOwnProperty.call(channelValue, field))
+  ) {
+    return [normalizeVersion(channelValue)];
+  }
+
+  return [];
+}
+
+function normalizeGeneratedOutputShape(parsedObject) {
+  if (!isPlainObject(parsedObject)) {
+    return parsedObject;
+  }
+
+  const normalized = { ...parsedObject };
+
+  normalized.instagram = {
+    versions: normalizeChannelVersions(
+      parsedObject.instagram,
+      ["caption", "hashtags", "alt_text"],
+      (version) => ({
+        caption: (version?.caption || "").toString(),
+        hashtags: (version?.hashtags || "").toString(),
+        alt_text: (version?.alt_text || "").toString(),
+      }),
+    ),
+  };
+
+  normalized.naver = {
+    versions: normalizeChannelVersions(
+      parsedObject.naver,
+      ["title", "body", "hashtags"],
+      (version) => ({
+        title: (version?.title || "").toString(),
+        body: (version?.body || "").toString(),
+        hashtags: (version?.hashtags || "").toString(),
+      }),
+    ),
+  };
+
+  normalized.wordpress = {
+    versions: normalizeChannelVersions(
+      parsedObject.wordpress,
+      ["seo", "body"],
+      (version) => ({
+        seo: {
+          seo_title: (version?.seo?.seo_title || "").toString(),
+          slug: (version?.seo?.slug || "").toString(),
+          meta_description: (version?.seo?.meta_description || "").toString(),
+          focus_keyphrase: (version?.seo?.focus_keyphrase || "").toString(),
+          lsi_keywords: normalizeStringArray(version?.seo?.lsi_keywords),
+        },
+        body: (version?.body || "").toString(),
+      }),
+    ),
+  };
+
+  normalized.threads = {
+    versions: normalizeChannelVersions(
+      parsedObject.threads,
+      ["text", "hashtags", "alt_text"],
+      (version) => ({
+        text: (version?.text || "").toString(),
+        hashtags: (version?.hashtags || "").toString(),
+        alt_text: (version?.alt_text || "").toString(),
+      }),
+    ),
+  };
+
+  normalized.sns_summary = {
+    versions: normalizeChannelVersions(
+      parsedObject.sns_summary,
+      ["threads_text", "instagram_text", "hashtags"],
+      (version) => ({
+        threads_text: (version?.threads_text || "").toString(),
+        instagram_text: (version?.instagram_text || "").toString(),
+        hashtags: (version?.hashtags || "").toString(),
+      }),
+    ),
+  };
+
+  return normalized;
+}
+
 /**
  * Sanitize malformed JSON text from ChatGPT:
  * - Escape actual newlines/tabs inside JSON string values
@@ -3811,50 +3987,104 @@ function sanitizeJsonString(text) {
 }
 
 function extractJsonObject(raw) {
-  const text = (raw || "").toString().trim();
+  const text = normalizeJsonCandidateText(raw);
   if (!text) {
     throw new Error("붙여넣은 결과가 비어 있어요.");
   }
 
   const tryParse = (value) => {
     try {
-      return JSON.parse(value);
+      const parsed = JSON.parse(value);
+      return isPlainObject(parsed) ? parsed : null;
     } catch {
       return null;
     }
   };
 
-  // Attempt 1: direct parse
-  const direct = tryParse(text);
-  if (direct) return direct;
+  const candidates = [];
+  const seen = new Set();
 
-  // Attempt 2: extract from code fence
+  const pushCandidate = (value, mode) => {
+    const candidate = normalizeJsonCandidateText(value);
+    if (!candidate || seen.has(candidate)) return;
+    seen.add(candidate);
+    candidates.push({ value: candidate, mode });
+  };
+
+  pushCandidate(text, "direct");
+  pushCandidate(sanitizeJsonString(text), "sanitized");
+
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fenced?.[1]) {
-    const parsed = tryParse(fenced[1].trim());
-    if (parsed) return parsed;
+    pushCandidate(fenced[1], "fenced");
+    pushCandidate(sanitizeJsonString(fenced[1]), "fenced-sanitized");
   }
 
-  // Attempt 3: slice from first { to last }
+  for (const slice of collectBalancedJsonCandidates(text)) {
+    pushCandidate(slice, "balanced");
+    pushCandidate(sanitizeJsonString(slice), "balanced-sanitized");
+  }
+
   const firstBrace = text.indexOf("{");
   const lastBrace = text.lastIndexOf("}");
   if (firstBrace >= 0 && lastBrace > firstBrace) {
-    const sliced = text.slice(firstBrace, lastBrace + 1);
-    const parsed = tryParse(sliced);
-    if (parsed) return parsed;
-
-    // Attempt 4: sanitize and retry
-    const sanitized = sanitizeJsonString(sliced);
-    const parsedSanitized = tryParse(sanitized);
-    if (parsedSanitized) return parsedSanitized;
+    pushCandidate(text.slice(firstBrace, lastBrace + 1), "first-last-brace");
   }
 
-  // Attempt 5: sanitize the entire text and retry
-  const fullSanitized = sanitizeJsonString(text);
-  const parsedFull = tryParse(fullSanitized);
-  if (parsedFull) return parsedFull;
+  for (const candidate of [...candidates]) {
+    try {
+      const repaired = jsonrepair(candidate.value);
+      pushCandidate(repaired, `${candidate.mode}-jsonrepair`);
+      pushCandidate(sanitizeJsonString(repaired), `${candidate.mode}-jsonrepair-sanitized`);
+    } catch {
+      // ignore repair failures and continue
+    }
+  }
+
+  for (const candidate of candidates) {
+    const parsed = tryParse(candidate.value);
+    if (parsed) {
+      return {
+        data: normalizeGeneratedOutputShape(parsed),
+        meta: {
+          repairApplied: /repair|sanitized/.test(candidate.mode),
+          extractionMode: candidate.mode,
+          normalizedJson: JSON.stringify(normalizeGeneratedOutputShape(parsed), null, 2),
+        },
+      };
+    }
+  }
 
   throw new Error("JSON 파싱에 실패했어요. ChatGPT 출력 전체를 그대로 붙여넣어 주세요.");
+}
+
+function parseGeneratedContent(raw, variantCount) {
+  const { data, meta } = extractJsonObject(raw);
+  const schema = buildOutputSchema(variantCount);
+  const parsed = schema.parse(data);
+
+  assertNoTemplateValues(parsed);
+
+  for (const v of parsed.instagram.versions) {
+    v.hashtags = normalizeHashtagLine(v.hashtags);
+  }
+  for (const v of parsed.naver.versions) {
+    v.hashtags = normalizeHashtagLine(v.hashtags);
+  }
+  for (const v of parsed.threads.versions) {
+    v.hashtags = normalizeHashtagLine(v.hashtags);
+  }
+  for (const v of parsed.sns_summary.versions) {
+    v.hashtags = normalizeHashtagLine(v.hashtags);
+  }
+
+  return {
+    parsed,
+    meta: {
+      ...meta,
+      normalizedJson: JSON.stringify(parsed, null, 2),
+    },
+  };
 }
 
 function assertNoTemplateValues(parsed) {
@@ -4110,26 +4340,11 @@ app.post("/api/parse", (req, res) => {
     const variantCount = parseVariantCount(body.variants);
     const raw = (body.raw || "").toString();
 
-    const parsedObject = extractJsonObject(raw);
-    const schema = buildOutputSchema(variantCount);
-    const parsed = schema.parse(parsedObject);
-
-    assertNoTemplateValues(parsed);
-
-    for (const v of parsed.instagram.versions) {
-      v.hashtags = normalizeHashtagLine(v.hashtags);
-    }
-    for (const v of parsed.naver.versions) {
-      v.hashtags = normalizeHashtagLine(v.hashtags);
-    }
-    for (const v of parsed.threads.versions) {
-      v.hashtags = normalizeHashtagLine(v.hashtags);
-    }
-    for (const v of parsed.sns_summary.versions) {
-      v.hashtags = normalizeHashtagLine(v.hashtags);
-    }
-
-    res.json(parsed);
+    const { parsed, meta } = parseGeneratedContent(raw, variantCount);
+    res.json({
+      ...parsed,
+      __meta: meta,
+    });
   } catch (err) {
     const message = err?.issues
       ? err.issues.map(i => `${i.path.join('.')}: ${i.message}`).join('; ')
@@ -4241,28 +4456,20 @@ app.post("/api/auto-generate", async (req, res) => {
     send({ type: "log", message: "응답 텍스트 파싱 중…" });
     send({ type: "progress", percent: 95 });
 
-    // Parse the response JSON
-    const parsedObject = extractJsonObject(responseText);
     const variantCount = parseVariantCount(variants);
-    const schema = buildOutputSchema(variantCount);
-    const parsed = schema.parse(parsedObject);
+    const { parsed, meta } = parseGeneratedContent(responseText, variantCount);
 
-    assertNoTemplateValues(parsed);
-
-    for (const v of parsed.instagram.versions) {
-      v.hashtags = normalizeHashtagLine(v.hashtags);
-    }
-    for (const v of parsed.naver.versions) {
-      v.hashtags = normalizeHashtagLine(v.hashtags);
-    }
-    for (const v of parsed.threads.versions) {
-      v.hashtags = normalizeHashtagLine(v.hashtags);
-    }
-    for (const v of parsed.sns_summary.versions) {
-      v.hashtags = normalizeHashtagLine(v.hashtags);
+    if (meta.repairApplied) {
+      send({ type: "log", message: `JSON 작은 오류 자동 보정 ✓ (${meta.extractionMode})` });
     }
 
-    send({ type: "result", data: parsed });
+    send({
+      type: "result",
+      data: {
+        ...parsed,
+        __meta: meta,
+      },
+    });
     send({ type: "progress", percent: 100 });
   } catch (err) {
     const message = err?.issues

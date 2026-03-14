@@ -125,10 +125,11 @@ body {
 
 .header-link {
   display: inline-flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   justify-content: center;
-  min-height: 30px;
-  padding: 0 12px;
+  min-height: 38px;
+  padding: 6px 12px;
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -137,12 +138,30 @@ body {
   font-weight: 700;
   text-decoration: none;
   transition: var(--transition);
+  line-height: 1.15;
 }
 
 .header-link:hover {
   color: var(--text);
   border-color: rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.08);
+}
+
+.header-link-label {
+  color: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.header-link-meta {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.header-link:hover .header-link-meta {
+  color: var(--text-secondary);
 }
 
 .header .badge {

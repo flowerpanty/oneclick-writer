@@ -718,6 +718,9 @@ async function applyResultJson() {
     }
 
     state.parsed = json;
+    if (json?.__meta?.normalizedJson) {
+      els.resultJson.value = json.__meta.normalizedJson;
+    }
     const count = json?.wordpress?.versions?.length || 1;
     state.variantCount = count;
     state.activeVersion = 0;
@@ -726,8 +729,12 @@ async function applyResultJson() {
     fillOutputs();
     activateTab("instagram");
     setStep(3);
-    setStatus("");
-    showToast("✅ 결과 반영 완료!");
+    setStatus(
+      json?.__meta?.repairApplied
+        ? `JSON 작은 오류를 자동 보정해서 반영했습니다. (${json.__meta.extractionMode || "auto"})`
+        : "",
+    );
+    showToast(json?.__meta?.repairApplied ? "✅ 자동 보정 후 반영 완료!" : "✅ 결과 반영 완료!");
   } catch (err) {
     setError(err?.message || "오류가 발생했어요.");
   } finally {
@@ -842,6 +849,7 @@ async function autoGenerate() {
 
     if (resultData) {
       state.parsed = resultData;
+      els.resultJson.value = resultData?.__meta?.normalizedJson || JSON.stringify(resultData, null, 2);
       const count = resultData?.wordpress?.versions?.length || 1;
       state.variantCount = count;
       state.activeVersion = 0;
@@ -850,7 +858,11 @@ async function autoGenerate() {
       fillOutputs();
       activateTab("instagram");
       setStep(3);
-      showToast("🎉 자동 생성 완료!");
+      if (resultData?.__meta?.repairApplied) {
+        addProgressLog(`JSON 작은 오류 자동 보정 ✓ (${resultData.__meta.extractionMode || "auto"})`);
+        setStatus("자동 생성 결과의 JSON 작은 오류를 자동 보정해 반영했습니다.");
+      }
+      showToast(resultData?.__meta?.repairApplied ? "🎉 자동 생성 완료! 자동 보정 포함" : "🎉 자동 생성 완료!");
     } else {
       throw new Error("결과를 받지 못했어요. 다시 시도해주세요.");
     }
