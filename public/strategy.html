@@ -154,10 +154,11 @@
         <div id="statusText" class="status-bar mt-8"></div>
         <div id="errorText" class="status-bar error mt-8"></div>
 
-        <div class="field">
-          <label for="promptOutput">생성된 프롬프트</label>
-          <textarea id="promptOutput" class="prompt-textarea" readonly placeholder="프롬프트 만들기를 누르면 여기에 채워집니다."></textarea>
+        <div class="compact-action-card">
+          프롬프트는 화면에 길게 표시하지 않고, <strong>프롬프트 복사</strong> 버튼으로 바로 쓸 수 있게 준비됩니다.
         </div>
+
+        <textarea id="promptOutput" class="prompt-storage" readonly aria-hidden="true" tabindex="-1"></textarea>
       </div>
     </section>
 
@@ -180,7 +181,7 @@
 
         <div class="field">
           <label for="resultOutput">콘텐츠 기획안 결과</label>
-          <textarea id="resultOutput" class="result-textarea" placeholder="여기에 기획안 결과가 표시됩니다."></textarea>
+          <textarea id="resultOutput" class="result-paste-line" placeholder="여기에 GPT 결과 JSON만 붙여넣으면 바로 아래에서 정리됩니다."></textarea>
         </div>
 
         <div class="divider"></div>
