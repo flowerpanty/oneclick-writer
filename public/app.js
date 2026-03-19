@@ -41,7 +41,6 @@ const els = {
   autoGenerateBtn: $("autoGenerateBtn"),
   openChatgptBtn: $("openChatgptBtn"),
   applyJsonBtn: $("applyJsonBtn"),
-  toggleResultsBtn: $("toggleResultsBtn"),
   clearBtn: $("clearBtn"),
   copyPromptBtn: $("copyPromptBtn"),
 
@@ -128,7 +127,7 @@ const state = {
   styleMemory: null,
   autoApplyTimer: null,
   lastAppliedResultRaw: "",
-  resultsVisible: false,
+  resultsVisible: true,
 };
 
 // ===== Toast Notification =====
@@ -562,12 +561,9 @@ function openAdvancedOptions() {
 }
 
 function setResultsVisible(visible) {
-  state.resultsVisible = Boolean(visible);
+  state.resultsVisible = visible !== false;
   if (els.resultsSection) {
-    els.resultsSection.classList.toggle("hidden", !state.resultsVisible);
-  }
-  if (els.toggleResultsBtn) {
-    els.toggleResultsBtn.textContent = state.resultsVisible ? "결과 숨기기" : "결과 보기";
+    els.resultsSection.classList.remove("hidden");
   }
 }
 
@@ -1208,7 +1204,7 @@ function clearAll() {
   state.lastAppliedResultRaw = "";
   clearTimeout(state.autoApplyTimer);
 
-  setResultsVisible(false);
+  setResultsVisible(true);
   setVersionTabs(1);
   renderMetaSummary(null);
   runSeoAudit(null);
@@ -1226,9 +1222,6 @@ els.openChatgptBtn.addEventListener("click", () => {
   window.open("https://chatgpt.com", "_blank", "noopener,noreferrer");
 });
 els.applyJsonBtn.addEventListener("click", applyResultJson);
-els.toggleResultsBtn.addEventListener("click", () => {
-  setResultsVisible(!state.resultsVisible);
-});
 els.clearBtn.addEventListener("click", clearAll);
 els.copyPromptBtn.addEventListener("click", () =>
   copyToClipboard(els.generatedPrompt.value || "")
@@ -1347,7 +1340,7 @@ els.twoVariants.addEventListener("change", () => {
 });
 
 // Init
-setResultsVisible(false);
+setResultsVisible(true);
 setStep(1);
 runSeoAudit(null);
 loadStyleMemory();

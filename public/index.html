@@ -247,15 +247,13 @@
         </div>
 
         <div class="field" style="margin-bottom: 0;">
-          <label for="resultJson" style="display:flex; justify-content:space-between; align-items:center;">
-            <span>ChatGPT 결과 JSON 붙여넣기</span>
-            <span style="display:flex; gap:8px; align-items:center;">
-              <button id="toggleResultsBtn" class="btn-secondary" type="button" style="padding: 6px 12px; font-size: 12px;">결과 보기</button>
-              <button id="applyJsonBtn" class="btn-primary" style="padding: 6px 14px; font-size: 12px;">✅ 결과 불러오기</button>
-            </span>
-          </label>
+          <label for="resultJson">ChatGPT 결과 JSON 붙여넣기</label>
           <textarea id="resultJson" class="result-paste-line"
             placeholder='여기에 {"instagram":{...}} 형식의 결과를 붙여넣으세요. 붙여넣으면 자동으로 불러옵니다.'></textarea>
+          <div class="btn-row" style="margin-top: 10px; align-items: center;">
+            <button id="applyJsonBtn" class="btn-primary" type="button" style="padding: 10px 16px;">✅ 결과 불러오기</button>
+            <span class="hint" style="margin: 0;">자동 반영이 안 될 때만 눌러주세요.</span>
+          </div>
         </div>
       </div>
     </section>
@@ -344,7 +342,7 @@
     <!-- ═══════════════════════════════════════════
          SECTION 4: 생성 결과
     ═══════════════════════════════════════════ -->
-    <section class="section-block section-results hidden" id="resultsSection">
+    <section class="section-block section-results" id="resultsSection">
       <div class="section-header">
         <span class="section-icon">📊</span>
         <h2>생성 결과</h2>
