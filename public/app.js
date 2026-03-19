@@ -575,6 +575,25 @@ function revealResultsSection() {
   });
 }
 
+function getParsedVariantCount(parsed) {
+  const lengths = [
+    parsed?.instagram?.versions?.length,
+    parsed?.naver?.versions?.length,
+    parsed?.wordpress?.versions?.length,
+    parsed?.threads?.versions?.length,
+    parsed?.sns_summary?.versions?.length,
+    parsed?.__meta?.inferredVariantCount,
+  ]
+    .map((value) => parseInt(value, 10))
+    .filter((value) => Number.isFinite(value) && value > 0);
+
+  if (lengths.length === 0) {
+    return 1;
+  }
+
+  return lengths.some((value) => value >= 2) ? 2 : 1;
+}
+
 function canAutoApplyResult(raw) {
   const value = (raw || "").trim();
   return value.length > 20 && value.includes("{") && value.includes("}");
@@ -975,7 +994,7 @@ async function applyResultJson(options = {}) {
       els.resultJson.value = json.__meta.normalizedJson;
     }
     state.lastAppliedResultRaw = (els.resultJson.value || raw).trim();
-    const count = json?.wordpress?.versions?.length || 1;
+    const count = getParsedVariantCount(json);
     state.variantCount = count;
     state.activeVersion = 0;
 
@@ -1111,7 +1130,7 @@ async function autoGenerate() {
     if (resultData) {
       state.parsed = resultData;
       els.resultJson.value = resultData?.__meta?.normalizedJson || JSON.stringify(resultData, null, 2);
-      const count = resultData?.wordpress?.versions?.length || 1;
+      const count = getParsedVariantCount(resultData);
       state.variantCount = count;
       state.activeVersion = 0;
 
