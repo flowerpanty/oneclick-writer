@@ -123,7 +123,7 @@ const els = {
 // ===== State =====
 const state = {
   parsed: null,
-  variantCount: 1,
+  variantCount: 2,
   activeVersion: 0,
   prompt: "",
   styleMemory: null,
@@ -1111,14 +1111,14 @@ function clearAll() {
   els.keywordMentions.value = "3-5";
   els.styleSampleSource.value = "manual";
   els.includeFaq.checked = false;
-  els.twoVariants.checked = false;
+  els.twoVariants.checked = true;
 
   state.parsed = null;
-  state.variantCount = 1;
+  state.variantCount = 2;
   state.activeVersion = 0;
   state.prompt = "";
 
-  setVersionTabs(1);
+  setVersionTabs(2);
   renderMetaSummary(null);
   runSeoAudit(null);
   setStatus("");
@@ -1245,6 +1245,7 @@ on(els.twoVariants, "change", () => {
 });
 
 // Init
+setVersionTabs(2);
 setStep(1);
 runSeoAudit(null);
 loadStyleMemory();
