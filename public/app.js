@@ -202,6 +202,7 @@ async function copyToClipboard(text, options = {}) {
   const {
     toast = true,
     successMessage = "✅ 복사 완료!",
+    preferElement = null,
   } = options;
 
   let copied = false;
@@ -209,14 +210,29 @@ async function copyToClipboard(text, options = {}) {
     await navigator.clipboard.writeText(value);
     copied = true;
   } catch {
-    const ta = document.createElement("textarea");
-    ta.value = value;
-    ta.style.position = "fixed";
-    ta.style.opacity = "0";
-    document.body.appendChild(ta);
-    ta.select();
-    copied = document.execCommand("copy");
-    document.body.removeChild(ta);
+    // Some mobile browsers (especially iOS) copy more reliably
+    // when selecting a visible textarea in the document.
+    if (preferElement && typeof preferElement.select === "function") {
+      try {
+        preferElement.focus();
+        preferElement.select();
+        preferElement.setSelectionRange(0, preferElement.value.length);
+        copied = document.execCommand("copy");
+      } catch {
+        copied = false;
+      }
+    }
+
+    if (!copied) {
+      const ta = document.createElement("textarea");
+      ta.value = value;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      copied = document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
   }
 
   if (copied && toast) {
@@ -900,6 +916,7 @@ async function buildPrompt() {
     const copied = await copyToClipboard(state.prompt, {
       toast: true,
       successMessage: "📋 프롬프트 자동 복사 완료!",
+      preferElement: els.generatedPrompt,
     });
     if (!copied) {
       selectPromptText();
