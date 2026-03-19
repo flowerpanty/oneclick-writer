@@ -41,6 +41,7 @@ const els = {
   autoGenerateBtn: $("autoGenerateBtn"),
   openChatgptBtn: $("openChatgptBtn"),
   applyJsonBtn: $("applyJsonBtn"),
+  toggleResultsBtn: $("toggleResultsBtn"),
   clearBtn: $("clearBtn"),
   copyPromptBtn: $("copyPromptBtn"),
 
@@ -58,6 +59,7 @@ const els = {
   metaCoreAngle: $("metaCoreAngle"),
   metaMissingInfo: $("metaMissingInfo"),
 
+  resultsSection: $("resultsSection"),
   versionTabs: $("versionTabs"),
   seoAudit: $("seoAudit"),
 
@@ -124,6 +126,9 @@ const state = {
   activeVersion: 0,
   prompt: "",
   styleMemory: null,
+  autoApplyTimer: null,
+  lastAppliedResultRaw: "",
+  resultsVisible: false,
 };
 
 // ===== Toast Notification =====
@@ -192,10 +197,17 @@ function hideProgress() {
 }
 
 // ===== Copy to Clipboard =====
-async function copyToClipboard(text) {
+async function copyToClipboard(text, options = {}) {
   const value = (text || "").toString();
+  const {
+    toast = true,
+    successMessage = "✅ 복사 완료!",
+  } = options;
+
+  let copied = false;
   try {
     await navigator.clipboard.writeText(value);
+    copied = true;
   } catch {
     const ta = document.createElement("textarea");
     ta.value = value;
@@ -203,10 +215,15 @@ async function copyToClipboard(text) {
     ta.style.opacity = "0";
     document.body.appendChild(ta);
     ta.select();
-    document.execCommand("copy");
+    copied = document.execCommand("copy");
     document.body.removeChild(ta);
   }
-  showToast("✅ 복사 완료!");
+
+  if (copied && toast) {
+    showToast(successMessage);
+  }
+
+  return copied;
 }
 
 // ===== Copy button feedback =====
@@ -519,6 +536,33 @@ function openAdvancedOptions() {
   if (els.advancedOptions) {
     els.advancedOptions.open = true;
   }
+}
+
+function setResultsVisible(visible) {
+  state.resultsVisible = Boolean(visible);
+  if (els.resultsSection) {
+    els.resultsSection.classList.toggle("hidden", !state.resultsVisible);
+  }
+  if (els.toggleResultsBtn) {
+    els.toggleResultsBtn.textContent = state.resultsVisible ? "결과 숨기기" : "결과 보기";
+  }
+}
+
+function canAutoApplyResult(raw) {
+  const value = (raw || "").trim();
+  return value.length > 20 && value.includes("{") && value.includes("}");
+}
+
+function scheduleAutoApplyResult(delay = 250) {
+  clearTimeout(state.autoApplyTimer);
+
+  const raw = (els.resultJson.value || "").trim();
+  if (!canAutoApplyResult(raw)) return;
+  if (raw === state.lastAppliedResultRaw) return;
+
+  state.autoApplyTimer = setTimeout(() => {
+    applyResultJson({ silent: true });
+  }, delay);
 }
 
 // ===== Tab Switching =====
@@ -846,12 +890,18 @@ async function buildPrompt() {
     state.variantCount = json.variantCount === 2 ? 2 : 1;
     els.generatedPrompt.value = state.prompt;
 
-    await copyToClipboard(state.prompt);
+    const copied = await copyToClipboard(state.prompt, {
+      toast: true,
+      successMessage: "📋 프롬프트 자동 복사 완료!",
+    });
     const styleMessage =
       json?.styleApplied && json?.styleSampleCount
         ? ` 스타일 메모리 ${json.styleSampleCount}개도 반영됐습니다.`
         : "";
-    setStatus(`프롬프트 준비 완료! ChatGPT에 붙여넣고 생성하세요.${styleMessage}`);
+    const copyMessage = copied
+      ? " 프롬프트는 자동 복사됐어요."
+      : " 자동 복사는 브라우저가 막아서 아래 '프롬프트 복사' 버튼을 써주세요.";
+    setStatus(`프롬프트 준비 완료! ChatGPT에 붙여넣고 생성하세요.${styleMessage}${copyMessage}`);
     setStep(2);
   } catch (err) {
     setError(err?.message || "오류가 발생했어요.");
@@ -861,18 +911,21 @@ async function buildPrompt() {
 }
 
 // ===== Apply JSON result =====
-async function applyResultJson() {
+async function applyResultJson(options = {}) {
+  const { silent = false } = options;
   setError("");
-  setStatus("");
+  if (!silent) setStatus("");
 
   const raw = (els.resultJson.value || "").trim();
   if (!raw) {
-    setError("ChatGPT 결과 JSON을 붙여넣어 주세요.");
-    return;
+    if (!silent) {
+      setError("ChatGPT 결과 JSON을 붙여넣어 주세요.");
+    }
+    return false;
   }
 
   els.applyJsonBtn.disabled = true;
-  setStatus("결과 검증/적용 중…");
+  setStatus(silent ? "붙여넣은 JSON을 자동으로 불러오는 중…" : "결과 검증/적용 중…");
 
   try {
     const res = await fetch("/api/parse", {
@@ -890,6 +943,7 @@ async function applyResultJson() {
     if (json?.__meta?.normalizedJson) {
       els.resultJson.value = json.__meta.normalizedJson;
     }
+    state.lastAppliedResultRaw = (els.resultJson.value || raw).trim();
     const count = json?.wordpress?.versions?.length || 1;
     state.variantCount = count;
     state.activeVersion = 0;
@@ -901,11 +955,17 @@ async function applyResultJson() {
     setStatus(
       json?.__meta?.repairApplied
         ? `JSON 작은 오류를 자동 보정해서 반영했습니다. (${json.__meta.extractionMode || "auto"})`
-        : "",
+        : silent ? "붙여넣은 JSON을 자동으로 불러왔습니다." : "",
     );
-    showToast(json?.__meta?.repairApplied ? "✅ 자동 보정 후 반영 완료!" : "✅ 결과 반영 완료!");
+    if (!silent || json?.__meta?.repairApplied) {
+      showToast(json?.__meta?.repairApplied ? "✅ 자동 보정 후 반영 완료!" : "✅ 결과 반영 완료!");
+    }
+    return true;
   } catch (err) {
-    setError(err?.message || "오류가 발생했어요.");
+    if (!silent) {
+      setError(err?.message || "오류가 발생했어요.");
+    }
+    return false;
   } finally {
     els.applyJsonBtn.disabled = false;
   }
@@ -1108,7 +1168,10 @@ function clearAll() {
   state.variantCount = 1;
   state.activeVersion = 0;
   state.prompt = "";
+  state.lastAppliedResultRaw = "";
+  clearTimeout(state.autoApplyTimer);
 
+  setResultsVisible(false);
   setVersionTabs(1);
   renderMetaSummary(null);
   runSeoAudit(null);
@@ -1126,6 +1189,9 @@ els.openChatgptBtn.addEventListener("click", () => {
   window.open("https://chatgpt.com", "_blank", "noopener,noreferrer");
 });
 els.applyJsonBtn.addEventListener("click", applyResultJson);
+els.toggleResultsBtn.addEventListener("click", () => {
+  setResultsVisible(!state.resultsVisible);
+});
 els.clearBtn.addEventListener("click", clearAll);
 els.copyPromptBtn.addEventListener("click", () =>
   copyToClipboard(els.generatedPrompt.value || "")
@@ -1219,6 +1285,14 @@ els.copySsHashtags.addEventListener("click", () =>
   copyToClipboard(els.ssHashtags.value.trim())
 );
 
+els.resultJson.addEventListener("paste", () => {
+  setTimeout(() => scheduleAutoApplyResult(120), 0);
+});
+
+els.resultJson.addEventListener("input", () => {
+  scheduleAutoApplyResult(500);
+});
+
 // Ctrl/Cmd + Enter -> build prompt
 els.story.addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
@@ -1236,6 +1310,7 @@ els.twoVariants.addEventListener("change", () => {
 });
 
 // Init
+setResultsVisible(false);
 setStep(1);
 runSeoAudit(null);
 loadStyleMemory();
@@ -1292,7 +1367,8 @@ fetch("/api/health")
   // JSON 결과도 있으면 자동 붙여넣기
   if (params.get('json') && bridge.resultJson) {
     els.resultJson.value = bridge.resultJson;
-    showToast('에이전트에서 JSON 결과를 불러왔어요! "결과 불러오기"를 눌러주세요.');
+    scheduleAutoApplyResult(120);
+    showToast('에이전트에서 JSON 결과를 자동으로 불러오는 중이에요.');
     setStep(2);
   } else {
     showToast('에이전트 데이터를 불러왔어요! 내용을 확인하고 프롬프트를 생성해 주세요.');
