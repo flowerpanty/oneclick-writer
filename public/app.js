@@ -1203,6 +1203,16 @@ if (styleSection) {
   }
 }
 
+const metaSection = document.getElementById("metaSummaryCard");
+if (metaSection) {
+  const toggleHint = metaSection.querySelector(".toggle-hint");
+  if (toggleHint) {
+    metaSection.addEventListener("toggle", () => {
+      toggleHint.textContent = metaSection.open ? "접기 ▾" : "펼치기 ▸";
+    });
+  }
+}
+
 // Copy buttons with feedback animation
 document.querySelectorAll(".btn-copy").forEach(attachCopyFeedback);
 

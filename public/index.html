@@ -342,32 +342,40 @@
         <h2>생성 결과</h2>
       </div>
 
-      <div id="metaSummaryCard" class="card hidden" style="margin-bottom: 18px;">
-        <div class="field">
-          <label style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+      <details id="metaSummaryCard" class="section-details card hidden" style="margin-bottom: 18px;">
+        <summary class="section-header section-header-toggle" style="margin:0; padding:0; border:none; background:none;">
+          <span class="section-header-left">
             <span>프롬프트 메타</span>
-            <button id="applyMetaBtn" class="btn-secondary" type="button" disabled>메타 입력폼에 적용</button>
-          </label>
-        </div>
-        <div class="grid-2">
+          </span>
+          <span class="toggle-hint">펼치기 ▸</span>
+        </summary>
+        <div class="card" style="margin-top: 14px;">
           <div class="field">
-            <label for="metaInputType">입력 분류</label>
-            <input id="metaInputType" type="text" readonly />
+            <label style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+              <span>메타 정보</span>
+              <button id="applyMetaBtn" class="btn-secondary" type="button" disabled>메타 입력폼에 적용</button>
+            </label>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label for="metaInputType">입력 분류</label>
+              <input id="metaInputType" type="text" readonly />
+            </div>
+            <div class="field">
+              <label for="metaLine">라인 분류</label>
+              <input id="metaLine" type="text" readonly />
+            </div>
           </div>
           <div class="field">
-            <label for="metaLine">라인 분류</label>
-            <input id="metaLine" type="text" readonly />
+            <label for="metaCoreAngle">핵심 장면/감정</label>
+            <textarea id="metaCoreAngle" style="min-height:90px;" readonly></textarea>
+          </div>
+          <div class="field">
+            <label for="metaMissingInfo">검토 필요 정보</label>
+            <textarea id="metaMissingInfo" style="min-height:90px;" readonly></textarea>
           </div>
         </div>
-        <div class="field">
-          <label for="metaCoreAngle">핵심 장면/감정</label>
-          <textarea id="metaCoreAngle" style="min-height:90px;" readonly></textarea>
-        </div>
-        <div class="field">
-          <label for="metaMissingInfo">검토 필요 정보</label>
-          <textarea id="metaMissingInfo" style="min-height:90px;" readonly></textarea>
-        </div>
-      </div>
+      </details>
 
       <div id="versionTabs" class="tabs hidden" aria-label="버전 탭"></div>
 
