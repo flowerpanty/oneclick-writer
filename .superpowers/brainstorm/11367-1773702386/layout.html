@@ -1,0 +1,89 @@
+<h2>블로그 작성기 웹 앱 — 레이아웃 선택</h2>
+<p class="subtitle">Next.js 기반, Claude/Gemini 선택 가능. 어떤 구조가 좋으세요?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup" style="margin:0">
+        <div class="mockup-header" style="font-size:11px">블로그 AI 작성기</div>
+        <div class="mockup-body" style="padding:8px;display:flex;flex-direction:column;gap:6px;font-size:10px">
+          <div style="display:flex;gap:6px;align-items:center">
+            <div class="mock-input" style="flex:1;padding:3px 6px;font-size:10px">주제를 입력하세요…</div>
+            <div style="display:flex;gap:3px">
+              <div style="padding:3px 6px;background:#6366f1;color:#fff;border-radius:4px;font-size:9px">Claude</div>
+              <div style="padding:3px 6px;background:#eee;border-radius:4px;font-size:9px">Gemini</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:4px">
+            <div style="padding:2px 6px;background:#f3f4f6;border-radius:4px;font-size:9px">정보전달형</div>
+            <div style="padding:2px 6px;background:#f3f4f6;border-radius:4px;font-size:9px">스토리텔링</div>
+            <div style="padding:2px 6px;background:#f3f4f6;border-radius:4px;font-size:9px">가이드형</div>
+          </div>
+          <div class="mock-button" style="padding:4px;font-size:10px;text-align:center">✨ 블로그 생성</div>
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:6px;font-size:9px;min-height:50px;color:#9ca3af">생성된 블로그 글이 여기에 표시됩니다…</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 단일 페이지 (올인원)</h3>
+      <p>입력→설정→결과가 한 화면. 심플하고 빠름. 스크롤로 진행.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup" style="margin:0">
+        <div class="mockup-header" style="font-size:11px">블로그 AI 작성기</div>
+        <div class="mockup-body" style="padding:8px;display:flex;gap:8px;font-size:10px">
+          <div style="width:90px;background:#f9fafb;border-right:1px solid #e5e7eb;padding:6px;display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:9px;font-weight:bold;color:#6366f1">● 1. 입력</div>
+            <div style="font-size:9px;color:#aaa">○ 2. AI 선택</div>
+            <div style="font-size:9px;color:#aaa">○ 3. 스타일</div>
+            <div style="font-size:9px;color:#aaa">○ 4. 결과</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:9px;font-weight:bold">주제 입력</div>
+            <div class="mock-input" style="padding:4px 6px;font-size:9px">요즘 두쫀쿠가 유행한다던데…</div>
+            <div class="mock-button" style="padding:3px;font-size:9px;text-align:center">다음 →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. 단계별 위저드</h3>
+      <p>1입력 → 2API선택 → 3스타일 → 4결과. 각 단계 집중. 초보자에게 적합.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup" style="margin:0">
+        <div class="mockup-header" style="font-size:11px">블로그 AI 작성기</div>
+        <div class="mockup-body" style="padding:8px;display:flex;gap:8px;font-size:10px">
+          <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:9px;font-weight:bold">입력</div>
+            <div class="mock-input" style="padding:4px 6px;font-size:9px;min-height:40px">주제를 입력하세요…</div>
+            <div style="display:flex;gap:4px">
+              <div style="padding:2px 5px;background:#6366f1;color:#fff;border-radius:3px;font-size:8px">Claude ▼</div>
+              <div style="padding:2px 5px;background:#f3f4f6;border-radius:3px;font-size:8px">스타일 ▼</div>
+            </div>
+            <div class="mock-button" style="padding:3px;font-size:9px;text-align:center">생성</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:9px;font-weight:bold">결과</div>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:4px;font-size:8px;flex:1;min-height:80px;color:#9ca3af">블로그 글…</div>
+            <div class="mock-button" style="padding:3px;font-size:9px;text-align:center;background:#f3f4f6;color:#333">📋 복사</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. 좌우 분할 (에디터 스타일)</h3>
+      <p>왼쪽 입력/설정, 오른쪽 결과. 동시에 보임. 파워유저 친화적.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px">클릭하거나 터미널에 A/B/C로 답해주세요.</p>

@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>STEP 3 | 네이버 블로그 생성기</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" defer src="/step3.js"></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand-lockup" href="/">
+          <span class="brand-mark">N</span>
+          <span>네이버 블로그 생성기</span>
+        </a>
+        <nav class="step-nav">
+          <a class="step-link" href="/">홈</a>
+          <a class="step-link" href="/step1.html">STEP 1</a>
+          <a class="step-link" href="/step2.html">STEP 2</a>
+          <a class="step-link active" href="/step3.html">STEP 3</a>
+          <button class="step-link reset-link" id="reset-all-button" type="button">새로 시작</button>
+        </nav>
+      </header>
+
+      <main class="focus-main">
+        <div id="guard-message" class="warning-banner hidden"></div>
+
+        <section class="panel focus-card">
+          <div class="panel-head">
+            <p class="section-kicker">Step 3-①</p>
+            <h2>추가 입력 (선택사항)</h2>
+          </div>
+
+          <div class="compact-fields compact-fields-3">
+          <label class="field">
+            <span>브랜드명</span>
+            <input id="brand-name-input" type="text" placeholder="선택 입력" />
+          </label>
+
+          <label class="field">
+            <span>선호 톤</span>
+            <input id="preferred-tone-input" type="text" placeholder="예: 친절하지만 정보 밀도 높은 톤" />
+          </label>
+
+          <label class="field">
+            <span>네이버 에디터 라벨</span>
+            <input id="naver-editor-label-input" type="text" placeholder="예: ✍️ 에디터 노트" />
+          </label>
+          </div>
+        </section>
+
+        <!-- 프롬프트 생성 -->
+        <section class="panel focus-card">
+          <div class="panel-head">
+            <p class="section-kicker">Step 3-②</p>
+            <h2>프롬프트 생성 &amp; 복사</h2>
+          </div>
+
+          <div class="prompt-action-grid">
+            <button class="primary-button prompt-action-button" id="generate-step3-button" type="button">
+              프롬프트 생성
+            </button>
+            <button class="ghost-button prompt-action-button" id="clear-step3-prompt-button" type="button">
+              삭제
+            </button>
+          </div>
+
+          <details class="prompt-details">
+            <summary>생성된 프롬프트 보기</summary>
+            <textarea
+              id="step3-prompt-textarea"
+              class="prompt-textarea"
+              rows="14"
+              placeholder="생성된 STEP 3 프롬프트"
+            ></textarea>
+          </details>
+        </section>
+
+        <!-- 결과 붙여넣기 -->
+        <section class="panel focus-card">
+          <div class="panel-head split-head">
+            <div>
+              <p class="section-kicker">Step 3-③</p>
+              <h2>결과 붙여넣기</h2>
+            </div>
+            <div class="button-row">
+              <button class="ghost-button compact-button" id="clear-step3-result-button" type="button">
+                결과 삭제
+              </button>
+            </div>
+          </div>
+
+          <textarea
+            id="step3-result-textarea"
+            class="prompt-textarea result-textarea single-line-textarea"
+            rows="1"
+            placeholder='AI 전체 결과를 처음부터 끝까지 붙여넣기'
+          ></textarea>
+
+          <p class="subtle-note">`NAVER_VERSION`과 `WORDPRESS_VERSION`이 모두 포함된 전체 결과를 붙여넣어 주세요.</p>
+          <div id="step3-summary" class="compact-summary empty-state">
+            결과를 붙여넣으면 파싱 상태와 복사용 출력이 여기에 표시됩니다.
+          </div>
+        </section>
+
+        <!-- 네이버 복사본 (항상 펼쳐진 상태) -->
+        <section class="panel focus-card">
+          <div class="panel-head split-head">
+            <div>
+              <p class="section-kicker">Step 3-④ Naver</p>
+              <h2>네이버 블로그 복사본</h2>
+            </div>
+            <div class="button-row">
+              <button class="ghost-button copy-button" data-copy-target="naver-title-output" type="button">
+                제목 복사
+              </button>
+              <button class="secondary-button copy-button" data-copy-target="naver-body-output" type="button">
+                본문 복사
+              </button>
+            </div>
+          </div>
+
+          <label class="field">
+            <span>네이버 제목</span>
+            <textarea
+              id="naver-title-output"
+              class="readonly-output"
+              rows="2"
+              readonly
+              placeholder="STEP 3 결과를 넣으면 네이버 제목이 여기에 채워집니다."
+            ></textarea>
+          </label>
+
+          <label class="field">
+            <span>네이버 본문</span>
+            <textarea
+              id="naver-body-output"
+              class="readonly-output output-body"
+              rows="18"
+              readonly
+              placeholder="STEP 3 결과를 넣으면 네이버용 본문이 여기에 채워집니다."
+            ></textarea>
+          </label>
+        </section>
+
+        <!-- 워드프레스 복사본 (항상 펼쳐진 상태) -->
+        <section class="panel focus-card">
+          <div class="panel-head split-head">
+            <div>
+              <p class="section-kicker">Step 3-⑤ WordPress</p>
+              <h2>워드프레스 복사본</h2>
+            </div>
+            <div class="button-row">
+              <button class="ghost-button copy-button" data-copy-target="wordpress-title-output" type="button">
+                제목 복사
+              </button>
+              <button
+                class="ghost-button copy-button"
+                data-copy-target="wordpress-excerpt-output"
+                type="button"
+              >
+                요약 복사
+              </button>
+              <button
+                class="secondary-button copy-button"
+                data-copy-target="wordpress-html-output"
+                type="button"
+              >
+                HTML 복사
+              </button>
+            </div>
+          </div>
+
+          <label class="field">
+            <span>워드프레스 제목</span>
+            <textarea
+              id="wordpress-title-output"
+              class="readonly-output"
+              rows="2"
+              readonly
+              placeholder="STEP 3 결과를 넣으면 워드프레스 제목이 여기에 채워집니다."
+            ></textarea>
+          </label>
+
+          <label class="field">
+            <span>워드프레스 요약문</span>
+            <textarea
+              id="wordpress-excerpt-output"
+              class="readonly-output"
+              rows="4"
+              readonly
+              placeholder="STEP 3 결과를 넣으면 excerpt가 여기에 채워집니다."
+            ></textarea>
+          </label>
+
+          <label class="field">
+            <span>워드프레스 HTML 본문</span>
+            <textarea
+              id="wordpress-html-output"
+              class="readonly-output output-html"
+              rows="18"
+              readonly
+              placeholder="STEP 3 결과를 넣으면 워드프레스용 HTML이 여기에 채워집니다."
+            ></textarea>
+          </label>
+
+          <div id="wordpress-preview" class="wordpress-preview empty-state">
+            HTML 본문이 보이면 워드프레스 복붙 전 마지막 확인을 할 수 있습니다.
+          </div>
+        </section>
+
+        <div class="navigation-row">
+          <a class="ghost-button link-button" href="/step2.html">← STEP 2</a>
+          <a class="primary-button link-button" href="/">홈</a>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </body>
+</html>

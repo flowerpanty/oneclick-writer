@@ -67,6 +67,8 @@ const state = {
   step7SelectedIds: new Set(),
   step7Prompt: "",
   step7Result: "",
+  resultRepairTicket: 0,
+  step7RepairTicket: 0,
 };
 
 function escapeHtml(value) {
@@ -186,16 +188,140 @@ function extractJsonObjectText(raw) {
   return input;
 }
 
+const RELAXED_LITERAL_ESCAPE_CHARS = new Set([
+  "~",
+  "!",
+  "<",
+  ">",
+  "#",
+  "&",
+  "'",
+  "*",
+  "_",
+  "-",
+  "=",
+  "(",
+  ")",
+  "[",
+  "]",
+  "{",
+  "}",
+  "|",
+  "@",
+  ";",
+]);
+
+function findNextMeaningfulJsonChar(text, startIndex) {
+  for (let index = startIndex; index < text.length; index += 1) {
+    const ch = text[index];
+    if (!/\s/.test(ch)) {
+      return { char: ch, index };
+    }
+  }
+  return { char: "", index: -1 };
+}
+
+function looksLikeJsonStringBoundary(text, quoteIndex) {
+  const next = findNextMeaningfulJsonChar(text, quoteIndex + 1);
+  if (!next.char) return true;
+  if (next.char === ":" || next.char === "}" || next.char === "]") return true;
+  if (next.char !== ",") return false;
+
+  const afterComma = findNextMeaningfulJsonChar(text, next.index + 1);
+  if (!afterComma.char) return true;
+  return /["{\[\]\}0-9\-tfn]/i.test(afterComma.char);
+}
+
+function sanitizeJsonStringCandidate(text) {
+  const source = (text || "").replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, "");
+  let result = "";
+  let inString = false;
+
+  for (let index = 0; index < source.length; index += 1) {
+    const ch = source[index];
+
+    if (inString) {
+      if (ch === "\\") {
+        const next = source[index + 1];
+
+        if (typeof next === "undefined") {
+          result += "\\\\";
+          continue;
+        }
+
+        if (/[\"\\/bfnrt]/.test(next)) {
+          result += ch + next;
+          index += 1;
+          continue;
+        }
+
+        if (next === "u") {
+          const unicodeChunk = source.slice(index + 2, index + 6);
+          if (/^[0-9a-fA-F]{4}$/.test(unicodeChunk)) {
+            result += `\\u${unicodeChunk}`;
+            index += 5;
+            continue;
+          }
+        }
+
+        if (RELAXED_LITERAL_ESCAPE_CHARS.has(next)) {
+          result += next;
+          index += 1;
+          continue;
+        }
+
+        result += `\\\\${next}`;
+        index += 1;
+        continue;
+      }
+
+      if (ch === '"') {
+        if (looksLikeJsonStringBoundary(source, index)) {
+          inString = false;
+          result += ch;
+        } else {
+          result += '\\"';
+        }
+        continue;
+      }
+
+      if (ch === "\n") {
+        result += "\\n";
+        continue;
+      }
+
+      if (ch === "\r") {
+        continue;
+      }
+
+      if (ch === "\t") {
+        result += "\\t";
+        continue;
+      }
+
+      result += ch;
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+    }
+    result += ch;
+  }
+
+  return result.replace(/,\s*([}\]])/g, "$1");
+}
+
 function normalizeLikelyJsonMistakes(raw) {
-  return (raw || "")
+  const normalized = (raw || "")
     .replace(/^\uFEFF/, "")
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
     .replace(/\u00A0/g, " ")
-    .replace(/,\s*([}\]])/g, "$1")
     .replace(/([{,]\s*)([A-Za-z0-9_]+)\s*:/g, '$1"$2":')
-    .replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_, inner) => `"${inner.replace(/"/g, '\\"')}"`)
     .trim();
+
+  return sanitizeJsonStringCandidate(normalized);
 }
 
 function tryParseStrategyJson(raw) {
@@ -220,6 +346,19 @@ function tryParseStrategyJson(raw) {
   }
 
   return { data: null, repaired: false };
+}
+
+async function repairJsonViaServer(raw) {
+  const response = await fetch("/api/json/repair", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ raw }),
+  });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(json?.error || "JSON 자동 보정에 실패했어요.");
+  }
+  return json;
 }
 
 function renderSimpleList(items, ordered = false) {
@@ -262,6 +401,88 @@ function toHtmlParagraphs(items) {
     .join("\n");
 }
 
+const SUMMARY_BOX_TITLE_MAP = {
+  spec: "먼저 보면 좋은 핵심 정보",
+  comparison: "비교 전에 볼 포인트",
+  checklist: "고르기 전에 체크할 것",
+  decision: "이럴 때 이렇게 보면 쉬워요",
+  situation: "이런 상황이면 더 잘 맞아요",
+  guide: "읽기 전에 핵심만 먼저",
+  point: "이 부분이 핵심이에요",
+};
+
+function getSummaryBoxType(summaryBox) {
+  return toText(summaryBox?.boxType).toLowerCase();
+}
+
+function getSummaryBoxTitle(summaryBox) {
+  const customTitle = toText(summaryBox?.title);
+  if (customTitle) return customTitle;
+  return SUMMARY_BOX_TITLE_MAP[getSummaryBoxType(summaryBox)] || "한눈에 보면 이런 흐름이에요";
+}
+
+function getSummaryBoxRows(summaryBox, section) {
+  const dynamicRows = Array.isArray(summaryBox?.items)
+    ? summaryBox.items
+      .map((item, index) => {
+        if (isPlainObject(item)) {
+          return {
+            label: toText(item.label) || `포인트 ${index + 1}`,
+            value: toText(item.value),
+          };
+        }
+        return {
+          label: `포인트 ${index + 1}`,
+          value: toText(item),
+        };
+      })
+      .filter((row) => row.value)
+    : [];
+
+  if (dynamicRows.length) return dynamicRows;
+
+  return [
+    { label: "브랜드", value: toText(summaryBox?.brand) },
+    { label: "제품명", value: toText(summaryBox?.productName) || toText(section?.productName) },
+    { label: "가격", value: toText(summaryBox?.price) || toText(section?.price) },
+    { label: "사이즈", value: toText(summaryBox?.size) || toText(section?.size) },
+    { label: "소재", value: toText(summaryBox?.material) },
+    { label: "컬러", value: toText(summaryBox?.color) },
+  ].filter((row) => row.value);
+}
+
+function getSummaryBoxFeatureLabel(summaryBox) {
+  const type = getSummaryBoxType(summaryBox);
+  if (type === "comparison") return "비교 포인트";
+  if (type === "checklist") return "체크 포인트";
+  if (type === "decision") return "판단 기준";
+  if (type === "situation") return "추천 상황";
+  if (type === "guide") return "핵심 포인트";
+  return "특징";
+}
+
+function getSummaryBoxRecommendLabel(summaryBox) {
+  const type = getSummaryBoxType(summaryBox);
+  if (type === "comparison") return "이럴 때 더 맞아요";
+  if (type === "checklist") return "실전 팁";
+  if (type === "decision") return "추천 포인트";
+  if (type === "situation") return "잘 맞는 상황";
+  if (type === "guide") return "적용 포인트";
+  return "추천 포인트";
+}
+
+function hasSummaryBoxContent(summaryBox, section) {
+  return Boolean(
+    toText(summaryBox?.title)
+    || toText(summaryBox?.intro)
+    || getSummaryBoxRows(summaryBox, section).length
+    || toStringArray(summaryBox?.features).length
+    || toStringArray(summaryBox?.recommendPoints).length
+    || toText(summaryBox?.takeaway)
+    || toText(summaryBox?.caution)
+  );
+}
+
 function buildStructuredHtmlBody(featuredDraftInput) {
   const featuredDraft = isPlainObject(featuredDraftInput) ? featuredDraftInput : {};
   const chunks = [];
@@ -286,23 +507,26 @@ function buildStructuredHtmlBody(featuredDraftInput) {
     }
 
     const summaryBox = isPlainObject(section?.summaryBox) ? section.summaryBox : {};
-    const summaryLines = [
-      ["브랜드", toText(summaryBox.brand)],
-      ["제품명", toText(summaryBox.productName) || toText(section?.productName)],
-      ["가격", toText(summaryBox.price) || toText(section?.price)],
-      ["사이즈", toText(summaryBox.size) || toText(section?.size)],
-      ["소재", toText(summaryBox.material)],
-      ["컬러", toText(summaryBox.color)],
-      ["특징", toStringArray(summaryBox.features).join(", ")],
-      ["추천 포인트", toStringArray(summaryBox.recommendPoints).join(", ")],
-    ].filter(([, value]) => value);
+    const summaryRows = getSummaryBoxRows(summaryBox, section);
+    const summaryIntro = toText(summaryBox.intro);
+    const summaryTitle = getSummaryBoxTitle(summaryBox);
+    const takeaway = toText(summaryBox.takeaway);
+    const caution = toText(summaryBox.caution);
+    const features = toStringArray(summaryBox.features);
+    const recommendPoints = toStringArray(summaryBox.recommendPoints);
 
-    if (summaryLines.length) {
+    if (hasSummaryBoxContent(summaryBox, section)) {
       chunks.push([
         "<div>",
-        ...summaryLines.map(([label, value]) => `<p><strong>${escapeHtml(label)}</strong> ${escapeHtml(value)}</p>`),
+        summaryTitle ? `<p><strong>${escapeHtml(summaryTitle)}</strong></p>` : "",
+        summaryIntro ? `<p>${escapeHtml(summaryIntro)}</p>` : "",
+        ...summaryRows.map((row) => `<p><strong>${escapeHtml(row.label)}</strong> ${escapeHtml(row.value)}</p>`),
+        takeaway ? `<p><strong>한줄 결론</strong> ${escapeHtml(takeaway)}</p>` : "",
+        caution ? `<p><strong>주의 포인트</strong> ${escapeHtml(caution)}</p>` : "",
+        features.length ? `<p><strong>${escapeHtml(getSummaryBoxFeatureLabel(summaryBox))}</strong> ${escapeHtml(features.join(", "))}</p>` : "",
+        recommendPoints.length ? `<p><strong>${escapeHtml(getSummaryBoxRecommendLabel(summaryBox))}</strong> ${escapeHtml(recommendPoints.join(", "))}</p>` : "",
         "</div>",
-      ].join("\n"));
+      ].filter(Boolean).join("\n"));
     }
 
     if (toText(section?.betterComment)) {
@@ -445,20 +669,20 @@ function renderFeaturedDraftCard(featuredDraftInput) {
                 { label: "사이즈", value: toText(section?.size) },
                 { label: "한줄평", value: toText(section?.oneLineSummary) }
               ])}
-              ${isPlainObject(section?.summaryBox)
+              ${isPlainObject(section?.summaryBox) && hasSummaryBoxContent(section.summaryBox, section)
                 ? `
                   <div class="result-preview-panel">
-                    <h5>요약 박스</h5>
+                    <h5>${renderInlineText(getSummaryBoxTitle(section.summaryBox))}</h5>
+                    ${toText(section.summaryBox.intro)
+                      ? `<p class="result-preview-text">${renderInlineText(toText(section.summaryBox.intro))}</p>`
+                      : ""}
                     ${renderInfoRows([
-                      { label: "브랜드", value: toText(section.summaryBox.brand) },
-                      { label: "제품명", value: toText(section.summaryBox.productName) },
-                      { label: "가격", value: toText(section.summaryBox.price) },
-                      { label: "사이즈", value: toText(section.summaryBox.size) },
-                      { label: "소재", value: toText(section.summaryBox.material) },
-                      { label: "컬러", value: toText(section.summaryBox.color) }
+                      ...getSummaryBoxRows(section.summaryBox, section),
+                      { label: "한줄 결론", value: toText(section.summaryBox.takeaway) },
+                      { label: "주의 포인트", value: toText(section.summaryBox.caution) }
                     ])}
-                    ${renderTagRow("특징", section.summaryBox.features)}
-                    ${renderTagRow("추천 포인트", section.summaryBox.recommendPoints)}
+                    ${renderTagRow(getSummaryBoxFeatureLabel(section.summaryBox), section.summaryBox.features)}
+                    ${renderTagRow(getSummaryBoxRecommendLabel(section.summaryBox), section.summaryBox.recommendPoints)}
                   </div>
                 `
                 : ""}
@@ -508,90 +732,342 @@ function renderFeaturedDraftCard(featuredDraftInput) {
 }
 
 function createSelectionItem(groupId, index, title, description, summaryLines) {
+  const normalizedTitle = toText(title) || `항목 ${index + 1}`;
+  const normalizedDescription = toText(description);
+  const normalizedSummaryLines = Array.isArray(summaryLines)
+    ? summaryLines.map((line) => shortenText(line, 220)).filter(Boolean)
+    : [];
+
   return {
     id: `${groupId}-${index}`,
-    title: toText(title) || `항목 ${index + 1}`,
-    description: toText(description),
-    summaryLines: Array.isArray(summaryLines)
-      ? summaryLines.map((line) => shortenText(line, 220)).filter(Boolean)
-      : [],
+    title: normalizedTitle,
+    description: normalizedDescription,
+    summaryLines: normalizedSummaryLines,
+    searchText: [normalizedTitle, normalizedDescription, ...normalizedSummaryLines].filter(Boolean).join(" "),
   };
+}
+
+const SELECTION_STOPWORDS = new Set([
+  "step",
+  "seo",
+  "html",
+  "json",
+  "blog",
+  "brand",
+  "daily",
+  "intro",
+  "outline",
+  "title",
+  "topic",
+  "draft",
+  "글",
+  "블로그",
+  "글감",
+  "주제",
+  "제목",
+  "추천",
+  "핵심",
+  "키워드",
+  "질문",
+  "고민",
+  "검색",
+  "의도",
+  "이유",
+  "상세",
+  "목차",
+  "우선",
+  "발행",
+  "관점",
+  "활용",
+  "방향",
+  "기획",
+  "반응",
+  "도입문",
+  "내용",
+  "요약",
+  "포인트",
+  "메인",
+  "보조",
+  "독자",
+]);
+
+const PERSPECTIVE_HINTS = [
+  {
+    matchers: ["vs", "비교", "장단점", "차이", "정리"],
+    preferred: ["비교형"],
+  },
+  {
+    matchers: ["가이드", "기준", "팁", "에티켓", "범위", "정리"],
+    preferred: ["정보형", "문제해결형"],
+  },
+  {
+    matchers: ["여름", "겨울", "보관", "유통기한", "걱정", "문제"],
+    preferred: ["문제해결형"],
+  },
+  {
+    matchers: ["트렌드", "요즘", "유니크", "패키지", "포장", "감동"],
+    preferred: ["트렌드형"],
+  },
+];
+
+function buildSelectionSearchText(item) {
+  return toText(item?.searchText) || [
+    toText(item?.title),
+    toText(item?.description),
+    ...toStringArray(item?.summaryLines),
+  ].filter(Boolean).join(" ");
+}
+
+function tokenizeSelectionText(value) {
+  return Array.from(new Set(
+    (toText(value).toLowerCase().match(/[가-힣a-z0-9]+/g) || [])
+      .filter((token) => token.length >= 2 && !SELECTION_STOPWORDS.has(token))
+  ));
+}
+
+function getSelectionTokens(item) {
+  return tokenizeSelectionText(buildSelectionSearchText(item));
+}
+
+function extendTokenPool(pool, item) {
+  getSelectionTokens(item).forEach((token) => pool.add(token));
+}
+
+function scoreSelectionItem(item, anchorTokens = []) {
+  const searchText = buildSelectionSearchText(item).toLowerCase();
+  const itemTokens = new Set(getSelectionTokens(item));
+
+  if (!anchorTokens.length) {
+    return itemTokens.size;
+  }
+
+  let score = 0;
+  anchorTokens.forEach((token) => {
+    if (!token) return;
+    if (itemTokens.has(token)) {
+      score += token.length >= 4 ? 4 : 2;
+      return;
+    }
+    if (searchText.includes(token)) {
+      score += 1;
+    }
+  });
+
+  return score;
+}
+
+function getGroupSelectionLimit(group) {
+  if (!group) return 1;
+  if (group.mode === "single") return 1;
+  return Math.max(1, group.maxSelectable || group.recommendedCount || 1);
+}
+
+function getSelectionModeLabel(group) {
+  const limit = getGroupSelectionLimit(group);
+  return limit === 1 ? "1개 선택" : `최대 ${limit}개`;
+}
+
+function findSelectionGroup(groups, groupId) {
+  return (groups || []).find((group) => group.id === groupId) || null;
+}
+
+function rankGroupItems(group, anchorTokens = []) {
+  return (group?.items || [])
+    .map((item, index) => ({
+      item,
+      index,
+      score: scoreSelectionItem(item, anchorTokens),
+    }))
+    .sort((left, right) => right.score - left.score || left.index - right.index);
+}
+
+function pickSummaryValue(item, label) {
+  const prefix = `${label}:`;
+  const matchedLine = Array.isArray(item?.summaryLines)
+    ? item.summaryLines.find((line) => line.startsWith(prefix))
+    : "";
+  return matchedLine ? matchedLine.slice(prefix.length).trim() : "";
+}
+
+function normalizeRelationText(value) {
+  return toText(value)
+    .toLowerCase()
+    .replace(/[^가-힣a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildRelationVariants(item) {
+  return Array.from(new Set([
+    toText(item?.title),
+    toText(item?.description),
+    pickSummaryValue(item, "추천 제목"),
+    pickSummaryValue(item, "글감 주제"),
+    pickSummaryValue(item, "우선 주제"),
+    pickSummaryValue(item, "기획 의도"),
+  ].map((value) => normalizeRelationText(value)).filter(Boolean)));
+}
+
+function buildAnchorContext(item) {
+  const title = toText(item?.title);
+  const topic = pickSummaryValue(item, "우선 주제")
+    || pickSummaryValue(item, "글감 주제")
+    || title;
+  const keywordLine = [
+    pickSummaryValue(item, "핵심 키워드"),
+    pickSummaryValue(item, "녹일 키워드"),
+    title,
+    topic,
+  ].filter(Boolean).join(", ");
+
+  return {
+    title,
+    topic,
+    variants: new Set([
+      normalizeRelationText(title),
+      normalizeRelationText(topic),
+      ...buildRelationVariants(item),
+    ].filter(Boolean)),
+    tokens: new Set([
+      ...tokenizeSelectionText(title),
+      ...tokenizeSelectionText(topic),
+      ...tokenizeSelectionText(keywordLine),
+    ]),
+  };
+}
+
+function mergeAnchorContext(context, item) {
+  if (!item) return context;
+  const built = buildAnchorContext(item);
+  const next = {
+    title: context?.title || built.title,
+    topic: context?.topic || built.topic,
+    variants: new Set(context?.variants || []),
+    tokens: new Set(context?.tokens || []),
+  };
+
+  built.variants.forEach((variant) => next.variants.add(variant));
+  built.tokens.forEach((token) => next.tokens.add(token));
+  return next;
+}
+
+function inferPreferredPerspective(context) {
+  const joined = `${context?.title || ""} ${context?.topic || ""}`.toLowerCase();
+  return PERSPECTIVE_HINTS
+    .filter((hint) => hint.matchers.some((matcher) => joined.includes(matcher)))
+    .flatMap((hint) => hint.preferred);
+}
+
+function scoreItemAgainstContext(item, context, groupId = "") {
+  if (!item || !context) return 0;
+
+  const itemTitle = normalizeRelationText(item.title);
+  const itemVariants = buildRelationVariants(item);
+  const itemTokens = new Set(getSelectionTokens(item));
+  let score = 0;
+
+  if (context.variants.has(itemTitle)) {
+    score += 140;
+  }
+
+  itemVariants.forEach((variant) => {
+    if (!variant) return;
+    if (context.variants.has(variant)) {
+      score += 100;
+      return;
+    }
+    context.variants.forEach((anchorVariant) => {
+      if (!anchorVariant || anchorVariant === variant) return;
+      if (variant.includes(anchorVariant) || anchorVariant.includes(variant)) {
+        score += 35;
+      }
+    });
+  });
+
+  context.tokens.forEach((token) => {
+    if (!token) return;
+    if (itemTokens.has(token)) {
+      score += token.length >= 4 ? 7 : 4;
+    }
+  });
+
+  if (groupId === "step1-perspectives") {
+    const preferred = inferPreferredPerspective(context);
+    preferred.forEach((label) => {
+      if (item.title.includes(label)) {
+        score += 45;
+      }
+    });
+  }
+
+  if (groupId === "step1-coreKeywords") {
+    const anchorText = `${context.title} ${context.topic}`.toLowerCase();
+    if (anchorText.includes(toText(item.title).toLowerCase())) {
+      score += 60;
+    }
+  }
+
+  if (groupId === "step4-titles" && itemTitle && context.variants.has(itemTitle)) {
+    score += 80;
+  }
+
+  return score;
+}
+
+function pickAlignedItems(group, context, { limit = 1, threshold = 1, allowFallback = false } = {}) {
+  if (!group?.items?.length) return [];
+
+  const ranked = group.items
+    .map((item, index) => ({
+      item,
+      index,
+      score: scoreItemAgainstContext(item, context, group.id),
+    }))
+    .sort((left, right) => right.score - left.score || left.index - right.index);
+
+  const selectedItems = ranked
+    .filter((entry) => entry.score >= threshold)
+    .slice(0, limit)
+    .map((entry) => entry.item);
+
+  if (selectedItems.length || !allowFallback) {
+    return selectedItems;
+  }
+
+  return group.items.slice(0, limit);
+}
+
+function getCanonicalTitle(items = []) {
+  const ranked = new Map();
+
+  items.forEach((item) => {
+    const normalized = normalizeRelationText(item?.title);
+    if (!normalized) return;
+    if (!ranked.has(normalized)) {
+      ranked.set(normalized, { count: 0, label: item.title });
+    }
+    ranked.get(normalized).count += 1;
+  });
+
+  return [...ranked.values()]
+    .sort((left, right) => right.count - left.count || left.label.length - right.label.length)[0]?.label || "";
 }
 
 function buildStep7SelectionGroups(data) {
   if (!isPlainObject(data)) return [];
 
   const groups = [];
-  const step1 = isPlainObject(data.step1) ? data.step1 : {};
   const step2 = isPlainObject(data.step2) ? data.step2 : {};
-  const step3 = isPlainObject(data.step3) ? data.step3 : {};
-  const step4 = isPlainObject(data.step4) ? data.step4 : {};
-  const step5 = isPlainObject(data.step5) ? data.step5 : {};
-  const step6 = isPlainObject(data.step6) ? data.step6 : {};
-
-  const coreKeywords = Array.isArray(step1.coreKeywords) ? step1.coreKeywords : [];
-  if (coreKeywords.length) {
-    groups.push({
-      id: "step1-coreKeywords",
-      title: "STEP 1 핵심 키워드",
-      helper: "글의 메인 키워드와 중요한 보조 키워드를 고르세요.",
-      mode: "multi",
-      recommendedCount: 3,
-      items: coreKeywords.map((item, index) => createSelectionItem(
-        "step1-coreKeywords",
-        index,
-        item?.keyword,
-        item?.reason,
-        [`키워드: ${toText(item?.keyword)}`, `중요한 이유: ${toText(item?.reason)}`]
-      ))
-    });
-  }
-
-  const questions = Array.isArray(step1.questions) ? step1.questions : [];
-  if (questions.length) {
-    groups.push({
-      id: "step1-questions",
-      title: "STEP 1 질문 / 고민 포인트",
-      helper: "독자가 실제로 궁금해하는 질문을 골라 글의 공감 포인트로 씁니다.",
-      mode: "multi",
-      recommendedCount: 2,
-      items: questions.map((item, index) => createSelectionItem(
-        "step1-questions",
-        index,
-        item?.question,
-        item?.intent,
-        [`질문: ${toText(item?.question)}`, `검색 의도: ${toText(item?.intent)}`]
-      ))
-    });
-  }
-
-  const perspectives = Array.isArray(step1.perspectives) ? step1.perspectives : [];
-  if (perspectives.length) {
-    groups.push({
-      id: "step1-perspectives",
-      title: "STEP 1 발전 관점",
-      helper: "이 글을 어떤 각도로 풀지 정하는 보조 관점입니다.",
-      mode: "multi",
-      recommendedCount: 1,
-      items: perspectives.map((item, index) => createSelectionItem(
-        "step1-perspectives",
-        index,
-        item?.type,
-        item?.direction,
-        [`관점: ${toText(item?.type)}`, `활용 방향: ${toText(item?.direction)}`]
-      ))
-    });
-  }
 
   const topics = Array.isArray(step2.topics) ? step2.topics : [];
   if (topics.length) {
     groups.push({
       id: "step2-topics",
-      title: "STEP 2 글감 TOP 10",
-      helper: "최종 글의 큰 주제는 여기서 1개를 먼저 고르는 게 가장 안정적입니다.",
+      title: "STEP 2 추천 블로그 글감",
+      helper: "이 화면은 글감 1개만 고르는 흐름입니다. 아래 추천 글감 중 최종 주제 1개를 선택하세요.",
       mode: "single",
       recommendedCount: 1,
-      items: topics.map((item, index) => createSelectionItem(
+      items: topics.slice(0, 20).map((item, index) => createSelectionItem(
         "step2-topics",
         index,
         item?.title || item?.topic,
@@ -601,102 +1077,13 @@ function buildStep7SelectionGroups(data) {
           `추천 제목: ${toText(item?.title)}`,
           `검색 의도: ${toText(item?.intent)}`,
           `추천 이유: ${toText(item?.reason)}`,
+          `읽을 사람: ${toText(item?.reader)}`,
+          `도입문 방향: ${toText(item?.introDirection)}`,
           `핵심 키워드: ${toStringArray(item?.keywords).join(", ")}`,
-          `추천 목차: ${toStringArray(item?.outline).join(" / ")}`
-        ]
-      ))
-    });
-  }
-
-  const priorities = Array.isArray(step3.priorities) ? step3.priorities : [];
-  if (priorities.length) {
-    groups.push({
-      id: "step3-priorities",
-      title: "STEP 3 우선 발행 추천",
-      helper: "STEP 7의 주제 방향은 보통 여기서 1개 고른 내용이 가장 강하게 반영됩니다.",
-      mode: "single",
-      recommendedCount: 1,
-      items: priorities.map((item, index) => createSelectionItem(
-        "step3-priorities",
-        index,
-        item?.title || item?.topic,
-        item?.whyNow,
-        [
-          `우선 주제: ${toText(item?.topic)}`,
-          `추천 제목: ${toText(item?.title)}`,
-          `왜 먼저 써야 하는지: ${toText(item?.whyNow)}`,
-          `예상 장점: ${toStringArray(item?.advantages).join(", ")}`,
-          `우선순위 점수: ${toText(item?.score)}`
-        ]
-      ))
-    });
-  }
-
-  const titles = Array.isArray(step4.titles) ? step4.titles : [];
-  if (titles.length) {
-    groups.push({
-      id: "step4-titles",
-      title: "STEP 4 제목 후보",
-      helper: "최종 SEO 제목과 대안 제목을 만들 때 참고할 제목을 여러 개 골라둘 수 있습니다.",
-      mode: "multi",
-      recommendedCount: 3,
-      items: titles.map((title, index) => createSelectionItem(
-        "step4-titles",
-        index,
-        title,
-        "",
-        [`제목 후보: ${toText(title)}`]
-      ))
-    });
-  }
-
-  const outlines = Array.isArray(step5.detailedOutlines) ? step5.detailedOutlines : [];
-  if (outlines.length) {
-    groups.push({
-      id: "step5-outlines",
-      title: "STEP 5 상세 목차",
-      helper: "글 구조를 정하는 핵심 단계라서 보통 1개만 고르는 걸 추천합니다.",
-      mode: "single",
-      recommendedCount: 1,
-      items: outlines.map((item, index) => createSelectionItem(
-        "step5-outlines",
-        index,
-        item?.title,
-        item?.planningIntent,
-        [
-          `기획 의도: ${toText(item?.planningIntent)}`,
-          `예상 독자 반응: ${toText(item?.expectedReaction)}`,
-          `상세 목차: ${[
-            toText(item?.outline?.intro),
-            toText(item?.outline?.body1),
-            toText(item?.outline?.body2),
-            toText(item?.outline?.body3),
-            toText(item?.outline?.body4),
-            toText(item?.outline?.conclusion)
-          ].filter(Boolean).join(" / ")}`,
-          `녹일 키워드: ${toStringArray(item?.keywords).join(", ")}`,
-          `피해야 할 표현: ${toStringArray(item?.avoidExpressions).join(", ")}`
-        ]
-      ))
-    });
-  }
-
-  const intros = Array.isArray(step6.introDrafts) ? step6.introDrafts : [];
-  if (intros.length) {
-    groups.push({
-      id: "step6-intros",
-      title: "STEP 6 도입문 초안",
-      helper: "도입 톤과 공감 멘트 흐름을 고르는 단계입니다.",
-      mode: "single",
-      recommendedCount: 1,
-      items: intros.map((item, index) => createSelectionItem(
-        "step6-intros",
-        index,
-        item?.title,
-        shortenText(toStringArray(item?.introA)[0] || toStringArray(item?.introB)[0], 120),
-        [
-          `도입문 A: ${toStringArray(item?.introA).join(" / ")}`,
-          `도입문 B: ${toStringArray(item?.introB).join(" / ")}`
+          `추천 목차: ${toStringArray(item?.outline).join(" / ")}`,
+          `꼭 다룰 내용: ${toStringArray(item?.mustCover).join(", ")}`,
+          `주의할 점: ${toStringArray(item?.cautions).join(", ")}`,
+          `브랜드 연결 포인트: ${toText(item?.brandConnection)}`
         ]
       ))
     });
@@ -708,7 +1095,7 @@ function buildStep7SelectionGroups(data) {
 function getDefaultStep7SelectedIds(groups) {
   const selected = new Set();
   groups.forEach((group) => {
-    group.items.slice(0, Math.max(1, group.recommendedCount || 1)).forEach((item) => {
+    group.items.slice(0, 1).forEach((item) => {
       selected.add(item.id);
     });
   });
@@ -721,7 +1108,7 @@ function renderStep7SelectionBoard() {
   const groups = state.step7SelectionGroups || [];
   if (!groups.length) {
     els.step7SelectionBoard.className = "step7-selection-board empty";
-    els.step7SelectionBoard.textContent = "콘텐츠 기획 결과 JSON을 붙여넣거나 자동 생성한 뒤, STEP 1~6 선택 보드가 열립니다.";
+    els.step7SelectionBoard.textContent = "콘텐츠 기획 결과 JSON을 붙여넣거나 자동 생성한 뒤, STEP 2 글감 선택 보드가 열립니다.";
     return;
   }
 
@@ -733,7 +1120,7 @@ function renderStep7SelectionBoard() {
           <h3>${renderInlineText(group.title)}</h3>
           <p>${renderInlineText(group.helper || "")}</p>
         </div>
-        <span class="step7-selection-mode">${group.mode === "single" ? "1개 선택 권장" : "여러 개 선택 가능"}</span>
+        <span class="step7-selection-mode">${getSelectionModeLabel(group)}</span>
       </div>
       <div class="step7-selection-items">
         ${group.items.map((item) => {
@@ -758,21 +1145,69 @@ function renderStep7SelectionBoard() {
 
 function buildStep7SelectionSummary() {
   const groups = state.step7SelectionGroups || [];
-  const lines = ["[STEP 1~6 선택 요약]"];
+  const selectedByGroup = new Map(
+    groups.map((group) => [
+      group.id,
+      group.items.filter((item) => state.step7SelectedIds.has(item.id)),
+    ])
+  );
+  const lines = ["[STEP 7 작성 브리프]"];
+  const topic = selectedByGroup.get("step2-topics")?.[0] || null;
 
-  groups.forEach((group) => {
-    const selectedItems = group.items.filter((item) => state.step7SelectedIds.has(item.id));
-    if (!selectedItems.length) return;
+  if (topic) {
+    lines.push(`선택한 글감: ${topic.title}`);
+    const topicName = pickSummaryValue(topic, "글감 주제");
+    if (topicName) {
+      lines.push(`글감 주제: ${topicName}`);
+    }
+    if (topic.description) {
+      lines.push(`선정 이유: ${topic.description}`);
+    }
 
-    lines.push("");
-    lines.push(`## ${group.title}`);
-    selectedItems.forEach((item, index) => {
-      lines.push(`${index + 1}. ${item.title}`);
-      item.summaryLines.forEach((line) => {
-        lines.push(`- ${line}`);
-      });
-    });
-  });
+    const intent = pickSummaryValue(topic, "검색 의도");
+    if (intent) {
+      lines.push(`검색 의도: ${intent}`);
+    }
+
+    const keywords = pickSummaryValue(topic, "핵심 키워드");
+    if (keywords) {
+      lines.push(`핵심 키워드: ${keywords}`);
+    }
+
+    const reader = pickSummaryValue(topic, "읽을 사람");
+    if (reader) {
+      lines.push(`핵심 독자: ${reader}`);
+    }
+
+    const introDirection = pickSummaryValue(topic, "도입문 방향");
+    if (introDirection) {
+      lines.push(`도입 방향: ${introDirection}`);
+    }
+
+    const outline = pickSummaryValue(topic, "추천 목차");
+    if (outline) {
+      lines.push(`추천 흐름: ${outline}`);
+    }
+
+    const mustCover = pickSummaryValue(topic, "꼭 다룰 내용");
+    if (mustCover) {
+      lines.push(`반드시 다룰 내용: ${mustCover}`);
+    }
+
+    const cautions = pickSummaryValue(topic, "주의할 점");
+    if (cautions) {
+      lines.push(`주의할 점: ${cautions}`);
+    }
+
+    const brandConnection = pickSummaryValue(topic, "브랜드 연결 포인트");
+    if (brandConnection) {
+      lines.push(`브랜드 연결 포인트: ${brandConnection}`);
+    }
+  }
+
+  if (topic) {
+    lines.push("작성 원칙: 위에서 고른 글감 1개만 중심축으로 사용하고, 다른 STEP 후보 주제나 다른 글감을 끌어오지 말 것.");
+  }
 
   return lines.length > 1 ? lines.join("\n") : "";
 }
@@ -786,8 +1221,8 @@ function syncStep7SelectionSummary() {
   const totalSelected = state.step7SelectedIds.size;
   if (els.step7SelectionMeta) {
     els.step7SelectionMeta.textContent = totalSelected
-      ? `선택된 항목 ${totalSelected}개를 STEP 7 전용 글 생성기로 넘길 준비가 됐습니다.`
-      : "선택된 항목이 아직 없습니다. STEP 1~6에서 글에 쓸 항목을 골라주세요.";
+      ? "글감 1개를 골라 STEP 7 전용 글 생성기로 넘길 준비가 됐습니다."
+      : "선택된 항목이 아직 없습니다. STEP 2에서 글감 1개를 골라주세요.";
   }
 }
 
@@ -999,7 +1434,7 @@ function renderStrategyJsonPreview(data) {
   els.resultPreview.className = "result-preview";
   els.resultPreview.innerHTML = [
     renderStepBlock("STEP 1. 리서치 핵심 인사이트", step1Html, true),
-    renderStepBlock("STEP 2. 추천 블로그 글감 TOP 10", step2Html),
+    renderStepBlock("STEP 2. 추천 블로그 글감 TOP 20", step2Html),
     renderStepBlock("STEP 3. 지금 가장 먼저 써야 할 글 3개", step3Html),
     renderStepBlock("STEP 4. 제목 후보 추가 제안", step4Html),
     renderStepBlock("STEP 5. 베스트 3개 글의 상세 목차", step5Html),
@@ -1241,6 +1676,25 @@ function setStep7ResultValue(value = "", options = {}) {
     els.step7CopyResultBtn.disabled = !value.trim();
   }
   renderStep7ResultPreview(value);
+
+  const parsed = tryParseStrategyJson(value || "");
+  if (!parsed.data && /[{\[]/.test(value || "")) {
+    const requestedValue = (value || "").trim();
+    const ticket = ++state.step7RepairTicket;
+    repairJsonViaServer(value)
+      .then((json) => {
+        if (ticket !== state.step7RepairTicket) return;
+        if ((els.step7ResultOutput?.value || "").trim() !== requestedValue) return;
+        const repairedText = (json?.repairedText || "").trim();
+        if (!repairedText) return;
+        state.step7RepairTicket += 1;
+        setStep7ResultValue(repairedText);
+        setStatus("붙여넣은 STEP 7 JSON의 작은 오류를 자동 보정했습니다.");
+      })
+      .catch(() => {
+        // ignore repair failures and keep original preview
+      });
+  }
 }
 
 function clearStep7Result() {
@@ -1252,11 +1706,11 @@ function clearStep7Builder() {
   state.step7SelectionLookup = new Map();
   state.step7SelectedIds = new Set();
   if (els.step7SelectionMeta) {
-    els.step7SelectionMeta.textContent = "먼저 콘텐츠 기획 결과 JSON을 넣으면 여기서 STEP 1~6 항목을 고를 수 있습니다.";
+    els.step7SelectionMeta.textContent = "먼저 콘텐츠 기획 결과 JSON을 넣으면 여기서 STEP 2 글감 1개를 고를 수 있습니다.";
   }
   if (els.step7SelectionBoard) {
     els.step7SelectionBoard.className = "step7-selection-board empty";
-    els.step7SelectionBoard.textContent = "콘텐츠 기획 결과 JSON을 붙여넣거나 자동 생성한 뒤, STEP 1~6 선택 보드가 열립니다.";
+    els.step7SelectionBoard.textContent = "콘텐츠 기획 결과 JSON을 붙여넣거나 자동 생성한 뒤, STEP 2 글감 선택 보드가 열립니다.";
   }
   if (els.step7SelectionSummary) {
     els.step7SelectionSummary.value = "";
@@ -1295,7 +1749,11 @@ function syncStep7BuilderFromStrategyJson(data) {
 function toggleStep7Selection(itemId, groupId, mode) {
   if (!itemId) return;
 
-  if (mode === "single") {
+  const group = findSelectionGroup(state.step7SelectionGroups, groupId);
+  const limit = getGroupSelectionLimit(group || { mode });
+  const selectionMode = group?.mode || mode;
+
+  if (selectionMode === "single" || limit === 1) {
     [...state.step7SelectedIds].forEach((selectedId) => {
       if (selectedId.startsWith(`${groupId}-`)) {
         state.step7SelectedIds.delete(selectedId);
@@ -1305,6 +1763,13 @@ function toggleStep7Selection(itemId, groupId, mode) {
   } else if (state.step7SelectedIds.has(itemId)) {
     state.step7SelectedIds.delete(itemId);
   } else {
+    const sameGroupCount = [...state.step7SelectedIds]
+      .filter((selectedId) => selectedId.startsWith(`${groupId}-`))
+      .length;
+    if (sameGroupCount >= limit) {
+      setStatus(`${group?.title || "이 그룹"}는 최대 ${limit}개까지 선택할 수 있습니다.`);
+      return;
+    }
     state.step7SelectedIds.add(itemId);
   }
 
@@ -1318,7 +1783,7 @@ function applyDefaultStep7Selections() {
   renderStep7SelectionBoard();
   syncStep7SelectionSummary();
   clearStep7Prompt();
-  setStatus("STEP 7 추천 선택을 다시 적용했습니다.");
+  setStatus("STEP 7 추천 선택을 다시 적용했습니다. 상위 글감 1개만 남기도록 정리했어요.");
 }
 
 function clearStep7Selections() {
@@ -1341,6 +1806,24 @@ function setResultValue(value = "", options = {}) {
   syncStep7BuilderFromStrategyJson(parsed.data);
   saveStrategySession();
   syncStep();
+
+  if (!parsed.data && /[{\[]/.test(value || "")) {
+    const requestedValue = (value || "").trim();
+    const ticket = ++state.resultRepairTicket;
+    repairJsonViaServer(value)
+      .then((json) => {
+        if (ticket !== state.resultRepairTicket) return;
+        if ((els.resultOutput?.value || "").trim() !== requestedValue) return;
+        const repairedText = (json?.repairedText || "").trim();
+        if (!repairedText) return;
+        state.resultRepairTicket += 1;
+        setResultValue(repairedText);
+        setStatus("붙여넣은 전략 JSON의 작은 오류를 자동 보정했습니다.");
+      })
+      .catch(() => {
+        // ignore repair failures and keep original preview
+      });
+  }
 }
 
 async function fetchHealth() {
@@ -1540,7 +2023,7 @@ async function buildStep7Prompt() {
   const payload = gatherStep7Payload();
 
   if (!payload.selectedPlan) {
-    throw new Error("STEP 1~6에서 글에 쓸 항목을 먼저 선택해 주세요.");
+    throw new Error("STEP 2에서 글감 1개를 먼저 선택해 주세요.");
   }
 
   const response = await fetch("/api/research-strategy/step7-prompt", {
@@ -1561,7 +2044,7 @@ async function buildStep7Prompt() {
   if (els.step7CopyPromptBtn) {
     els.step7CopyPromptBtn.disabled = !state.step7Prompt;
   }
-  setStatus(`STEP 7 전용 프롬프트를 만들었습니다. 선택 요약 ${json.selectedLength?.toLocaleString?.("ko-KR") || json.selectedLength || 0}자를 반영했습니다.`);
+  setStatus(`STEP 7 전용 프롬프트를 만들었습니다. 선택 요약 ${json.selectedLength?.toLocaleString?.("ko-KR") || json.selectedLength || 0}자와 집중 리서치 ${json.focusedResearchLength?.toLocaleString?.("ko-KR") || json.focusedResearchLength || 0}자를 반영했습니다.`);
   return state.step7Prompt;
 }
 
@@ -1830,6 +2313,43 @@ function bindEvents() {
   els.resetBtn.addEventListener("click", resetAll);
 }
 
+function loadAgentPlanBridge() {
+  const PLAN_BRIDGE_KEY = 'agent:planBridge';
+  const raw = localStorage.getItem(PLAN_BRIDGE_KEY);
+  if (!raw) return;
+
+  let bridge;
+  try { bridge = JSON.parse(raw); } catch { return; }
+
+  if (Date.now() - (bridge.savedAt || 0) > 10 * 60 * 1000) {
+    localStorage.removeItem(PLAN_BRIDGE_KEY);
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  if (!params.get('from')) return;
+
+  localStorage.removeItem(PLAN_BRIDGE_KEY);
+
+  // Fill in brand info fields if available
+  if (bridge.topic && els.primaryCategoryInput) {
+    els.primaryCategoryInput.value = bridge.topic;
+  }
+
+  // Fill in research data if available
+  if (bridge.researchData && els.researchDataInput) {
+    els.researchDataInput.value = bridge.researchData;
+  }
+
+  // Fill keywords into research data if no summary
+  if (!bridge.researchData && bridge.keywords?.length && els.researchDataInput) {
+    els.researchDataInput.value = '[에이전트 키워드]\n' + bridge.keywords.map(k => `${k.keyword}${k.volume ? ` (${k.volume.toLocaleString()}회)` : ''}`).join('\n');
+  }
+
+  setStatus('에이전트에서 기획 데이터를 불러왔어요. 브랜드 정보를 채우고 기획을 시작해 보세요!');
+  syncStep();
+}
+
 function init() {
   loadSettings();
   const snapshot = loadResearchSnapshotFromStorage();
@@ -1842,6 +2362,7 @@ function init() {
   clearStep7Builder();
   syncStep();
   fetchHealth();
+  loadAgentPlanBridge();
 }
 
 init();

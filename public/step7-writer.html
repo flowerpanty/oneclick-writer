@@ -18,15 +18,15 @@
       <h1>✦ STEP 7 전용 글 생성기</h1>
       <div class="header-actions">
         <a href="/strategy" class="header-link">
-          <span class="header-link-label">콘텐츠 기획 툴</span>
+          <span class="header-link-label">📋 2.컨텐츠</span>
           <span class="header-link-meta">/strategy</span>
         </a>
         <a href="/research" class="header-link">
-          <span class="header-link-label">네이버 리서치 툴</span>
+          <span class="header-link-label">🔍 1.리서치</span>
           <span class="header-link-meta">/research</span>
         </a>
         <a href="/" class="header-link">
-          <span class="header-link-label">원클릭 글 생성기</span>
+          <span class="header-link-label">📱 SNS</span>
           <span class="header-link-meta">/</span>
         </a>
         <span class="badge"><span class="dot"></span> 선택형 글 작성 모드</span>
@@ -169,7 +169,10 @@
         </div>
         <div class="section-actions">
           <button id="buildPromptBtn" class="btn-primary" type="button">STEP 7 프롬프트 만들기</button>
-          <button id="autoGenerateBtn" class="btn-auto" type="button">STEP 7 자동 생성</button>
+          <button id="copyPromptBtn" class="btn-copy" type="button" disabled style="padding: 10px 18px; font-size: 13px; font-weight: 600; background: rgba(59, 130, 246, 0.1); color: var(--accent-hover); border-color: rgba(59,130,246,0.3);">📋 STEP 7 프롬프트 복사</button>
+          <button id="clearPromptBtn" class="btn-secondary" type="button">🧹 프롬프트 비우기</button>
+          
+          <button id="autoGenerateBtn" class="btn-auto hidden-flow" type="button" style="display:none!important">STEP 7 자동 생성</button>
         </div>
       </div>
 
@@ -184,13 +187,8 @@
           <div id="progressLog" class="progress-log"></div>
         </div>
 
-        <div class="btn-row">
-          <button id="copyPromptBtn" class="btn-copy" type="button" disabled>📋 STEP 7 프롬프트 복사</button>
-          <button id="clearPromptBtn" class="btn-secondary" type="button">🧹 프롬프트 비우기</button>
-        </div>
-
-        <div class="compact-action-card">
-          STEP 7 프롬프트도 화면에는 길게 보여주지 않고, <strong>STEP 7 프롬프트 복사</strong> 버튼으로 바로 쓸 수 있게 준비됩니다.
+        <div class="compact-action-card" style="margin-top: 16px;">
+          STEP 7 프롬프트 생성 후 화면에는 길게 보여주지 않고, <strong>STEP 7 프롬프트 복사</strong> 버튼으로 바로 쓸 수 있게 준비됩니다.
         </div>
 
         <textarea id="promptOutput" class="prompt-storage" readonly aria-hidden="true" tabindex="-1"></textarea>

@@ -16,16 +16,20 @@
     <div class="header-inner">
       <h1>✦ 콘텐츠 기획 툴</h1>
       <div class="header-actions">
+        <a href="/agent" class="header-link header-link-agent">
+          <span class="header-link-label">🤖 AI 에이전트</span>
+          <span class="header-link-meta">/agent</span>
+        </a>
         <a href="/research" class="header-link">
-          <span class="header-link-label">네이버 리서치 툴</span>
+          <span class="header-link-label">🔍 1.리서치</span>
           <span class="header-link-meta">/research</span>
         </a>
         <a href="/step7-writer" class="header-link">
-          <span class="header-link-label">STEP 7 전용 툴</span>
+          <span class="header-link-label">✍️ 3.글작성</span>
           <span class="header-link-meta">/step7-writer</span>
         </a>
         <a href="/" class="header-link">
-          <span class="header-link-label">원클릭 글 생성기</span>
+          <span class="header-link-label">📱 SNS</span>
           <span class="header-link-meta">/</span>
         </a>
         <span class="badge"><span class="dot"></span> 리서치 연동 모드</span>
@@ -62,51 +66,54 @@
     </div>
 
     <section class="section-block">
-      <div class="section-header">
-        <div class="section-title">
-          <span class="section-icon">🧾</span>
-          <h2>브랜드 정보 입력</h2>
-        </div>
-      </div>
+      <details id="brandInfoDetails">
+        <summary class="section-header brand-summary">
+          <div class="section-title">
+            <span class="section-icon">🧾</span>
+            <h2>브랜드 정보 입력</h2>
+            <span class="brand-summary-toggle-hint">클릭해서 펼치기 / 접기</span>
+          </div>
+        </summary>
 
-      <div class="card">
-        <div class="grid-2 strategy-grid">
-          <div class="field">
-            <label for="brandNameInput">브랜드명</label>
-            <input id="brandNameInput" type="text" placeholder="예: 시논감성" />
+        <div class="card" style="margin-top:12px;">
+          <div class="grid-2 strategy-grid">
+            <div class="field">
+              <label for="brandNameInput">브랜드명</label>
+              <input id="brandNameInput" type="text" placeholder="예: 시논감성" />
+            </div>
+
+            <div class="field">
+              <label for="blogTypeInput">블로그 성격</label>
+              <input id="blogTypeInput" type="text" placeholder="예: 브랜드 블로그 / 정보형 블로그" />
+            </div>
+
+            <div class="field">
+              <label for="primaryCategoryInput">주력 카테고리</label>
+              <input id="primaryCategoryInput" type="text" placeholder="예: 수제쿠키, 답례품, 디저트선물" />
+            </div>
+
+            <div class="field">
+              <label for="targetAudienceInput">타겟 독자</label>
+              <input id="targetAudienceInput" type="text" placeholder="예: 답례품 찾는 고객 / 20~40대 여성" />
+            </div>
           </div>
 
           <div class="field">
-            <label for="blogTypeInput">블로그 성격</label>
-            <input id="blogTypeInput" type="text" placeholder="예: 브랜드 블로그 / 정보형 블로그" />
+            <label for="toneInput">원하는 톤앤매너</label>
+            <input id="toneInput" type="text" placeholder="예: 자연스럽고 감각적 / 친근한 정보형" />
           </div>
 
           <div class="field">
-            <label for="primaryCategoryInput">주력 카테고리</label>
-            <input id="primaryCategoryInput" type="text" placeholder="예: 수제쿠키, 답례품, 디저트선물" />
+            <label for="avoidInput">피하고 싶은 방향</label>
+            <input id="avoidInput" type="text" placeholder="예: 광고 티 강한 글 / 기계적인 SEO 말투" />
           </div>
 
           <div class="field">
-            <label for="targetAudienceInput">타겟 독자</label>
-            <input id="targetAudienceInput" type="text" placeholder="예: 답례품 찾는 고객 / 20~40대 여성" />
+            <label for="goalsInput">이번 작업 목적</label>
+            <textarea id="goalsInput" class="compact-textarea" placeholder="예:&#10;블로그 글감 발굴&#10;네이버 유입형 제목 찾기&#10;실제 발행 가능한 글 3개 초안 만들기"></textarea>
           </div>
         </div>
-
-        <div class="field">
-          <label for="toneInput">원하는 톤앤매너</label>
-          <input id="toneInput" type="text" placeholder="예: 자연스럽고 감각적 / 친근한 정보형" />
-        </div>
-
-        <div class="field">
-          <label for="avoidInput">피하고 싶은 방향</label>
-          <input id="avoidInput" type="text" placeholder="예: 광고 티 강한 글 / 기계적인 SEO 말투" />
-        </div>
-
-        <div class="field">
-          <label for="goalsInput">이번 작업 목적</label>
-          <textarea id="goalsInput" class="compact-textarea" placeholder="예:&#10;블로그 글감 발굴&#10;네이버 유입형 제목 찾기&#10;실제 발행 가능한 글 3개 초안 만들기"></textarea>
-        </div>
-      </div>
+      </details>
     </section>
 
     <section class="section-block">
@@ -149,17 +156,12 @@
           <h2>프롬프트 생성 및 실행</h2>
         </div>
         <div class="section-actions">
-          <button id="buildPromptBtn" class="btn-primary" type="button">📋 프롬프트 만들기</button>
-          <button id="autoGenerateBtn" class="btn-auto" type="button">🚀 자동 생성</button>
-          <button id="resetBtn" class="btn-secondary" type="button">↺ 입력 초기화</button>
+          <button id="resetBtn" class="btn-secondary" type="button">↺ 초기화</button>
+          <button id="autoGenerateBtn" class="btn-auto hidden-flow" type="button" style="display:none!important">🚀 자동 생성</button>
         </div>
       </div>
 
       <div class="card">
-        <div class="btn-row">
-          <button id="copyPromptBtn" class="btn-copy" type="button" disabled>📋 프롬프트 복사</button>
-        </div>
-
         <div id="progressContainer" class="progress-container">
           <div class="progress-bar-track">
             <div id="progressBar" class="progress-bar-fill"></div>
@@ -170,8 +172,18 @@
         <div id="statusText" class="status-bar mt-8"></div>
         <div id="errorText" class="status-bar error mt-8"></div>
 
-        <div class="compact-action-card">
-          프롬프트는 화면에 길게 표시하지 않고, <strong>프롬프트 복사</strong> 버튼으로 바로 쓸 수 있게 준비됩니다.
+        <!-- 큰 버튼 2개 -->
+        <div class="prompt-btn-row">
+          <button id="buildPromptBtn" class="prompt-main-btn prompt-build-btn" type="button">
+            <span class="prompt-btn-icon">⚡</span>
+            <span class="prompt-btn-text">프롬프트 만들기</span>
+            <span class="prompt-btn-sub">클릭 한 번으로 생성</span>
+          </button>
+          <button id="copyPromptBtn" class="prompt-main-btn prompt-copy-btn" type="button" disabled>
+            <span class="prompt-btn-icon">📋</span>
+            <span class="prompt-btn-text">프롬프트 복사</span>
+            <span class="prompt-btn-sub">ChatGPT에 붙여넣기</span>
+          </button>
         </div>
 
         <textarea id="promptOutput" class="prompt-storage" readonly aria-hidden="true" tabindex="-1"></textarea>
@@ -195,9 +207,14 @@
           자동 생성이 어렵다면 프롬프트를 복사해 ChatGPT에 붙여넣은 뒤, JSON 결과를 아래 칸에 붙여넣어도 됩니다. STEP 7 글 작성은 상단의 `STEP 7 전용 툴`에서 이어서 진행할 수 있습니다.
         </div>
 
-        <div class="field">
-          <label for="resultOutput">콘텐츠 기획안 결과</label>
-          <textarea id="resultOutput" class="result-paste-line" placeholder="여기에 GPT 결과 JSON만 붙여넣으면 바로 아래에서 정리됩니다."></textarea>
+        <div class="field result-paste-field">
+          <label for="resultOutput" class="result-paste-label">
+            <span class="result-paste-badge">✦ 여기에 붙여넣기</span>
+            콘텐츠 기획안 결과 (ChatGPT에서 받은 JSON)
+          </label>
+          <div class="result-paste-glow-wrap">
+            <textarea id="resultOutput" class="result-paste-line result-paste-glow" placeholder="📋 ChatGPT 결과를 여기에 붙여넣으세요 → 바로 아래에 카드형으로 정리됩니다"></textarea>
+          </div>
         </div>
 
         <div class="divider"></div>

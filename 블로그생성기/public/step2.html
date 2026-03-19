@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>STEP 2 | 네이버 블로그 생성기</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" defer src="/step2.js"></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand-lockup" href="/">
+          <span class="brand-mark">N</span>
+          <span>네이버 블로그 생성기</span>
+        </a>
+        <nav class="step-nav">
+          <a class="step-link" href="/">홈</a>
+          <a class="step-link" href="/step1.html">STEP 1</a>
+          <a class="step-link active" href="/step2.html">STEP 2</a>
+          <a class="step-link" href="/step3.html">STEP 3</a>
+          <button class="step-link reset-link" id="reset-all-button" type="button">새로 시작</button>
+        </nav>
+      </header>
+
+      <main class="focus-main">
+        <div id="guard-message" class="warning-banner hidden"></div>
+
+        <!-- 제목 선택 -->
+        <section class="panel focus-card">
+          <div class="panel-head">
+            <p class="section-kicker">Step 2-①</p>
+            <h2>발행 패키지를 골라주세요</h2>
+            <p class="subtle-note">STEP 1 결과에서 제목, 글 각도, 목차가 함께 묶인 패키지 1개를 선택하세요.</p>
+          </div>
+
+          <div id="title-picker" class="title-picker empty-state">
+            STEP 1 결과가 있으면 발행 패키지 후보가 여기에 나타납니다.
+          </div>
+
+          <div id="step1-digest" style="display:none;"></div>
+          <details id="more-title-details" class="prompt-details" style="display:none;">
+            <summary>다른 구조형 제목 더 보기</summary>
+            <div id="secondary-title-picker" class="title-picker"></div>
+          </details>
+        </section>
+
+        <!-- 프롬프트 생성 -->
+        <section class="panel focus-card">
+          <div class="panel-head">
+            <p class="section-kicker">Step 2-②</p>
+            <h2>프롬프트 생성 &amp; 복사</h2>
+          </div>
+
+          <div class="prompt-action-grid">
+            <button class="primary-button prompt-action-button" id="generate-step2-button" type="button">
+              프롬프트 생성
+            </button>
+            <button class="ghost-button prompt-action-button" id="clear-step2-prompt-button" type="button">
+              삭제
+            </button>
+          </div>
+
+          <details class="prompt-details">
+            <summary>생성된 프롬프트 보기</summary>
+            <textarea
+              id="step2-prompt-textarea"
+              class="prompt-textarea"
+              rows="14"
+              placeholder="생성된 STEP 2 프롬프트"
+            ></textarea>
+          </details>
+        </section>
+
+        <!-- 결과 붙여넣기 -->
+        <section class="panel focus-card">
+          <div class="panel-head split-head">
+            <div>
+              <p class="section-kicker">Step 2-③</p>
+              <h2>결과 붙여넣기</h2>
+            </div>
+            <div class="button-row">
+              <button class="ghost-button compact-button" id="clear-step2-result-button" type="button">
+                결과 삭제
+              </button>
+            </div>
+          </div>
+
+          <textarea
+            id="step2-result-textarea"
+            class="prompt-textarea result-textarea single-line-textarea"
+            rows="1"
+            placeholder='STEP 2 설계도 JSON 붙여넣기'
+          ></textarea>
+
+          <p class="subtle-note">전체 JSON을 처음부터 끝까지 붙여넣으면 자동 보정 후 저장됩니다.</p>
+        </section>
+
+        <div class="navigation-row">
+          <a class="ghost-button link-button" href="/step1.html">← STEP 1</a>
+          <a class="primary-button link-button" href="/step3.html">STEP 3로 이동 →</a>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </body>
+</html>

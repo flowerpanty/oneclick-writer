@@ -7,6 +7,12 @@
   <title>원클릭 글 생성기 — 5채널 자동 콘텐츠</title>
   <meta name="description" content="ChatGPT 구독으로 Instagram, 네이버 블로그, WordPress, Threads, SNS 요약 글을 한 번에 생성하는 로컬 도구" />
   <meta name="theme-color" content="#0b0e18" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="원클릭 글생성기" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 
@@ -17,19 +23,7 @@
     <div class="header-inner">
       <h1>✦ 원클릭 글 생성기</h1>
       <div class="header-actions">
-        <a href="/research" class="header-link">
-          <span class="header-link-label">네이버 리서치 툴</span>
-          <span class="header-link-meta">/research</span>
-        </a>
-        <a href="/strategy" class="header-link">
-          <span class="header-link-label">콘텐츠 기획 툴</span>
-          <span class="header-link-meta">/strategy</span>
-        </a>
-        <a href="/step7-writer" class="header-link">
-          <span class="header-link-label">STEP 7 전용 툴</span>
-          <span class="header-link-meta">/step7-writer</span>
-        </a>
-        <span class="badge"><span class="dot"></span> ChatGPT 구독 모드</span>
+        <span class="badge"><span class="dot"></span> 원클릭 단독 모드</span>
       </div>
     </div>
   </header>
@@ -61,6 +55,22 @@
       <span><strong>프롬프트 만들기</strong> → 클립보드 복사 → ChatGPT에 붙여넣기 → 결과 JSON 불러오기 &nbsp;|&nbsp; <strong>자동 생성</strong>으로 한 번에 완료</span>
     </div>
 
+    <section class="section-block">
+      <div class="card mobile-access-card">
+        <div class="mobile-access-head">
+          <div>
+            <strong>휴대폰에서 열기</strong>
+            <div class="hint">같은 와이파이에 연결된 상태에서 아래 주소로 접속하면 됩니다.</div>
+          </div>
+          <span class="badge"><span class="dot"></span> 모바일 사용 가능</span>
+        </div>
+        <div id="accessInfo" class="access-info-list">
+          <div class="style-empty">접속 주소를 불러오는 중입니다.</div>
+        </div>
+        <div class="hint">아이폰은 Safari 공유 메뉴의 '홈 화면에 추가', 안드로이드는 Chrome 메뉴의 '홈 화면에 추가'로 바로가기처럼 쓸 수 있습니다.</div>
+      </div>
+    </section>
+
     <!-- ═══════════════════════════════════════════
          SECTION 1: 콘텐츠 입력
     ═══════════════════════════════════════════ -->
@@ -89,7 +99,7 @@
         </div>
 
         <!-- Advanced Options -->
-        <details>
+        <details id="advancedOptions">
           <summary>고급 옵션 + SEO 강화</summary>
           <div class="grid-2 mt-12">
             <div class="field">
@@ -149,14 +159,44 @@
 
           <div class="field">
             <label for="mustInclude">꼭 포함할 정보 (사실만 / 선택)</label>
-            <textarea id="mustInclude" placeholder="예: 가격: [ ] / 주문마감: [ ] / 보관법: [ ]"
+            <textarea id="mustInclude" placeholder="예: 오늘 샘플 수정 2번 함 / 오븐 1차 테스트에서 색이 진했음"
               style="min-height: 80px;"></textarea>
-            <div class="hint">없으면 비워두세요. 모델이 지어내지 않고 [빈칸]으로 남겨요.</div>
+            <div class="hint">없으면 비워두세요. 모델이 지어내지 않고 생략하거나 일반 표현으로 정리합니다.</div>
           </div>
 
-          <div class="field">
-            <label for="cta">CTA 선호 (선택)</label>
-            <input id="cta" type="text" placeholder="예: 댓글로 꿀템 공유해줘요 / DM 문의" />
+          <div class="grid-2">
+            <div class="field">
+              <label for="mustExclude">피해야 할 표현 (선택)</label>
+              <textarea id="mustExclude" placeholder="예: 최고, 완벽, 무조건, 100%"
+                style="min-height: 80px;"></textarea>
+            </div>
+            <div class="field">
+              <label for="cta">CTA 선호 (선택)</label>
+              <input id="cta" type="text" placeholder="예: 댓글로 꿀템 공유해줘요 / DM 문의" />
+            </div>
+            <div class="field">
+              <label for="publishGoal">글 목적 (선택)</label>
+              <input id="publishGoal" type="text" placeholder="예: 브랜드 기록 / 공감 유도 / 검색 유입" />
+            </div>
+            <div class="field">
+              <label for="emotionTone">감정 톤 (선택)</label>
+              <input id="emotionTone" type="text" placeholder="예: 귀엽고 담백하게 / 따뜻하고 솔직하게" />
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label for="imagePlanned">이미지 첨부 예정</label>
+              <select id="imagePlanned">
+                <option value="">(선택 안 함)</option>
+                <option value="planned">예정</option>
+                <option value="none">없음</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="storyMode">스토리 모드 힌트 (선택)</label>
+              <input id="storyMode" type="text" placeholder="예: 오늘 꼬인 흐름 중심 / 작업 디테일 중심" />
+            </div>
           </div>
 
           <label class="chip"><input id="includeFaq" type="checkbox" /> WordPress FAQ 추가</label>
@@ -164,10 +204,13 @@
         </details>
 
         <!-- Action Buttons -->
-        <div class="btn-row btn-row-main">
-          <button id="generateBtn" class="btn-primary">📋 프롬프트 만들기</button>
-          <button id="autoGenerateBtn" class="btn-auto" type="button">🚀 자동 생성</button>
-          <button id="clearBtn" class="btn-secondary" type="button">↺ 초기화</button>
+        <div class="btn-row btn-row-main" style="justify-content: center; padding-top: 30px; margin-top: 30px;">
+          <button id="generateBtn" class="btn-primary" style="padding: 14px 28px; font-size: 16px;">📋 프롬프트 만들기</button>
+          <button class="btn-copy" id="copyPromptBtn" type="button" style="padding: 14px 20px; font-size: 14px; background: rgba(59, 130, 246, 0.1); color: var(--accent-hover); border-color: rgba(59,130,246,0.3);">📋 프롬프트 복사</button>
+          <button id="openChatgptBtn" class="btn-secondary" type="button" style="padding: 14px 20px; font-size: 14px;">↗ ChatGPT 열기</button>
+          <button id="clearBtn" class="btn-secondary" type="button" style="padding: 14px 20px; font-size: 14px;">↺ 초기화</button>
+          
+          <button id="autoGenerateBtn" class="btn-auto hidden-flow" type="button" style="display:none!important">🚀 자동 생성</button>
         </div>
 
         <!-- Progress -->
@@ -185,34 +228,24 @@
     </section>
 
     <!-- ═══════════════════════════════════════════
-         SECTION 2: 프롬프트 & 결과 입력
+         SECTION 2: 프롬프트 & 결과 입력 (Simplified)
     ═══════════════════════════════════════════ -->
     <section class="section-block">
       <div class="section-header">
         <span class="section-icon">⚡</span>
-        <h2>프롬프트 & 결과 입력</h2>
+        <h2>ChatGPT 결과 입력</h2>
       </div>
 
       <div class="card">
-        <div class="field">
-          <label for="generatedPrompt">생성된 프롬프트</label>
-          <textarea id="generatedPrompt" style="min-height:120px;" placeholder="프롬프트 만들기를 누르면 자동 채워집니다."
-            readonly></textarea>
-          <div class="btn-row" style="margin-top:8px;">
-            <button class="btn-copy" id="copyPromptBtn" type="button">📋 프롬프트 복사</button>
-            <button id="openChatgptBtn" class="btn-secondary" type="button">↗ ChatGPT 열기</button>
-          </div>
-        </div>
+        <textarea id="generatedPrompt" class="prompt-storage" readonly aria-hidden="true" tabindex="-1"></textarea>
 
-        <div class="divider"></div>
-
-        <div class="field">
-          <label for="resultJson">ChatGPT 결과 JSON (수동 모드)</label>
-          <textarea id="resultJson" style="min-height:120px;"
-            placeholder='{"instagram":{...},"naver":{...},"wordpress":{...},"threads":{...},"sns_summary":{...}}'></textarea>
-          <div class="btn-row" style="margin-top:8px;">
-            <button id="applyJsonBtn" class="btn-primary">✅ 결과 불러오기</button>
-          </div>
+        <div class="field" style="margin-bottom: 0;">
+          <label for="resultJson" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>ChatGPT 결과 JSON 붙여넣기</span>
+            <button id="applyJsonBtn" class="btn-primary" style="padding: 6px 14px; font-size: 12px;">✅ 결과 불러오기</button>
+          </label>
+          <textarea id="resultJson" class="result-paste-line"
+            placeholder='여기에 {"instagram":{...}} 형식의 결과를 붙여넣으세요.'></textarea>
         </div>
       </div>
     </section>
@@ -305,6 +338,33 @@
       <div class="section-header">
         <span class="section-icon">📊</span>
         <h2>생성 결과</h2>
+      </div>
+
+      <div id="metaSummaryCard" class="card hidden" style="margin-bottom: 18px;">
+        <div class="field">
+          <label style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+            <span>프롬프트 메타</span>
+            <button id="applyMetaBtn" class="btn-secondary" type="button" disabled>메타 입력폼에 적용</button>
+          </label>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="metaInputType">입력 분류</label>
+            <input id="metaInputType" type="text" readonly />
+          </div>
+          <div class="field">
+            <label for="metaLine">라인 분류</label>
+            <input id="metaLine" type="text" readonly />
+          </div>
+        </div>
+        <div class="field">
+          <label for="metaCoreAngle">핵심 장면/감정</label>
+          <textarea id="metaCoreAngle" style="min-height:90px;" readonly></textarea>
+        </div>
+        <div class="field">
+          <label for="metaMissingInfo">검토 필요 정보</label>
+          <textarea id="metaMissingInfo" style="min-height:90px;" readonly></textarea>
+        </div>
       </div>
 
       <!-- Version Tabs (A/B) -->
@@ -531,7 +591,7 @@
 
     <!-- Footer -->
     <footer class="footer">
-      서버 확인: <code>http://localhost:8787/api/health</code>
+      원클릭 전용 주소: <code>http://localhost:8787/oneclick-writer</code>
     </footer>
 
   </main>

@@ -2,11 +2,14 @@ services:
   - type: web
     name: oneclick-writer
     runtime: node
+    region: singapore
     plan: free
-    buildCommand: npm install
+    buildCommand: npm ci
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: NODE_VERSION
         value: 22.22.0
       - key: DISABLE_BROWSER_AUTOMATION

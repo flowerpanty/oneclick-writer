@@ -1,0 +1,14 @@
+{"type":"server-started","port":65174,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:65174","screen_dir":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/52814-1773716709"}
+{"type":"screen-added","file":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/52814-1773716709/input-modes.html"}
+{"type":"screen-updated","file":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/52814-1773716709/input-modes.html"}
+{"type":"screen-updated","file":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/52814-1773716709/input-modes.html"}
+{"source":"user-event","type":"click","text":"입력\n        \n          \n            📝 주제 입력\n            🔗 URL\n            📄 내 글/내용\n          \n          \n          URL이나 긴 텍스트를 붙여넣으면 자동으로 모드가 바뀝니다\n        \n      \n    \n    \n      B. 통합 입력창 (자동 감지)\n      텍스트창 하나. URL 붙여넣으면 URL모드, 긴 글 붙여넣으면 내용모드로 자동 전환. 심플.","choice":"b","id":null,"timestamp":1773716792605}
+{"source":"user-event","type":"click","text":"입력\n        \n          \n            📝 주제 입력\n            🔗 URL\n            📄 내 글/내용\n          \n          \n          URL이나 긴 텍스트를 붙여넣으면 자동으로 모드가 바뀝니다\n        \n      \n    \n    \n      B. 통합 입력창 (자동 감지)\n      텍스트창 하나. URL 붙여넣으면 URL모드, 긴 글 붙여넣으면 내용모드로 자동 전환. 심플.","choice":"b","id":null,"timestamp":1773716802639}
+{"type":"screen-added","file":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/52814-1773716709/waiting.html"}
+{"type":"screen-updated","file":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/52814-1773716709/waiting.html"}
+{"type":"screen-updated","file":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/52814-1773716709/waiting.html"}
+{"type":"screen-added","file":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/52814-1773716709/waiting-2.html"}
+{"type":"screen-updated","file":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/52814-1773716709/waiting-2.html"}
+{"type":"screen-updated","file":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/52814-1773716709/waiting-2.html"}
+{"type":"screen-updated","file":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/52814-1773716709/waiting-2.html"}
+{"type":"server-stopped","reason":"idle timeout"}

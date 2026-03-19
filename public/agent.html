@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI 에이전트 허브</title>
+  <meta name="theme-color" content="#0b0e18" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/agent.css" />
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="header">
+  <div class="header-inner">
+    <h1><a href="/" style="text-decoration:none;color:inherit;">✦ AI 에이전트</a></h1>
+    <div class="header-actions">
+      <a href="/agent" class="header-link header-link-agent active-link">
+        <span class="header-link-label">🤖 AI 에이전트</span>
+        <span class="header-link-meta">/agent</span>
+      </a>
+      <a href="/research" class="header-link"><span class="header-link-label">🔍 1.리서치</span><span class="header-link-meta">/research</span></a>
+      <a href="/strategy" class="header-link"><span class="header-link-label">📋 2.컨텐츠</span><span class="header-link-meta">/strategy</span></a>
+      <a href="/" class="header-link"><span class="header-link-label">글 생성기</span><span class="header-link-meta">/</span></a>
+    </div>
+  </div>
+</header>
+
+<!-- ── Agent Strip ── -->
+<div class="agent-strip">
+  <button class="a-pill" data-agent="research">
+    <span class="a-pill-icon">🔍</span>
+    <span class="a-pill-name">리서치</span>
+  </button>
+
+  <button class="a-pill" data-agent="content">
+    <span class="a-pill-icon">✍️</span>
+    <span class="a-pill-name">원클릭생성</span>
+  </button>
+  <button class="a-pill" data-agent="realBlog">
+    <span class="a-pill-icon">✍️</span>
+    <span class="a-pill-name">진짜블로그</span>
+  </button>
+  <button class="a-pill" data-agent="naverBlog">
+    <span class="a-pill-icon">📝</span>
+    <span class="a-pill-name">네이버블로그</span>
+  </button>
+</div>
+
+<!-- ── Root Layout ── -->
+<div class="agent-root">
+
+  <!-- Sidebar -->
+  <aside class="agent-sidebar" id="agentSidebar">
+    <button class="sidebar-close" id="sidebarClose">‹</button>
+
+    <!-- Agent Info Card -->
+    <div class="agent-info-card" id="agentInfoCard">
+      <div class="aic-avatar" id="aicAvatar">🔍</div>
+      <div class="aic-text">
+        <div class="aic-name" id="aicName">에이전트 선택</div>
+        <div class="aic-desc" id="aicDesc">위에서 에이전트를 선택하세요</div>
+      </div>
+      <div class="aic-status" id="aicStatus"></div>
+    </div>
+
+    <!-- Quick Examples -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">빠른 예시</div>
+      <div class="quick-list" id="quickList"></div>
+    </div>
+
+    <!-- Settings -->
+    <div class="sidebar-section" id="settingsSection">
+      <div class="sidebar-label">에이전트 설정</div>
+      <div class="agent-settings" id="agentSettings">
+        <label class="setting-row">
+          <span>키워드 리서치</span>
+          <input type="checkbox" id="settingResearch" checked />
+        </label>
+        <label class="setting-row">
+          <span>SEO 강화</span>
+          <input type="checkbox" id="settingSeo" checked />
+        </label>
+        <label class="setting-row">
+          <span>A/B 버전</span>
+          <input type="checkbox" id="settingAb" />
+        </label>
+      </div>
+    </div>
+
+    <!-- Data Bridge Status -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">데이터 연결</div>
+      <div class="bridge-status" id="bridgeStatus">
+        <div class="bridge-item" id="br-research">
+          <span class="br-dot off"></span>
+          <span>리서치 데이터</span>
+        </div>
+        <div class="bridge-item" id="br-plan">
+          <span class="br-dot off"></span>
+          <span>기획 데이터</span>
+        </div>
+        <div class="bridge-item" id="br-content">
+          <span class="br-dot off"></span>
+          <span>원클릭 프롬프트</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page Nav -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">다른 도구</div>
+      <a href="/?from=agent" class="page-nav-btn" id="goToWriter">
+        <span class="pnb-icon">✍️</span>
+        <div><div class="pnb-title">📱 SNS</div><div class="pnb-hint" id="writerHint">5채널 콘텐츠 생성</div></div>
+        <span class="pnb-arr">›</span>
+      </a>
+      <a href="/research?from=agent" class="page-nav-btn" id="goToResearch">
+        <span class="pnb-icon">🔍</span>
+        <div><div class="pnb-title">🔍 1.리서치</div><div class="pnb-hint" id="researchHint">블로그/카페 분석</div></div>
+        <span class="pnb-arr">›</span>
+      </a>
+      <a href="/strategy?from=agent" class="page-nav-btn" id="goToStrategyTool">
+        <span class="pnb-icon">📊</span>
+        <div><div class="pnb-title">📋 2.컨텐츠</div><div class="pnb-hint" id="strategyHint">월간 기획 수립</div></div>
+        <span class="pnb-arr">›</span>
+      </a>
+    </div>
+
+    <!-- History -->
+    <div class="sidebar-section">
+      <div class="sidebar-label sidebar-label-row">
+        <span>최근 기록</span>
+        <button class="btn-clear" id="clearHistoryBtn">지우기</button>
+      </div>
+      <div class="history-list" id="sessionHistory">
+        <div class="history-empty">기록 없음</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Sidebar reopen button -->
+  <button class="sidebar-reopen" id="sidebarReopen">›</button>
+
+  <!-- Main Chat -->
+  <div class="agent-main">
+    <div class="chat-messages" id="chatMessages">
+      <!-- Welcome injected by JS -->
+    </div>
+
+    <div class="typing-wrap hidden" id="typingIndicator">
+      <div class="t-avatar" id="tAvatar">🔍</div>
+      <div class="typing-bubble">
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+      </div>
+      <span class="typing-label" id="typingLabel">실행 중…</span>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="chat-input-wrap" id="chatInputWrap">
+        <div class="agent-tag" id="agentTag">에이전트 선택</div>
+        <textarea id="chatInput" class="chat-input" placeholder="에이전트를 선택하고 입력하세요…" rows="1"></textarea>
+        <button id="sendBtn" class="send-btn" disabled>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"/>
+          </svg>
+        </button>
+      </div>
+      <div class="input-footer">
+        <span class="input-hint">Enter 전송 &nbsp;·&nbsp; Shift+Enter 줄바꿈</span>
+        <span class="input-status" id="inputStatus"></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="/agent.js"></script>
+</body>
+</html>

@@ -396,6 +396,80 @@
   padding-top: 4px;
 }
 
+/* ─── 요약 박스 (제품 정보) ─── */
+.strategy-page .result-summary-box {
+  display: grid;
+  gap: 12px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  border-left: 4px solid rgba(59, 130, 246, 0.45);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(59, 130, 246, 0.02) 100%);
+}
+
+.strategy-page .result-summary-box h5 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #93c5fd;
+}
+
+.strategy-page .result-summary-box .result-json-info-item {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.strategy-page .result-summary-box .result-json-info-item strong {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.strategy-page .result-summary-box .result-json-tag {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+  color: #bfdbfe;
+}
+
+/* ─── 베러의 한마디 ─── */
+.strategy-page .result-better-comment {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(250, 204, 21, 0.18);
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.06) 0%, rgba(250, 204, 21, 0.02) 100%);
+}
+
+.strategy-page .result-better-comment::before {
+  content: "😎";
+  font-size: 22px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.strategy-page .result-better-comment-inner {
+  display: grid;
+  gap: 4px;
+}
+
+.strategy-page .result-better-comment-label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fde68a;
+}
+
+.strategy-page .result-better-comment-text {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  font-size: 14px;
+}
+
 .strategy-page .result-code-block {
   margin: 0;
   padding: 14px;
@@ -592,4 +666,129 @@
   .strategy-page .result-json-topic-head {
     flex-direction: column;
   }
+}
+
+/* ── 브랜드 정보 접기/펼치기 ─────────────────────────────────── */
+.strategy-page #brandInfoDetails > .section-header.brand-summary {
+  list-style: none;
+  cursor: pointer;
+}
+.strategy-page #brandInfoDetails > .section-header.brand-summary::-webkit-details-marker { display: none; }
+.strategy-page .brand-summary-toggle-hint {
+  font-size: 11px;
+  color: var(--text3);
+  font-weight: 400;
+  margin-left: 4px;
+}
+.strategy-page #brandInfoDetails[open] .brand-summary-toggle-hint::after { content: ' ▲'; }
+.strategy-page #brandInfoDetails:not([open]) .brand-summary-toggle-hint::after { content: ' ▼'; }
+
+/* ── 큰 프롬프트 버튼 ─────────────────────────────────────────── */
+.strategy-page .prompt-btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 8px;
+}
+.strategy-page .prompt-main-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 20px 16px;
+  border-radius: 14px;
+  border: 1.5px solid;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+  font-family: inherit;
+}
+.strategy-page .prompt-main-btn:hover { transform: translateY(-2px); }
+.strategy-page .prompt-main-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.strategy-page .prompt-btn-icon { font-size: 1.8rem; }
+.strategy-page .prompt-btn-text { font-size: 1rem; font-weight: 700; }
+.strategy-page .prompt-btn-sub { font-size: 0.72rem; opacity: 0.7; }
+
+.strategy-page .prompt-build-btn {
+  background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));
+  border-color: rgba(139,92,246,0.5);
+  color: #a78bfa;
+  box-shadow: 0 0 18px rgba(139,92,246,0.15);
+}
+.strategy-page .prompt-build-btn:hover {
+  box-shadow: 0 0 28px rgba(139,92,246,0.35);
+  border-color: rgba(139,92,246,0.8);
+}
+.strategy-page .prompt-copy-btn {
+  background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(16,185,129,0.1));
+  border-color: rgba(59,130,246,0.4);
+  color: #60a5fa;
+  box-shadow: 0 0 18px rgba(59,130,246,0.1);
+}
+.strategy-page .prompt-copy-btn:not(:disabled):hover {
+  box-shadow: 0 0 28px rgba(59,130,246,0.3);
+  border-color: rgba(59,130,246,0.7);
+}
+
+/* ── 결과 붙여넣기 글로우 ──────────────────────────────────────── */
+.strategy-page .result-paste-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.strategy-page .result-paste-badge {
+  display: inline-block;
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+  width: fit-content;
+  animation: badgePulse 2.5s ease-in-out infinite;
+}
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+  50% { box-shadow: 0 0 10px 3px rgba(249,115,22,0.4); }
+}
+.strategy-page .result-paste-glow-wrap {
+  position: relative;
+}
+.strategy-page .result-paste-glow-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f59e0b, #f97316, #ec4899);
+  opacity: 0.5;
+  filter: blur(6px);
+  z-index: 0;
+  animation: glowPulse 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.65; }
+}
+.strategy-page .result-paste-glow {
+  position: relative;
+  z-index: 1;
+  min-height: 72px !important;
+  max-height: 72px !important;
+  font-size: 14px;
+  border-color: rgba(249,115,22,0.5) !important;
+  background: var(--card) !important;
+}
+.strategy-page .result-paste-glow:focus {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 3px rgba(245,158,11,0.25) !important;
+}
+
+@media (max-width: 720px) {
+  .strategy-page .prompt-btn-row { grid-template-columns: 1fr; }
 }

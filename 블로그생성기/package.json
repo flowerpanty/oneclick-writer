@@ -1,0 +1,14 @@
+{
+  "name": "naver-blog-generator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "네이버 데이터 수집과 프롬프트 워크플로우를 묶은 반자동 블로그 생성기",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

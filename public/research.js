@@ -126,7 +126,17 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+function getPreferredResearchData(data) {
+  const enriched = data?.insights?.enrichedSummary;
+  return typeof enriched === "string" && enriched.trim() ? enriched.trim() : "";
+}
+
 function buildSummaryText(data) {
+  const enrichedSummary = getPreferredResearchData(data);
+  if (enrichedSummary) {
+    return enrichedSummary;
+  }
+
   const keywords = [...(data.insights.relatedKeywords || [])]
     .sort((a, b) => (b.totalSearch || 0) - (a.totalSearch || 0))
     .slice(0, 8)
@@ -161,6 +171,11 @@ function shortenSnapshotText(text, maxLength = 180) {
 }
 
 function buildStrategyResearchSnapshot(data) {
+  const enrichedSummary = getPreferredResearchData(data);
+  if (enrichedSummary) {
+    return enrichedSummary;
+  }
+
   const items = Array.isArray(data?.items) ? data.items : [];
   const blogItems = items.filter((item) => item.source === "blog");
   const cafeItems = items.filter((item) => item.source === "cafe");
@@ -771,6 +786,33 @@ function init() {
   clearRenderedResult();
   setStep(1);
   fetchHealth();
+  loadAgentResearchBridge();
+}
+
+// ── 에이전트 브릿지: 에이전트에서 넘어온 검색어 자동 적용 ──────
+function loadAgentResearchBridge() {
+  const RESEARCH_BRIDGE_KEY = 'agent:research';
+  const raw = localStorage.getItem(RESEARCH_BRIDGE_KEY);
+  if (!raw) return;
+
+  let bridge;
+  try { bridge = JSON.parse(raw); } catch { return; }
+
+  // 5분 이상 지난 데이터는 무시
+  if (Date.now() - (bridge.savedAt || 0) > 5 * 60 * 1000) {
+    localStorage.removeItem(RESEARCH_BRIDGE_KEY);
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  if (!params.get('from')) return;
+
+  if (bridge.query && els.queryInput) {
+    els.queryInput.value = bridge.query;
+    setStatus(`에이전트에서 "${bridge.query}" 키워드를 불러왔어요. 리서치를 시작해 보세요!`);
+  }
+
+  localStorage.removeItem(RESEARCH_BRIDGE_KEY);
 }
 
 init();

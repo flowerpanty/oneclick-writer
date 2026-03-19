@@ -1,0 +1,7 @@
+{"type":"server-started","port":50972,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:50972","screen_dir":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/11367-1773702386"}
+{"type":"screen-added","file":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/11367-1773702386/layout.html"}
+{"type":"screen-updated","file":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/11367-1773702386/layout.html"}
+{"type":"screen-updated","file":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/11367-1773702386/layout.html"}
+{"type":"screen-updated","file":"/Users/nahmsoochan/Desktop/daily/alarm/untitled folder/repo/.superpowers/brainstorm/11367-1773702386/layout.html"}
+{"source":"user-event","type":"click","text":"블로그 AI 작성기\n        \n          \n            주제를 입력하세요…\n            \n              Claude\n              Gemini\n            \n          \n          \n            정보전달형\n            스토리텔링\n            가이드형\n          \n          ✨ 블로그 생성\n          생성된 블로그 글이 여기에 표시됩니다…\n        \n      \n    \n    \n      A. 단일 페이지 (올인원)\n      입력→설정→결과가 한 화면. 심플하고 빠름. 스크롤로 진행.","choice":"a","id":null,"timestamp":1773703291309}
+{"type":"server-stopped","reason":"idle timeout"}

@@ -1,10 +1,8 @@
-const STRATEGY_SESSION_STORAGE_KEY = "naverStrategy:lastSession";
+const BLOG_WRITER_STORAGE_KEY = "blogWriter:lastSession";
 
 const $ = (id) => document.getElementById(id);
 
 const els = {
-  loadRecentStrategyBtn: $("loadRecentStrategyBtn"),
-  sessionMeta: $("sessionMeta"),
   brandNameInput: $("brandNameInput"),
   blogTypeInput: $("blogTypeInput"),
   primaryCategoryInput: $("primaryCategoryInput"),
@@ -13,12 +11,7 @@ const els = {
   avoidInput: $("avoidInput"),
   goalsInput: $("goalsInput"),
   researchDataInput: $("researchDataInput"),
-  strategyResultInput: $("strategyResultInput"),
-  selectionMeta: $("selectionMeta"),
-  selectionBoard: $("selectionBoard"),
-  selectionSummary: $("selectionSummary"),
-  autoSelectBtn: $("autoSelectBtn"),
-  clearSelectionBtn: $("clearSelectionBtn"),
+  writingPlanInput: $("writingPlanInput"),
   buildPromptBtn: $("buildPromptBtn"),
   autoGenerateBtn: $("autoGenerateBtn"),
   copyPromptBtn: $("copyPromptBtn"),
@@ -37,13 +30,9 @@ const els = {
 };
 
 const state = {
-  strategyJson: null,
-  selectionGroups: [],
-  selectedIds: new Set(),
   prompt: "",
   result: "",
   health: null,
-  strategyRepairTicket: 0,
   resultRepairTicket: 0,
 };
 
@@ -283,7 +272,7 @@ function normalizeLikelyJsonMistakes(raw) {
   return sanitizeJsonStringCandidate(normalized);
 }
 
-function tryParseStrategyJson(raw) {
+function tryParseJson(raw) {
   const candidate = extractJsonObjectText(raw);
   if (!candidate) return { data: null, repaired: false };
 
@@ -360,88 +349,6 @@ function toHtmlParagraphs(items) {
     .join("\n");
 }
 
-const SUMMARY_BOX_TITLE_MAP = {
-  spec: "먼저 보면 좋은 핵심 정보",
-  comparison: "비교 전에 볼 포인트",
-  checklist: "고르기 전에 체크할 것",
-  decision: "이럴 때 이렇게 보면 쉬워요",
-  situation: "이런 상황이면 더 잘 맞아요",
-  guide: "읽기 전에 핵심만 먼저",
-  point: "이 부분이 핵심이에요",
-};
-
-function getSummaryBoxType(summaryBox) {
-  return toText(summaryBox?.boxType).toLowerCase();
-}
-
-function getSummaryBoxTitle(summaryBox) {
-  const customTitle = toText(summaryBox?.title);
-  if (customTitle) return customTitle;
-  return SUMMARY_BOX_TITLE_MAP[getSummaryBoxType(summaryBox)] || "한눈에 보면 이런 흐름이에요";
-}
-
-function getSummaryBoxRows(summaryBox, section) {
-  const dynamicRows = Array.isArray(summaryBox?.items)
-    ? summaryBox.items
-      .map((item, index) => {
-        if (isPlainObject(item)) {
-          return {
-            label: toText(item.label) || `포인트 ${index + 1}`,
-            value: toText(item.value),
-          };
-        }
-        return {
-          label: `포인트 ${index + 1}`,
-          value: toText(item),
-        };
-      })
-      .filter((row) => row.value)
-    : [];
-
-  if (dynamicRows.length) return dynamicRows;
-
-  return [
-    { label: "브랜드", value: toText(summaryBox?.brand) },
-    { label: "제품명", value: toText(summaryBox?.productName) || toText(section?.productName) },
-    { label: "가격", value: toText(summaryBox?.price) || toText(section?.price) },
-    { label: "사이즈", value: toText(summaryBox?.size) || toText(section?.size) },
-    { label: "소재", value: toText(summaryBox?.material) },
-    { label: "컬러", value: toText(summaryBox?.color) },
-  ].filter((row) => row.value);
-}
-
-function getSummaryBoxFeatureLabel(summaryBox) {
-  const type = getSummaryBoxType(summaryBox);
-  if (type === "comparison") return "비교 포인트";
-  if (type === "checklist") return "체크 포인트";
-  if (type === "decision") return "판단 기준";
-  if (type === "situation") return "추천 상황";
-  if (type === "guide") return "핵심 포인트";
-  return "특징";
-}
-
-function getSummaryBoxRecommendLabel(summaryBox) {
-  const type = getSummaryBoxType(summaryBox);
-  if (type === "comparison") return "이럴 때 더 맞아요";
-  if (type === "checklist") return "실전 팁";
-  if (type === "decision") return "추천 포인트";
-  if (type === "situation") return "잘 맞는 상황";
-  if (type === "guide") return "적용 포인트";
-  return "추천 포인트";
-}
-
-function hasSummaryBoxContent(summaryBox, section) {
-  return Boolean(
-    toText(summaryBox?.title)
-    || toText(summaryBox?.intro)
-    || getSummaryBoxRows(summaryBox, section).length
-    || toStringArray(summaryBox?.features).length
-    || toStringArray(summaryBox?.recommendPoints).length
-    || toText(summaryBox?.takeaway)
-    || toText(summaryBox?.caution)
-  );
-}
-
 function buildStructuredHtmlBody(featuredDraftInput) {
   const featuredDraft = isPlainObject(featuredDraftInput) ? featuredDraftInput : {};
   const chunks = [];
@@ -466,26 +373,23 @@ function buildStructuredHtmlBody(featuredDraftInput) {
     }
 
     const summaryBox = isPlainObject(section?.summaryBox) ? section.summaryBox : {};
-    const summaryRows = getSummaryBoxRows(summaryBox, section);
-    const summaryIntro = toText(summaryBox.intro);
-    const summaryTitle = getSummaryBoxTitle(summaryBox);
-    const takeaway = toText(summaryBox.takeaway);
-    const caution = toText(summaryBox.caution);
-    const features = toStringArray(summaryBox.features);
-    const recommendPoints = toStringArray(summaryBox.recommendPoints);
+    const summaryLines = [
+      ["브랜드", toText(summaryBox.brand)],
+      ["제품명", toText(summaryBox.productName) || toText(section?.productName)],
+      ["가격", toText(summaryBox.price) || toText(section?.price)],
+      ["사이즈", toText(summaryBox.size) || toText(section?.size)],
+      ["소재", toText(summaryBox.material)],
+      ["컬러", toText(summaryBox.color)],
+      ["특징", toStringArray(summaryBox.features).join(", ")],
+      ["추천 포인트", toStringArray(summaryBox.recommendPoints).join(", ")],
+    ].filter(([, value]) => value);
 
-    if (hasSummaryBoxContent(summaryBox, section)) {
+    if (summaryLines.length) {
       chunks.push([
         '<div style="margin:20px 0;padding:18px 22px;border-radius:14px;border:1px solid #d1d5db;border-left:4px solid #3b82f6;background:#f8fafc;">',
-        summaryTitle ? `<p style="margin:0 0 8px 0;font-size:15px;font-weight:800;color:#1e3a5f;">${escapeHtml(summaryTitle)}</p>` : "",
-        summaryIntro ? `<p style="margin:0 0 10px 0;line-height:1.7;color:#334155;">${escapeHtml(summaryIntro)}</p>` : "",
-        ...summaryRows.map((row) => `<p style="margin:6px 0;line-height:1.7;"><strong style="color:#1e3a5f;">${escapeHtml(row.label)}</strong> &nbsp;${escapeHtml(row.value)}</p>`),
-        takeaway ? `<p style="margin:6px 0;line-height:1.7;"><strong style="color:#1e3a5f;">한줄 결론</strong> &nbsp;${escapeHtml(takeaway)}</p>` : "",
-        caution ? `<p style="margin:6px 0;line-height:1.7;"><strong style="color:#1e3a5f;">주의 포인트</strong> &nbsp;${escapeHtml(caution)}</p>` : "",
-        features.length ? `<p style="margin:6px 0;line-height:1.7;"><strong style="color:#1e3a5f;">${escapeHtml(getSummaryBoxFeatureLabel(summaryBox))}</strong> &nbsp;${escapeHtml(features.join(", "))}</p>` : "",
-        recommendPoints.length ? `<p style="margin:6px 0;line-height:1.7;"><strong style="color:#1e3a5f;">${escapeHtml(getSummaryBoxRecommendLabel(summaryBox))}</strong> &nbsp;${escapeHtml(recommendPoints.join(", "))}</p>` : "",
+        ...summaryLines.map(([label, value]) => `<p style="margin:6px 0;line-height:1.7;"><strong style="color:#1e3a5f;">${escapeHtml(label)}</strong> &nbsp;${escapeHtml(value)}</p>`),
         '</div>',
-      ].filter(Boolean).join("\n"));
+      ].join("\n"));
     }
 
     if (toText(section?.betterComment)) {
@@ -663,20 +567,20 @@ function renderFeaturedDraftCard(featuredDraftInput) {
                 { label: "사이즈", value: toText(section?.size) },
                 { label: "한줄평", value: toText(section?.oneLineSummary) },
               ])}
-              ${isPlainObject(section?.summaryBox) && hasSummaryBoxContent(section.summaryBox, section)
+              ${isPlainObject(section?.summaryBox)
                 ? `
                   <div class="result-summary-box">
-                    <h5>📦 ${renderInlineText(getSummaryBoxTitle(section.summaryBox))}</h5>
-                    ${toText(section.summaryBox.intro)
-                      ? `<p class="result-preview-text">${renderInlineText(toText(section.summaryBox.intro))}</p>`
-                      : ""}
+                    <h5>📦 요약 박스</h5>
                     ${renderInfoRows([
-                      ...getSummaryBoxRows(section.summaryBox, section),
-                      { label: "한줄 결론", value: toText(section.summaryBox.takeaway) },
-                      { label: "주의 포인트", value: toText(section.summaryBox.caution) },
+                      { label: "브랜드", value: toText(section.summaryBox.brand) },
+                      { label: "제품명", value: toText(section.summaryBox.productName) },
+                      { label: "가격", value: toText(section.summaryBox.price) },
+                      { label: "사이즈", value: toText(section.summaryBox.size) },
+                      { label: "소재", value: toText(section.summaryBox.material) },
+                      { label: "컬러", value: toText(section.summaryBox.color) },
                     ])}
-                    ${renderTagRow(getSummaryBoxFeatureLabel(section.summaryBox), section.summaryBox.features)}
-                    ${renderTagRow(getSummaryBoxRecommendLabel(section.summaryBox), section.summaryBox.recommendPoints)}
+                    ${renderTagRow("특징", section.summaryBox.features)}
+                    ${renderTagRow("추천 포인트", section.summaryBox.recommendPoints)}
                   </div>
                 `
                 : ""}
@@ -735,489 +639,6 @@ function renderFeaturedDraftCard(featuredDraftInput) {
   `;
 }
 
-function createSelectionItem(groupId, index, title, description, summaryLines) {
-  const normalizedTitle = toText(title) || `항목 ${index + 1}`;
-  const normalizedDescription = toText(description);
-  const normalizedSummaryLines = Array.isArray(summaryLines)
-    ? summaryLines.map((line) => shortenText(line, 220)).filter(Boolean)
-    : [];
-
-  return {
-    id: `${groupId}-${index}`,
-    title: normalizedTitle,
-    description: normalizedDescription,
-    summaryLines: normalizedSummaryLines,
-    searchText: [normalizedTitle, normalizedDescription, ...normalizedSummaryLines].filter(Boolean).join(" "),
-  };
-}
-
-const SELECTION_STOPWORDS = new Set([
-  "step",
-  "seo",
-  "html",
-  "json",
-  "blog",
-  "brand",
-  "daily",
-  "intro",
-  "outline",
-  "title",
-  "topic",
-  "draft",
-  "글",
-  "블로그",
-  "글감",
-  "주제",
-  "제목",
-  "추천",
-  "핵심",
-  "키워드",
-  "질문",
-  "고민",
-  "검색",
-  "의도",
-  "이유",
-  "상세",
-  "목차",
-  "우선",
-  "발행",
-  "관점",
-  "활용",
-  "방향",
-  "기획",
-  "반응",
-  "도입문",
-  "내용",
-  "요약",
-  "포인트",
-  "메인",
-  "보조",
-  "독자",
-]);
-
-const PERSPECTIVE_HINTS = [
-  {
-    matchers: ["vs", "비교", "장단점", "차이", "정리"],
-    preferred: ["비교형"],
-  },
-  {
-    matchers: ["가이드", "기준", "팁", "에티켓", "범위", "정리"],
-    preferred: ["정보형", "문제해결형"],
-  },
-  {
-    matchers: ["여름", "겨울", "보관", "유통기한", "걱정", "문제"],
-    preferred: ["문제해결형"],
-  },
-  {
-    matchers: ["트렌드", "요즘", "유니크", "패키지", "포장", "감동"],
-    preferred: ["트렌드형"],
-  },
-];
-
-function buildSelectionSearchText(item) {
-  return toText(item?.searchText) || [
-    toText(item?.title),
-    toText(item?.description),
-    ...toStringArray(item?.summaryLines),
-  ].filter(Boolean).join(" ");
-}
-
-function tokenizeSelectionText(value) {
-  return Array.from(new Set(
-    (toText(value).toLowerCase().match(/[가-힣a-z0-9]+/g) || [])
-      .filter((token) => token.length >= 2 && !SELECTION_STOPWORDS.has(token))
-  ));
-}
-
-function getSelectionTokens(item) {
-  return tokenizeSelectionText(buildSelectionSearchText(item));
-}
-
-function extendTokenPool(pool, item) {
-  getSelectionTokens(item).forEach((token) => pool.add(token));
-}
-
-function scoreSelectionItem(item, anchorTokens = []) {
-  const searchText = buildSelectionSearchText(item).toLowerCase();
-  const itemTokens = new Set(getSelectionTokens(item));
-
-  if (!anchorTokens.length) {
-    return itemTokens.size;
-  }
-
-  let score = 0;
-  anchorTokens.forEach((token) => {
-    if (!token) return;
-    if (itemTokens.has(token)) {
-      score += token.length >= 4 ? 4 : 2;
-      return;
-    }
-    if (searchText.includes(token)) {
-      score += 1;
-    }
-  });
-
-  return score;
-}
-
-function getGroupSelectionLimit(group) {
-  if (!group) return 1;
-  if (group.mode === "single") return 1;
-  return Math.max(1, group.maxSelectable || group.recommendedCount || 1);
-}
-
-function getSelectionModeLabel(group) {
-  const limit = getGroupSelectionLimit(group);
-  return limit === 1 ? "1개 선택" : `최대 ${limit}개`;
-}
-
-function findSelectionGroup(groups, groupId) {
-  return (groups || []).find((group) => group.id === groupId) || null;
-}
-
-function rankGroupItems(group, anchorTokens = []) {
-  return (group?.items || [])
-    .map((item, index) => ({
-      item,
-      index,
-      score: scoreSelectionItem(item, anchorTokens),
-    }))
-    .sort((left, right) => right.score - left.score || left.index - right.index);
-}
-
-function pickSummaryValue(item, label) {
-  const prefix = `${label}:`;
-  const matchedLine = Array.isArray(item?.summaryLines)
-    ? item.summaryLines.find((line) => line.startsWith(prefix))
-    : "";
-  return matchedLine ? matchedLine.slice(prefix.length).trim() : "";
-}
-
-function normalizeRelationText(value) {
-  return toText(value)
-    .toLowerCase()
-    .replace(/[^가-힣a-z0-9]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function buildRelationVariants(item) {
-  return Array.from(new Set([
-    toText(item?.title),
-    toText(item?.description),
-    pickSummaryValue(item, "추천 제목"),
-    pickSummaryValue(item, "글감 주제"),
-    pickSummaryValue(item, "우선 주제"),
-    pickSummaryValue(item, "기획 의도"),
-  ].map((value) => normalizeRelationText(value)).filter(Boolean)));
-}
-
-function buildAnchorContext(item) {
-  const title = toText(item?.title);
-  const topic = pickSummaryValue(item, "우선 주제")
-    || pickSummaryValue(item, "글감 주제")
-    || title;
-  const keywordLine = [
-    pickSummaryValue(item, "핵심 키워드"),
-    pickSummaryValue(item, "녹일 키워드"),
-    title,
-    topic,
-  ].filter(Boolean).join(", ");
-
-  return {
-    title,
-    topic,
-    variants: new Set([
-      normalizeRelationText(title),
-      normalizeRelationText(topic),
-      ...buildRelationVariants(item),
-    ].filter(Boolean)),
-    tokens: new Set([
-      ...tokenizeSelectionText(title),
-      ...tokenizeSelectionText(topic),
-      ...tokenizeSelectionText(keywordLine),
-    ]),
-  };
-}
-
-function mergeAnchorContext(context, item) {
-  if (!item) return context;
-  const next = {
-    title: context?.title || toText(item?.title),
-    topic: context?.topic || pickSummaryValue(item, "우선 주제") || pickSummaryValue(item, "글감 주제") || toText(item?.title),
-    variants: new Set(context?.variants || []),
-    tokens: new Set(context?.tokens || []),
-  };
-
-  buildRelationVariants(item).forEach((variant) => next.variants.add(variant));
-  buildAnchorContext(item).variants.forEach((variant) => next.variants.add(variant));
-  buildAnchorContext(item).tokens.forEach((token) => next.tokens.add(token));
-  return next;
-}
-
-function inferPreferredPerspective(context) {
-  const joined = `${context?.title || ""} ${context?.topic || ""}`.toLowerCase();
-  return PERSPECTIVE_HINTS
-    .filter((hint) => hint.matchers.some((matcher) => joined.includes(matcher)))
-    .flatMap((hint) => hint.preferred);
-}
-
-function scoreItemAgainstContext(item, context, groupId = "") {
-  if (!item || !context) return 0;
-
-  const itemTitle = normalizeRelationText(item.title);
-  const itemVariants = buildRelationVariants(item);
-  const itemTokens = new Set(getSelectionTokens(item));
-  let score = 0;
-
-  if (context.variants.has(itemTitle)) {
-    score += 140;
-  }
-
-  itemVariants.forEach((variant) => {
-    if (!variant) return;
-    if (context.variants.has(variant)) {
-      score += 100;
-      return;
-    }
-    context.variants.forEach((anchorVariant) => {
-      if (!anchorVariant || anchorVariant === variant) return;
-      if (variant.includes(anchorVariant) || anchorVariant.includes(variant)) {
-        score += 35;
-      }
-    });
-  });
-
-  context.tokens.forEach((token) => {
-    if (!token) return;
-    if (itemTokens.has(token)) {
-      score += token.length >= 4 ? 7 : 4;
-    }
-  });
-
-  if (groupId === "step1-perspectives") {
-    const preferred = inferPreferredPerspective(context);
-    preferred.forEach((label) => {
-      if (item.title.includes(label)) {
-        score += 45;
-      }
-    });
-  }
-
-  if (groupId === "step1-coreKeywords") {
-    const anchorText = `${context.title} ${context.topic}`.toLowerCase();
-    if (anchorText.includes(toText(item.title).toLowerCase())) {
-      score += 60;
-    }
-  }
-
-  if (groupId === "step4-titles" && itemTitle && context.variants.has(itemTitle)) {
-    score += 80;
-  }
-
-  return score;
-}
-
-function pickAlignedItems(group, context, { limit = 1, threshold = 1, allowFallback = false } = {}) {
-  if (!group?.items?.length) return [];
-
-  const ranked = group.items
-    .map((item, index) => ({
-      item,
-      index,
-      score: scoreItemAgainstContext(item, context, group.id),
-    }))
-    .sort((left, right) => right.score - left.score || left.index - right.index);
-
-  const selectedItems = ranked
-    .filter((entry) => entry.score >= threshold)
-    .slice(0, limit)
-    .map((entry) => entry.item);
-
-  if (selectedItems.length || !allowFallback) {
-    return selectedItems;
-  }
-
-  return group.items.slice(0, limit);
-}
-
-function getCanonicalTitle(items = []) {
-  const ranked = new Map();
-
-  items.forEach((item) => {
-    const normalized = normalizeRelationText(item?.title);
-    if (!normalized) return;
-    if (!ranked.has(normalized)) {
-      ranked.set(normalized, { count: 0, label: item.title });
-    }
-    ranked.get(normalized).count += 1;
-  });
-
-  return [...ranked.values()]
-    .sort((left, right) => right.count - left.count || left.label.length - right.label.length)[0]?.label || "";
-}
-
-function buildSelectionGroups(data) {
-  if (!isPlainObject(data)) return [];
-
-  const groups = [];
-  const step2 = isPlainObject(data.step2) ? data.step2 : {};
-
-  const topics = Array.isArray(step2.topics) ? step2.topics : [];
-  if (topics.length) {
-    groups.push({
-      id: "step2-topics",
-      title: "STEP 2 추천 블로그 글감",
-      helper: "이 화면은 글감 1개만 고르는 흐름입니다. 아래 추천 글감 중 최종 주제 1개를 선택하세요.",
-      mode: "single",
-      recommendedCount: 1,
-      items: topics.slice(0, 20).map((item, index) => createSelectionItem(
-        "step2-topics",
-        index,
-        item?.title || item?.topic,
-        item?.reason,
-        [
-          `글감 주제: ${toText(item?.topic)}`,
-          `추천 제목: ${toText(item?.title)}`,
-          `검색 의도: ${toText(item?.intent)}`,
-          `추천 이유: ${toText(item?.reason)}`,
-          `읽을 사람: ${toText(item?.reader)}`,
-          `도입문 방향: ${toText(item?.introDirection)}`,
-          `핵심 키워드: ${toStringArray(item?.keywords).join(", ")}`,
-          `추천 목차: ${toStringArray(item?.outline).join(" / ")}`,
-          `꼭 다룰 내용: ${toStringArray(item?.mustCover).join(", ")}`,
-          `주의할 점: ${toStringArray(item?.cautions).join(", ")}`,
-          `브랜드 연결 포인트: ${toText(item?.brandConnection)}`,
-        ],
-      )),
-    });
-  }
-
-  return groups.filter((group) => Array.isArray(group.items) && group.items.length);
-}
-
-function getDefaultSelectedIds(groups) {
-  const selected = new Set();
-  groups.forEach((group) => {
-    group.items.slice(0, 1).forEach((item) => {
-      selected.add(item.id);
-    });
-  });
-  return selected;
-}
-
-function renderSelectionBoard() {
-  const groups = state.selectionGroups || [];
-  if (!groups.length) {
-    els.selectionBoard.className = "step7-selection-board empty";
-    els.selectionBoard.textContent = "콘텐츠 기획 결과 JSON을 붙여넣으면 STEP 2 글감 선택 보드가 열립니다.";
-    return;
-  }
-
-  els.selectionBoard.className = "step7-selection-board";
-  els.selectionBoard.innerHTML = groups.map((group) => `
-    <article class="step7-selection-group">
-      <div class="step7-selection-group-head">
-        <div>
-          <h3>${renderInlineText(group.title)}</h3>
-          <p>${renderInlineText(group.helper || "")}</p>
-        </div>
-        <span class="step7-selection-mode">${getSelectionModeLabel(group)}</span>
-      </div>
-      <div class="step7-selection-items">
-        ${group.items.map((item) => `
-          <button
-            type="button"
-            class="step7-choice${state.selectedIds.has(item.id) ? " active" : ""}"
-            data-choice-id="${escapeHtml(item.id)}"
-            data-group-id="${escapeHtml(group.id)}"
-            data-choice-mode="${escapeHtml(group.mode)}"
-          >
-            <strong>${renderInlineText(item.title)}</strong>
-            ${item.description ? `<span>${renderInlineText(item.description)}</span>` : ""}
-          </button>
-        `).join("")}
-      </div>
-    </article>
-  `).join("");
-}
-
-function buildSelectionSummary() {
-  const selectedByGroup = new Map(
-    state.selectionGroups.map((group) => [
-      group.id,
-      group.items.filter((item) => state.selectedIds.has(item.id)),
-    ])
-  );
-  const lines = ["[STEP 7 작성 브리프]"];
-  const topic = selectedByGroup.get("step2-topics")?.[0] || null;
-
-  if (topic) {
-    lines.push(`선택한 글감: ${topic.title}`);
-    const topicName = pickSummaryValue(topic, "글감 주제");
-    if (topicName) {
-      lines.push(`글감 주제: ${topicName}`);
-    }
-    if (topic.description) {
-      lines.push(`선정 이유: ${topic.description}`);
-    }
-
-    const intent = pickSummaryValue(topic, "검색 의도");
-    if (intent) {
-      lines.push(`검색 의도: ${intent}`);
-    }
-
-    const keywords = pickSummaryValue(topic, "핵심 키워드");
-    if (keywords) {
-      lines.push(`핵심 키워드: ${keywords}`);
-    }
-
-    const reader = pickSummaryValue(topic, "읽을 사람");
-    if (reader) {
-      lines.push(`핵심 독자: ${reader}`);
-    }
-
-    const introDirection = pickSummaryValue(topic, "도입문 방향");
-    if (introDirection) {
-      lines.push(`도입 방향: ${introDirection}`);
-    }
-
-    const outline = pickSummaryValue(topic, "추천 목차");
-    if (outline) {
-      lines.push(`추천 흐름: ${outline}`);
-    }
-
-    const mustCover = pickSummaryValue(topic, "꼭 다룰 내용");
-    if (mustCover) {
-      lines.push(`반드시 다룰 내용: ${mustCover}`);
-    }
-
-    const cautions = pickSummaryValue(topic, "주의할 점");
-    if (cautions) {
-      lines.push(`주의할 점: ${cautions}`);
-    }
-
-    const brandConnection = pickSummaryValue(topic, "브랜드 연결 포인트");
-    if (brandConnection) {
-      lines.push(`브랜드 연결 포인트: ${brandConnection}`);
-    }
-  }
-
-  if (topic) {
-    lines.push("작성 원칙: 위에서 고른 글감 1개만 중심축으로 사용하고, 다른 STEP 후보 주제나 다른 글감을 끌어오지 말 것.");
-  }
-
-  return lines.length > 1 ? lines.join("\n") : "";
-}
-
-function syncSelectionSummary() {
-  const summary = buildSelectionSummary();
-  els.selectionSummary.value = summary;
-  els.selectionMeta.textContent = state.selectedIds.size
-    ? "글감 1개를 골라 STEP 7 전용 글 생성기로 넘길 준비가 됐습니다."
-    : "선택된 항목이 아직 없습니다. STEP 2에서 글감 1개를 골라주세요.";
-}
-
 function clearPrompt() {
   state.prompt = "";
   els.promptOutput.value = "";
@@ -1234,7 +655,7 @@ function setResultValue(value = "", options = {}) {
   renderResultPreview(value);
   saveSession();
 
-  const parsed = tryParseStrategyJson(value || "");
+  const parsed = tryParseJson(value || "");
   if (!parsed.data && /[{\[]/.test(value || "")) {
     const requestedValue = (value || "").trim();
     const ticket = ++state.resultRepairTicket;
@@ -1246,7 +667,7 @@ function setResultValue(value = "", options = {}) {
         if (!repairedText) return;
         state.resultRepairTicket += 1;
         setResultValue(repairedText);
-        setStatus("붙여넣은 STEP 7 JSON의 작은 오류를 자동 보정했습니다.");
+        setStatus("붙여넣은 블로그 JSON의 작은 오류를 자동 보정했습니다.");
       })
       .catch(() => {
         // ignore repair failures and keep original preview
@@ -1256,114 +677,6 @@ function setResultValue(value = "", options = {}) {
 
 function clearResult() {
   setResultValue("");
-}
-
-function syncFromStrategyJson(data) {
-  const hasSteps = isPlainObject(data) && [1, 2, 3, 4, 5, 6].some((stepNumber) => isPlainObject(data[`step${stepNumber}`]));
-
-  if (!hasSteps) {
-    state.strategyJson = null;
-    state.selectionGroups = [];
-    state.selectedIds = new Set();
-    renderSelectionBoard();
-    syncSelectionSummary();
-    clearPrompt();
-    return;
-  }
-
-  state.strategyJson = data;
-  state.selectionGroups = buildSelectionGroups(data);
-  state.selectedIds = getDefaultSelectedIds(state.selectionGroups);
-  renderSelectionBoard();
-  syncSelectionSummary();
-  clearPrompt();
-}
-
-function handleStrategyInput(rawValue) {
-  const parsed = tryParseStrategyJson(rawValue);
-  syncFromStrategyJson(parsed.data);
-  saveSession();
-
-  if (!parsed.data && /[{\[]/.test(rawValue || "")) {
-    const requestedValue = (rawValue || "").trim();
-    const ticket = ++state.strategyRepairTicket;
-    repairJsonViaServer(rawValue)
-      .then((json) => {
-        if (ticket !== state.strategyRepairTicket) return;
-        if ((els.strategyResultInput?.value || "").trim() !== requestedValue) return;
-        const repairedText = (json?.repairedText || "").trim();
-        if (!repairedText) return;
-        state.strategyRepairTicket += 1;
-        els.strategyResultInput.value = repairedText;
-        handleStrategyInput(repairedText);
-        setStatus("붙여넣은 전략 JSON의 작은 오류를 자동 보정했습니다.");
-      })
-      .catch(() => {
-        // ignore repair failures and keep original preview
-      });
-  }
-}
-
-function toggleSelection(itemId, groupId, mode) {
-  if (!itemId) return;
-
-  const group = findSelectionGroup(state.selectionGroups, groupId);
-  const limit = getGroupSelectionLimit(group || { mode });
-  const selectionMode = group?.mode || mode;
-
-  if (selectionMode === "single" || limit === 1) {
-    [...state.selectedIds].forEach((selectedId) => {
-      if (selectedId.startsWith(`${groupId}-`)) {
-        state.selectedIds.delete(selectedId);
-      }
-    });
-    state.selectedIds.add(itemId);
-  } else if (state.selectedIds.has(itemId)) {
-    state.selectedIds.delete(itemId);
-  } else {
-    const sameGroupCount = [...state.selectedIds]
-      .filter((selectedId) => selectedId.startsWith(`${groupId}-`))
-      .length;
-    if (sameGroupCount >= limit) {
-      setStatus(`${group?.title || "이 그룹"}는 최대 ${limit}개까지 선택할 수 있습니다.`);
-      return;
-    }
-    state.selectedIds.add(itemId);
-  }
-
-  renderSelectionBoard();
-  syncSelectionSummary();
-  clearPrompt();
-}
-
-function applyDefaultSelections() {
-  if (!state.selectionGroups.length) return;
-  state.selectedIds = getDefaultSelectedIds(state.selectionGroups);
-  renderSelectionBoard();
-  syncSelectionSummary();
-  clearPrompt();
-  setStatus("추천 선택을 다시 적용했습니다. 글감 1개만 남기도록 정리했어요.");
-}
-
-function clearSelections() {
-  state.selectedIds = new Set();
-  renderSelectionBoard();
-  syncSelectionSummary();
-  clearPrompt();
-  setStatus("선택 항목을 비웠습니다.");
-}
-
-function formatSavedAt(isoString) {
-  if (!isoString) return "";
-  const date = new Date(isoString);
-  if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
 }
 
 function gatherPayload() {
@@ -1376,14 +689,14 @@ function gatherPayload() {
     avoidDirection: els.avoidInput.value.trim(),
     workGoals: els.goalsInput.value.trim(),
     researchData: els.researchDataInput.value.trim(),
-    selectedPlan: els.selectionSummary.value.trim(),
+    selectedPlan: els.writingPlanInput.value.trim(),
   };
 }
 
 function saveSession() {
   try {
     localStorage.setItem(
-      STRATEGY_SESSION_STORAGE_KEY,
+      BLOG_WRITER_STORAGE_KEY,
       JSON.stringify({
         brandName: els.brandNameInput.value,
         blogType: els.blogTypeInput.value,
@@ -1393,7 +706,7 @@ function saveSession() {
         avoidDirection: els.avoidInput.value,
         workGoals: els.goalsInput.value,
         researchData: els.researchDataInput.value,
-        resultText: els.strategyResultInput.value,
+        writingPlan: els.writingPlanInput.value,
         savedAt: new Date().toISOString(),
       }),
     );
@@ -1404,7 +717,7 @@ function saveSession() {
 
 function loadSession() {
   try {
-    const raw = localStorage.getItem(STRATEGY_SESSION_STORAGE_KEY);
+    const raw = localStorage.getItem(BLOG_WRITER_STORAGE_KEY);
     if (!raw) return null;
     return JSON.parse(raw);
   } catch {
@@ -1412,7 +725,7 @@ function loadSession() {
   }
 }
 
-function applySession(session, { announce = false } = {}) {
+function applySession(session) {
   if (!session) return false;
 
   els.brandNameInput.value = session.brandName || "";
@@ -1423,28 +736,17 @@ function applySession(session, { announce = false } = {}) {
   els.avoidInput.value = session.avoidDirection || "";
   els.goalsInput.value = session.workGoals || "";
   els.researchDataInput.value = session.researchData || "";
-  els.strategyResultInput.value = session.resultText || "";
+  els.writingPlanInput.value = session.writingPlan || "";
 
-  const savedAt = formatSavedAt(session.savedAt);
-  els.sessionMeta.textContent = session.resultText
-    ? `${savedAt || "방금"} 저장된 전략 결과를 불러왔습니다. 이 화면에서 바로 STEP 7만 진행할 수 있습니다.`
-    : "저장된 전략 결과가 아직 없습니다. 콘텐츠 기획 툴에서 결과를 만든 뒤 다시 불러와 주세요.";
-
-  handleStrategyInput(session.resultText || "");
-
-  if (announce && session.resultText) {
-    setStatus("최근 전략 결과를 불러왔습니다.");
-    setError("");
-  }
-  return Boolean(session.resultText);
+  return true;
 }
 
 async function buildPrompt() {
   setError("");
   const payload = gatherPayload();
 
-  if (!payload.selectedPlan) {
-    throw new Error("STEP 2에서 글감 1개를 먼저 선택해 주세요.");
+  if (!payload.selectedPlan || payload.selectedPlan.length < 20) {
+    throw new Error("'글 구성 & 참고 정보'를 20자 이상 입력해 주세요. 주제, 키워드, 목차 등을 적어주세요.");
   }
 
   const response = await fetch("/api/research-strategy/step7-prompt", {
@@ -1455,14 +757,14 @@ async function buildPrompt() {
   const json = await response.json();
 
   if (!response.ok) {
-    throw new Error(json?.error || "STEP 7 전용 프롬프트 생성에 실패했어요.");
+    throw new Error(json?.error || "블로그 프롬프트 생성에 실패했어요.");
   }
 
   state.prompt = json.prompt || "";
   els.promptOutput.value = state.prompt;
   els.copyPromptBtn.disabled = !state.prompt;
   saveSession();
-  setStatus(`STEP 7 전용 프롬프트를 만들었습니다. 선택 요약 ${json.selectedLength?.toLocaleString?.("ko-KR") || json.selectedLength || 0}자와 집중 리서치 ${json.focusedResearchLength?.toLocaleString?.("ko-KR") || json.focusedResearchLength || 0}자를 반영했습니다.`);
+  setStatus(`블로그 프롬프트를 만들었습니다. 글 구성 정보 ${json.selectedLength?.toLocaleString?.("ko-KR") || json.selectedLength || 0}자를 반영했습니다.`);
   return state.prompt;
 }
 
@@ -1471,7 +773,7 @@ async function handleBuildPrompt() {
     setProgressLines([]);
     await buildPrompt();
   } catch (error) {
-    setError(error?.message || "STEP 7 전용 프롬프트 생성 중 오류가 발생했어요.");
+    setError(error?.message || "블로그 프롬프트 생성 중 오류가 발생했어요.");
   }
 }
 
@@ -1479,12 +781,12 @@ async function handleAutoGenerate() {
   setError("");
   els.autoGenerateBtn.disabled = true;
   els.buildPromptBtn.disabled = true;
-  setProgressLines(["STEP 7 전용 프롬프트 생성 중…"]);
+  setProgressLines(["블로그 프롬프트 생성 중…"]);
   setProgress(8);
 
   try {
     const prompt = await buildPrompt();
-    setProgressLines(["STEP 7 전용 프롬프트 생성 완료 ✓", "ChatGPT 자동화 시작…"]);
+    setProgressLines(["블로그 프롬프트 생성 완료 ✓", "ChatGPT 자동화 시작…"]);
     setProgress(18);
 
     const response = await fetch("/api/research-strategy/auto-generate", {
@@ -1495,13 +797,13 @@ async function handleAutoGenerate() {
 
     if (!response.ok) {
       const errorJson = await response.json().catch(() => ({}));
-      throw new Error(errorJson?.error || "STEP 7 자동 생성에 실패했어요.");
+      throw new Error(errorJson?.error || "블로그 자동 생성에 실패했어요.");
     }
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
-    const logs = ["STEP 7 전용 프롬프트 생성 완료 ✓", "ChatGPT 자동화 시작…"];
+    const logs = ["블로그 프롬프트 생성 완료 ✓", "ChatGPT 자동화 시작…"];
     let resultText = "";
 
     while (true) {
@@ -1524,21 +826,21 @@ async function handleAutoGenerate() {
         } else if (payload.type === "result") {
           resultText = payload.text || "";
         } else if (payload.type === "error") {
-          throw new Error(payload.message || "STEP 7 자동 생성 중 오류가 발생했어요.");
+          throw new Error(payload.message || "블로그 자동 생성 중 오류가 발생했어요.");
         }
       }
     }
 
     if (!resultText) {
-      throw new Error("STEP 7 결과를 받지 못했어요. 프롬프트 복사 방식으로 다시 시도해 주세요.");
+      throw new Error("블로그 결과를 받지 못했어요. 프롬프트 복사 방식으로 다시 시도해 주세요.");
     }
 
     setResultValue(resultText);
     setProgress(100);
-    setProgressLines([...logs, "STEP 7 글 생성 완료 ✓"]);
-    setStatus("STEP 7 전용 블로그 글 결과를 받아왔습니다.");
+    setProgressLines([...logs, "블로그 글 생성 완료 ✓"]);
+    setStatus("블로그 글 결과를 받아왔습니다.");
   } catch (error) {
-    setError(error?.message || "STEP 7 자동 생성 중 오류가 발생했어요.");
+    setError(error?.message || "블로그 자동 생성 중 오류가 발생했어요.");
   } finally {
     els.autoGenerateBtn.disabled = false;
     els.buildPromptBtn.disabled = false;
@@ -1550,20 +852,20 @@ function renderResultPreview(text = "") {
 
   if (!normalized) {
     els.resultPreview.className = "result-preview empty";
-    els.resultPreview.textContent = "STEP 7 결과가 들어오면 여기서 최종 블로그 글 구조를 확인할 수 있습니다.";
-    els.resultPreviewHint.textContent = "STEP 7 결과를 붙여넣으면 제목 후보, 메타 정보, HTML 본문까지 보기 좋게 정리해서 보여줍니다.";
+    els.resultPreview.textContent = "블로그 결과가 들어오면 여기서 최종 블로그 글 구조를 확인할 수 있습니다.";
+    els.resultPreviewHint.textContent = "블로그 결과를 붙여넣으면 제목 후보, 메타 정보, HTML 본문까지 보기 좋게 정리해서 보여줍니다.";
     return;
   }
 
-  const parsed = tryParseStrategyJson(normalized);
+  const parsed = tryParseJson(normalized);
   const featuredDraft = extractFeaturedDraftPayload(parsed.data || {});
 
   if (featuredDraft) {
     els.resultPreview.className = "result-preview";
     els.resultPreview.innerHTML = renderFeaturedDraftCard(featuredDraft);
     els.resultPreviewHint.textContent = parsed.repaired
-      ? "STEP 7 JSON의 작은 오류를 자동 보정해서 정리했습니다."
-      : "STEP 7 JSON 결과를 보기 좋게 정리해서 보여주고 있습니다.";
+      ? "블로그 JSON의 작은 오류를 자동 보정해서 정리했습니다."
+      : "블로그 JSON 결과를 보기 좋게 정리해서 보여주고 있습니다.";
     return;
   }
 
@@ -1588,15 +890,6 @@ async function fetchHealth() {
 }
 
 function bindEvents() {
-  els.loadRecentStrategyBtn.addEventListener("click", () => {
-    const session = loadSession();
-    if (!session?.resultText) {
-      setError("최근 전략 결과를 찾지 못했어요. 콘텐츠 기획 툴에서 결과를 만든 뒤 다시 시도해 주세요.");
-      return;
-    }
-    applySession(session, { announce: true });
-  });
-
   [
     els.brandNameInput,
     els.blogTypeInput,
@@ -1606,56 +899,41 @@ function bindEvents() {
     els.avoidInput,
     els.goalsInput,
     els.researchDataInput,
+    els.writingPlanInput,
   ].forEach((input) => {
     input.addEventListener("change", saveSession);
   });
 
-  els.strategyResultInput.addEventListener("input", () => {
-    handleStrategyInput(els.strategyResultInput.value);
-  });
-
-  els.selectionBoard.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-choice-id]");
-    if (!button) return;
-    toggleSelection(
-      button.getAttribute("data-choice-id"),
-      button.getAttribute("data-group-id"),
-      button.getAttribute("data-choice-mode"),
-    );
-  });
-
-  els.autoSelectBtn.addEventListener("click", () => {
-    if (!state.selectionGroups.length) {
-      setError("먼저 콘텐츠 기획 결과 JSON을 불러와 주세요.");
-      return;
-    }
-    applyDefaultSelections();
-  });
-
-  els.clearSelectionBtn.addEventListener("click", clearSelections);
   els.buildPromptBtn.addEventListener("click", handleBuildPrompt);
   els.autoGenerateBtn.addEventListener("click", handleAutoGenerate);
 
   els.copyPromptBtn.addEventListener("click", async () => {
     if (!els.promptOutput.value.trim()) return;
     await copyText(els.promptOutput.value);
-    setStatus("STEP 7 프롬프트를 복사했습니다.");
+    setStatus("블로그 프롬프트를 복사했습니다.");
   });
 
   els.clearPromptBtn.addEventListener("click", () => {
     clearPrompt();
-    setStatus("STEP 7 프롬프트를 비웠습니다.");
+    setStatus("블로그 프롬프트를 비웠습니다.");
   });
 
   els.copyResultBtn.addEventListener("click", async () => {
     if (!els.resultOutput.value.trim()) return;
     await copyText(els.resultOutput.value);
-    setStatus("STEP 7 결과를 복사했습니다.");
+    setStatus("블로그 결과를 복사했습니다.");
   });
 
   els.clearResultBtn.addEventListener("click", () => {
     clearResult();
-    setStatus("STEP 7 결과를 비웠습니다.");
+    setStatus("블로그 결과를 비웠습니다.");
+  });
+
+  els.writingPlanInput.addEventListener("input", () => {
+    if (!els.primaryCategoryInput.value) {
+      const inferred = inferBlogCategory(els.writingPlanInput.value);
+      if (inferred) els.primaryCategoryInput.value = inferred;
+    }
   });
 
   els.resultOutput.addEventListener("input", () => {
@@ -1683,17 +961,57 @@ function bindEvents() {
   });
 }
 
+function inferBlogCategory(text) {
+  if (!text) return '';
+  if (/가방|백팩|파우치|지갑|토트|크로스백|숄더백|클러치|핸드백/i.test(text)) return '가방';
+  if (/쿠키|케이크|디저트|베이킹|마카롱|빵|브라우니|카스테라|답례품|수제/i.test(text)) return '쿠키';
+  return '일반';
+}
+
+function loadAgentBlogBridge() {
+  const BLOG_BRIDGE_KEY = 'agent:blogBridge';
+  const raw = localStorage.getItem(BLOG_BRIDGE_KEY);
+  if (!raw) return;
+
+  let bridge;
+  try { bridge = JSON.parse(raw); } catch { return; }
+
+  if (Date.now() - (bridge.savedAt || 0) > 10 * 60 * 1000) {
+    localStorage.removeItem(BLOG_BRIDGE_KEY);
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  if (!params.get('from')) return;
+
+  localStorage.removeItem(BLOG_BRIDGE_KEY);
+
+  // brandName은 항상 빈값으로 (이전 세션 덮어쓰기 방지)
+  els.brandNameInput.value = bridge.brandName || '';
+  if (bridge.blogType)        els.blogTypeInput.value        = bridge.blogType;
+  if (bridge.targetAudience)  els.targetAudienceInput.value  = bridge.targetAudience;
+  if (bridge.toneAndManner)   els.toneInput.value            = bridge.toneAndManner;
+  if (bridge.avoidDirection)  els.avoidInput.value           = bridge.avoidDirection;
+  if (bridge.workGoals)       els.goalsInput.value           = bridge.workGoals;
+  if (bridge.researchData)    els.researchDataInput.value    = bridge.researchData;
+  if (bridge.writingPlan)     els.writingPlanInput.value     = bridge.writingPlan;
+
+  // 주력 카테고리: writingPlan 내용에서 유추
+  const inferredCategory = inferBlogCategory(bridge.writingPlan || '');
+  els.primaryCategoryInput.value = inferredCategory;
+
+  setStatus('에이전트에서 블로그 글 구성을 불러왔어요. 내용을 확인하고 "블로그 프롬프트 만들기"를 눌러보세요!');
+}
+
 function init() {
   const session = loadSession();
   if (session) {
     applySession(session);
-  } else {
-    renderSelectionBoard();
-    syncSelectionSummary();
   }
   renderResultPreview("");
   bindEvents();
   fetchHealth();
+  loadAgentBlogBridge();
 }
 
 init();

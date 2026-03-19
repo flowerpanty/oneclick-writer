@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>네이버 블로그 생성기</title>
+    <meta
+      name="description"
+      content="STEP 1, STEP 2, STEP 3 페이지로 나뉜 반자동 네이버 블로그 생성기"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" defer src="/home.js"></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand-lockup" href="/">
+          <span class="brand-mark">N</span>
+          <span>네이버 블로그 생성기</span>
+        </a>
+        <nav class="step-nav">
+          <a class="step-link active" href="/">홈</a>
+          <a class="step-link" href="/step1.html">STEP 1</a>
+          <a class="step-link" href="/step2.html">STEP 2</a>
+          <a class="step-link" href="/step3.html">STEP 3</a>
+        </nav>
+      </header>
+
+      <section class="hero compact">
+        <div class="hero-copy">
+          <p class="eyebrow">multi-page workflow</p>
+          <h1>스텝별로 나눈 블로그 제작 흐름</h1>
+          <p class="hero-text">
+            한 화면에 전부 몰아넣는 대신, STEP 1부터 STEP 3까지 각 페이지를 분리했습니다.
+            이전 단계 결과는 브라우저에 저장되어 다음 단계 페이지에서 그대로 이어집니다.
+          </p>
+          <div class="button-row hero-actions">
+            <a id="resume-link" class="primary-button link-button" href="/step1.html">이어서 작업하기</a>
+            <a class="ghost-button link-button" href="/step1.html">STEP 1부터 시작</a>
+          </div>
+        </div>
+        <div class="hero-panel">
+          <div class="mini-card">
+            <span class="mini-label">API 상태</span>
+            <div class="status-pills" id="service-status">
+              <span class="status-pill">상태 확인 중</span>
+            </div>
+            <button class="secondary-button compact" id="refresh-status-button" type="button">
+              상태 새로고침
+            </button>
+          </div>
+          <div class="mini-card">
+            <span class="mini-label">현재 프로젝트</span>
+            <div id="project-snapshot" class="preview-content"></div>
+            <textarea id="topic-copy-buffer" class="hidden-buffer"></textarea>
+            <button class="ghost-button compact" id="copy-topic-button" type="button">
+              현재 주제 복사
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <main class="stack">
+        <section id="workflow-grid" class="workflow-grid"></section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </body>
+</html>

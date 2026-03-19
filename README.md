@@ -96,20 +96,28 @@ npm run dev
 - 따라서 **자동 생성 버튼은 숨겨지고**, 대신 **프롬프트 복사 → ChatGPT 앱/웹에 붙여넣기 → 결과 붙여넣기** 방식으로 사용합니다.
 - `/research`와 `/strategy`는 아이폰에서도 그대로 사용할 수 있습니다.
 
+### HTTPS 동작 방식
+- Render 웹 서비스는 기본 `onrender.com` 주소에 HTTPS를 자동 적용합니다.
+- HTTP로 들어와도 HTTPS로 자동 리디렉션됩니다.
+- 별도 인증서 설정 없이 배포 직후 `https://서비스명.onrender.com/oneclick-writer` 형태로 접속할 수 있습니다.
+
 ### 빠른 배포 순서
 1) 이 저장소를 GitHub에 올립니다.
 2) Render에서 새 Web Service를 만듭니다.
 3) 이 저장소를 연결합니다.
-4) `render.yaml`을 사용해 배포하거나, 아래 값으로 수동 설정합니다.
+4) Blueprint를 선택하면 저장소의 `render.yaml` 설정을 그대로 읽어 배포합니다.
+5) 배포가 끝나면 `https://서비스명.onrender.com/oneclick-writer`로 접속합니다.
 
 ### Render 설정값
-- Build Command: `npm install`
+- Region: `Singapore`
+- Build Command: `npm ci`
 - Start Command: `npm start`
 - Health Check Path: `/api/health`
 - Node Version: `22.22.0`
 
 ### Render 환경변수
 ```bash
+NODE_ENV=production
 DISABLE_BROWSER_AUTOMATION=true
 NAVER_CLIENT_ID=...
 NAVER_CLIENT_SECRET=...
@@ -119,6 +127,11 @@ NAVER_SEARCHAD_CUSTOMER_ID=...
 NAVER_SEARCHAD_ACCESS_LICENSE=...
 NAVER_SEARCHAD_SECRET_KEY=...
 ```
+
+### 커스텀 도메인 연결
+1) Render 서비스의 `Settings > Custom Domains`에서 도메인을 추가합니다.
+2) Render가 안내하는 DNS 레코드를 도메인 업체에 등록합니다.
+3) 인증서 발급이 끝나면 해당 도메인도 HTTPS로 자동 열립니다.
 
 ### 참고 문서
 - [Deploy a Node Express App on Render](https://render.com/docs/deploy-node-express-app)

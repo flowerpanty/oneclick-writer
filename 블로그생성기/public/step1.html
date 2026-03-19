@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>STEP 1 | 네이버 블로그 생성기</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" defer src="/step1.js"></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand-lockup" href="/">
+          <span class="brand-mark">N</span>
+          <span>네이버 블로그 생성기</span>
+        </a>
+        <nav class="step-nav">
+          <a class="step-link" href="/">홈</a>
+          <a class="step-link active" href="/step1.html">STEP 1</a>
+          <a class="step-link" href="/step2.html">STEP 2</a>
+          <a class="step-link" href="/step3.html">STEP 3</a>
+          <button class="step-link reset-link" id="reset-all-button" type="button">새로 시작</button>
+        </nav>
+      </header>
+
+      <main class="focus-main">
+
+        <!-- 0. 브랜드 선택 -->
+        <section class="panel focus-card" id="brand-switcher-panel">
+          <div class="panel-head">
+            <p class="section-kicker">브랜드</p>
+            <h2>홍보할 브랜드 선택</h2>
+          </div>
+
+          <div class="brand-switch-row">
+            <button
+              class="brand-switch-btn"
+              id="brand-btn-nothingmatters"
+              type="button"
+              data-brand="nothingmatters"
+            >
+              <span class="brand-btn-name">낫띵메터스</span>
+              <span class="brand-btn-category">쿠키</span>
+            </button>
+            <button
+              class="brand-switch-btn"
+              id="brand-btn-nothingnormalnow"
+              type="button"
+              data-brand="nothingnormalnow"
+            >
+              <span class="brand-btn-name">낫띵노말나우</span>
+              <span class="brand-btn-category">가방</span>
+            </button>
+          </div>
+
+          <div class="compact-fields compact-fields-3" id="brand-fields" style="margin-top:1rem;">
+            <label class="field">
+              <span>브랜드명 (공식)</span>
+              <input id="brand-profile-name" type="text" placeholder="예: 낫띵메터스" />
+            </label>
+            <label class="field">
+              <span>주력 제품 / 메뉴</span>
+              <input id="brand-profile-products" type="text" placeholder="예: 르뱅쿠키, 수제 구움과자, 개인포장 쿠키세트" />
+            </label>
+            <label class="field">
+              <span>브랜드 콘셉트 요약</span>
+              <input id="brand-profile-description" type="text" placeholder="예: 수제 쿠키 전문 답례품 브랜드" />
+            </label>
+          </div>
+
+          <p class="subtle-note" style="margin-top:0.5rem;">
+            입력한 브랜드 정보는 자동저장되며, 모든 STEP 프롬프트에 반영됩니다.
+          </p>
+        </section>
+
+        <!-- 1. 기본 입력 -->
+
+        <section class="panel focus-card">
+          <div class="panel-head">
+            <p class="section-kicker">Step 1-①</p>
+            <h2>주제 입력</h2>
+          </div>
+
+          <div class="compact-fields compact-fields-3">
+            <label class="field">
+              <span>주제</span>
+              <input id="topic-input" type="text" placeholder="예: 무선 게이밍 마우스" />
+            </label>
+
+            <label class="field">
+              <span>검색의도</span>
+              <select id="intent-input">
+                <option value="정보형">정보형</option>
+                <option value="후기형">후기형</option>
+                <option value="비교형">비교형</option>
+                <option value="추천형">추천형</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>브랜드 관점</span>
+              <select id="brand-type-input">
+                <option value="비브랜드형">비브랜드형</option>
+                <option value="브랜드형">브랜드형</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>톤앤매너</span>
+              <input id="tone-input" type="text" placeholder="예: 진정성 있고 전문적인 톤" />
+            </label>
+          </div>
+
+          <div class="inline-actions">
+            <button class="primary-button" id="research-button" type="button">데이터 수집</button>
+          </div>
+
+          <div class="metrics-grid compact-metrics" id="research-metrics">
+            <div class="metric-card">
+              <span>블로그 제목/요약</span>
+              <strong>0건</strong>
+            </div>
+            <div class="metric-card">
+              <span>블로그 본문</span>
+              <strong>0건</strong>
+            </div>
+            <div class="metric-card">
+              <span>카페 글</span>
+              <strong>0건</strong>
+            </div>
+            <div class="metric-card">
+              <span>연관 키워드</span>
+              <strong>0건</strong>
+            </div>
+          </div>
+
+          <div class="info-strip compact-strip" id="research-warning-strip">
+            데이터를 아직 불러오지 않았습니다.
+          </div>
+          <textarea id="research-data-textarea" class="hidden-input"></textarea>
+        </section>
+
+        <!-- 2. 프롬프트 생성 -->
+        <section class="panel focus-card">
+          <div class="panel-head">
+            <p class="section-kicker">Step 1-②</p>
+            <h2>수집 데이터 분석 프롬프트 생성 &amp; 복사</h2>
+            <p class="subtle-note">수집 데이터를 먼저 분석한 뒤, 그 분석 결과를 바탕으로 STEP 1 패키지를 만들도록 흐름을 분리합니다.</p>
+          </div>
+
+          <div class="prompt-action-grid">
+            <button class="primary-button prompt-action-button" id="generate-analysis-button" type="button">
+              분석 프롬프트 생성
+            </button>
+            <button class="ghost-button prompt-action-button" id="clear-analysis-prompt-button" type="button">
+              삭제
+            </button>
+          </div>
+
+          <details class="prompt-details">
+            <summary>생성된 분석 프롬프트 보기</summary>
+            <textarea
+              id="research-analysis-prompt-textarea"
+              class="prompt-textarea"
+              rows="14"
+              placeholder="생성된 수집 데이터 분석 프롬프트"
+            ></textarea>
+          </details>
+        </section>
+
+        <section class="panel focus-card">
+          <div class="panel-head split-head">
+            <div>
+              <p class="section-kicker">Step 1-③</p>
+              <h2>분석 결과 붙여넣기</h2>
+            </div>
+            <div class="button-row">
+              <button class="ghost-button compact-button" id="clear-analysis-result-button" type="button">
+                결과 삭제
+              </button>
+            </div>
+          </div>
+
+          <textarea
+            id="research-analysis-result-textarea"
+            class="prompt-textarea result-textarea single-line-textarea"
+            rows="1"
+            placeholder='수집 데이터 분석 JSON 붙여넣기'
+          ></textarea>
+
+          <p class="subtle-note">분석 결과가 있어야 STEP 1 프롬프트를 생성할 수 있습니다.</p>
+          <div id="research-analysis-status" class="compact-summary empty-state">
+            수집 데이터를 먼저 분석한 뒤, 분석 결과 JSON을 여기에 붙여넣어 주세요.
+          </div>
+        </section>
+
+        <!-- 3. 프롬프트 생성 -->
+        <section class="panel focus-card">
+          <div class="panel-head">
+            <p class="section-kicker">Step 1-④</p>
+            <h2>프롬프트 생성 &amp; 복사</h2>
+          </div>
+
+          <div class="prompt-action-grid">
+            <button class="primary-button prompt-action-button" id="generate-step1-button" type="button">
+              프롬프트 생성
+            </button>
+            <button class="ghost-button prompt-action-button" id="clear-step1-prompt-button" type="button">
+              삭제
+            </button>
+          </div>
+
+          <details class="prompt-details">
+            <summary>생성된 프롬프트 보기</summary>
+            <textarea
+              id="step1-prompt-textarea"
+              class="prompt-textarea"
+              rows="14"
+              placeholder="생성된 STEP 1 프롬프트"
+            ></textarea>
+          </details>
+        </section>
+
+        <!-- 4. 결과 붙여넣기 -->
+        <section class="panel focus-card">
+          <div class="panel-head split-head">
+            <div>
+              <p class="section-kicker">Step 1-⑤</p>
+              <h2>결과 붙여넣기</h2>
+            </div>
+            <div class="button-row">
+              <button class="ghost-button compact-button" id="clear-step1-result-button" type="button">
+                결과 삭제
+              </button>
+            </div>
+          </div>
+
+          <textarea
+            id="step1-result-textarea"
+            class="prompt-textarea result-textarea single-line-textarea"
+            rows="1"
+            placeholder='STEP 1 발행 패키지 JSON 붙여넣기'
+          ></textarea>
+
+          <p class="subtle-note">전체 JSON을 붙여넣으면 STEP 2에서 발행 패키지를 선택할 수 있습니다.</p>
+          <div id="step1-result-status" class="compact-summary empty-state">
+            현재 화면 설정과 붙여넣은 STEP 1 결과가 다르면 여기서 바로 알려드립니다.
+          </div>
+        </section>
+
+        <div class="navigation-row">
+          <a class="ghost-button link-button" href="/">홈</a>
+          <a class="primary-button link-button" href="/step2.html">STEP 2로 이동 →</a>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </body>
+</html>

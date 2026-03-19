@@ -3,6 +3,7 @@ const $ = (id) => document.getElementById(id);
 
 // ===== Element References =====
 const els = {
+  advancedOptions: $("advancedOptions"),
   topic: $("topic"),
   story: $("story"),
   format: $("format"),
@@ -12,7 +13,12 @@ const els = {
   focusKeyword: $("focusKeyword"),
   lsiKeywords: $("lsiKeywords"),
   mustInclude: $("mustInclude"),
+  mustExclude: $("mustExclude"),
   cta: $("cta"),
+  publishGoal: $("publishGoal"),
+  emotionTone: $("emotionTone"),
+  imagePlanned: $("imagePlanned"),
+  storyMode: $("storyMode"),
   seoLevel: $("seoLevel"),
   keywordIntent: $("keywordIntent"),
   keywordMentions: $("keywordMentions"),
@@ -43,6 +49,14 @@ const els = {
 
   status: $("status"),
   error: $("error"),
+  accessInfo: $("accessInfo"),
+
+  metaSummaryCard: $("metaSummaryCard"),
+  applyMetaBtn: $("applyMetaBtn"),
+  metaInputType: $("metaInputType"),
+  metaLine: $("metaLine"),
+  metaCoreAngle: $("metaCoreAngle"),
+  metaMissingInfo: $("metaMissingInfo"),
 
   versionTabs: $("versionTabs"),
   seoAudit: $("seoAudit"),
@@ -220,6 +234,60 @@ function setButtonBusy(btn, isBusy, busyLabel) {
   }
   btn.disabled = isBusy;
   btn.textContent = isBusy ? busyLabel : btn.dataset.labelDefault;
+}
+
+function renderAccessInfo(data) {
+  if (!els.accessInfo) return;
+
+  const lanUrls = Array.isArray(data?.lanUrls) ? data.lanUrls : [];
+  const oneclickPath = data?.oneclickPath || "/oneclick-writer";
+  const localUrl = data?.localUrl ? `${data.localUrl}${oneclickPath}` : "";
+  const items = [];
+
+  if (localUrl) {
+    items.push({ label: "이 컴퓨터", url: localUrl });
+  }
+
+  lanUrls.forEach((url, index) => {
+    items.push({ label: `같은 와이파이 ${index + 1}`, url: `${url}${oneclickPath}` });
+  });
+
+  if (!items.length) {
+    els.accessInfo.innerHTML = '<div class="style-empty">접속 주소를 찾지 못했어요. 서버를 켠 컴퓨터의 로컬 IP 뒤에 <code>/oneclick-writer</code>를 붙여 접속해 주세요.</div>';
+    return;
+  }
+
+  els.accessInfo.innerHTML = items.map((item, index) => [
+    '<div class="access-link-card">',
+    '<div class="access-link-meta">',
+    `<span class="access-link-label">${escapeHtml(item.label)}</span>`,
+    `<span class="access-link-url">${escapeHtml(item.url)}</span>`,
+    '</div>',
+    `<button type="button" class="btn-copy" data-access-url="${escapeHtml(item.url)}" id="copyAccessUrl${index}">주소 복사</button>`,
+    '</div>',
+  ].join("")).join("");
+
+  els.accessInfo.querySelectorAll("[data-access-url]").forEach((btn) => {
+    attachCopyFeedback(btn);
+    btn.addEventListener("click", () => {
+      copyToClipboard(btn.getAttribute("data-access-url") || "");
+    });
+  });
+}
+
+async function loadAccessInfo() {
+  if (!els.accessInfo) return;
+
+  try {
+    const res = await fetch("/api/access-info");
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json?.error || "접속 주소를 불러오지 못했어요.");
+    }
+    renderAccessInfo(json);
+  } catch {
+    els.accessInfo.innerHTML = '<div class="style-empty">접속 주소를 자동으로 불러오지 못했어요. 같은 와이파이에서 서버 PC의 IP 뒤에 <code>/oneclick-writer</code>를 붙여 접속해 주세요.</div>';
+  }
 }
 
 function renderStyleMemory(data) {
@@ -433,13 +501,24 @@ function gatherInput() {
     focusKeyword: els.focusKeyword.value.trim(),
     lsiKeywords: els.lsiKeywords.value.trim(),
     mustInclude: els.mustInclude.value.trim(),
+    mustExclude: els.mustExclude.value.trim(),
     cta: els.cta.value.trim(),
+    publishGoal: els.publishGoal.value.trim(),
+    emotionTone: els.emotionTone.value.trim(),
+    imagePlanned: els.imagePlanned.value,
+    storyMode: els.storyMode.value.trim(),
     seoLevel: els.seoLevel.value,
     keywordIntent: els.keywordIntent.value,
     keywordMentions: els.keywordMentions.value,
     targetAudience: els.targetAudience.value.trim(),
     includeFaq: Boolean(els.includeFaq.checked),
   };
+}
+
+function openAdvancedOptions() {
+  if (els.advancedOptions) {
+    els.advancedOptions.open = true;
+  }
 }
 
 // ===== Tab Switching =====
@@ -471,6 +550,27 @@ function getWordCount(text) {
     .replace(/[#*`>\-]/g, " ")
     .split(/\s+/)
     .filter(Boolean).length;
+}
+
+function stripHtmlTags(text) {
+  return (text || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractWordPressHeadings(body) {
+  const htmlHeadings = Array.from(
+    (body || "").matchAll(/<h[234][^>]*>([\s\S]*?)<\/h[234]>/gi),
+  ).map((match) => stripHtmlTags(match[1]));
+
+  const markdownHeadings = (body || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => /^#{2,4}\s/.test(line))
+    .map((line) => line.replace(/^#{2,4}\s*/, "").trim());
+
+  return [...htmlHeadings, ...markdownHeadings].filter(Boolean);
 }
 
 function runSeoAudit(v) {
@@ -506,19 +606,14 @@ function runSeoAudit(v) {
     ? ((occurrences / wordCount) * 100).toFixed(2)
     : "0.00";
 
-  const firstParagraph = body.split(/\n\s*\n/)[0] || "";
-  const h2Lines = body
-    .split("\n")
-    .filter((line) => line.trim().startsWith("## "));
-  const bodyLines = body
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-  const lastLine = bodyLines[bodyLines.length - 1] || "";
-  const beforeLast = bodyLines[bodyLines.length - 2] || "";
-  const endsWithQuestion =
-    /[?？]$/.test(beforeLast) || /[?？]$/.test(body.trim());
-  const hasFinalHashtagLine = /^#/.test(lastLine);
+  const firstParagraph = stripHtmlTags(body.split(/\n\s*\n/)[0] || "");
+  const headingLines = extractWordPressHeadings(body);
+  const metaLength = (seo.meta_description || "").trim().length;
+  const slugValid = /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test((seo.slug || "").trim());
+  const lsiCount = Array.isArray(seo.lsi_keywords)
+    ? seo.lsi_keywords.filter(Boolean).length
+    : 0;
+  const hasFaqHeading = /<h[234][^>]*>\s*(faq|자주 묻는 질문)/i.test(body);
 
   const checks = [
     {
@@ -538,22 +633,29 @@ function runSeoAudit(v) {
       pass: firstParagraph.includes(focus),
     },
     {
-      label: "H2 제목에 핵심 키워드(또는 변형) 1개 이상",
-      pass: h2Lines.some((line) => line.includes(focus)),
+      label: "H2/H3/H4에 핵심 키워드(또는 변형) 1개 이상",
+      pass: headingLines.some((line) => line.includes(focus)),
     },
     {
-      label: "LSI 키워드 6개 이상",
-      pass: Array.isArray(seo.lsi_keywords) && seo.lsi_keywords.length >= 6,
+      label: "Slug 형식이 영어 소문자/하이픈",
+      pass: slugValid,
     },
     {
-      label: "마지막 문단이 질문으로 끝남",
-      pass: endsWithQuestion,
+      label: "Meta description 길이 90-140자 권장",
+      pass: metaLength >= 90 && metaLength <= 140,
     },
     {
-      label: "본문 마지막 줄 해시태그 1줄",
-      pass: hasFinalHashtagLine,
+      label: "LSI 키워드 2개 이상",
+      pass: lsiCount >= 2,
     },
   ];
+
+  if (els.includeFaq.checked) {
+    checks.push({
+      label: "FAQ 섹션 포함",
+      pass: hasFaqHeading,
+    });
+  }
 
   const passed = checks.filter((c) => c.pass).length;
   const score = Math.round((passed / checks.length) * 100);
@@ -601,6 +703,74 @@ function getActiveVersion(channel) {
   return versions[state.activeVersion] || versions[0] || null;
 }
 
+function renderMetaSummary(meta) {
+  const missingInfo = Array.isArray(meta?.missing_info) ? meta.missing_info : [];
+  const hasMeta =
+    Boolean(meta?.input_type) ||
+    Boolean(meta?.line) ||
+    Boolean(meta?.core_angle) ||
+    missingInfo.length > 0;
+
+  els.metaSummaryCard.classList.toggle("hidden", !hasMeta);
+  els.metaInputType.value = meta?.input_type || "";
+  els.metaLine.value = meta?.line || "";
+  els.metaCoreAngle.value = meta?.core_angle || "";
+  els.metaMissingInfo.value = missingInfo.join("\n");
+  els.applyMetaBtn.disabled = !Boolean((meta?.core_angle || "").trim() || missingInfo.length);
+}
+
+function applyMetaToForm() {
+  const meta = state.parsed?.meta;
+  if (!meta) {
+    setStatus("적용할 메타 정보가 없어요.");
+    return;
+  }
+
+  const missingInfo = Array.isArray(meta.missing_info) ? meta.missing_info : [];
+  const existingMustInclude = (els.mustInclude.value || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  let appliedCount = 0;
+
+  if (missingInfo.length) {
+    const merged = Array.from(
+      new Set([
+        ...existingMustInclude,
+        ...missingInfo.map((item) => `검토 필요: ${item}`),
+      ]),
+    );
+    if (merged.join("\n") !== existingMustInclude.join("\n")) {
+      els.mustInclude.value = merged.join("\n");
+      appliedCount += 1;
+    }
+  }
+
+  if ((meta.core_angle || "").trim() && !els.storyMode.value.trim()) {
+    els.storyMode.value = meta.core_angle.trim();
+    appliedCount += 1;
+  }
+
+  if (!els.category.value && meta.line === "bakery") {
+    els.category.value = "쿠키";
+    appliedCount += 1;
+  } else if (!els.category.value && meta.line === "bag") {
+    els.category.value = "가방";
+    appliedCount += 1;
+  }
+
+  openAdvancedOptions();
+
+  if (appliedCount === 0) {
+    setStatus("이미 입력폼에 반영된 내용이라 추가로 바뀐 항목이 없었어요.");
+    return;
+  }
+
+  setStatus("프롬프트 메타를 입력폼에 반영했습니다.");
+  showToast("메타 적용 완료");
+}
+
 function fillOutputs() {
   if (!state.parsed) return;
 
@@ -614,9 +784,7 @@ function fillOutputs() {
   const thA = thVersions[0] || {};
   const thB = thVersions[1] || {};
 
-  // SNS Summary: show the first version
-  const ssVersions = state.parsed?.sns_summary?.versions || [];
-  const ss = ssVersions[0] || {};
+  const ss = getActiveVersion("sns_summary") || {};
 
   els.igCaption.value = ig.caption || "";
   els.igHashtags.value = ig.hashtags || "";
@@ -643,6 +811,7 @@ function fillOutputs() {
   els.ssInstagramText.value = ss.instagram_text || "";
   els.ssHashtags.value = ss.hashtags || "";
 
+  renderMetaSummary(state.parsed?.meta || null);
   runSeoAudit({ seo, body: wp.body || "" });
 }
 
@@ -887,8 +1056,16 @@ function clearAll() {
     els.focusKeyword,
     els.lsiKeywords,
     els.mustInclude,
+    els.mustExclude,
     els.cta,
+    els.publishGoal,
+    els.emotionTone,
+    els.storyMode,
     els.targetAudience,
+    els.metaInputType,
+    els.metaLine,
+    els.metaCoreAngle,
+    els.metaMissingInfo,
     els.generatedPrompt,
     els.resultJson,
     els.igCaption,
@@ -919,6 +1096,7 @@ function clearAll() {
   });
 
   els.category.value = "";
+  els.imagePlanned.value = "";
   els.seoLevel.value = "balanced";
   els.keywordIntent.value = "정보형";
   els.keywordMentions.value = "3-5";
@@ -932,6 +1110,7 @@ function clearAll() {
   state.prompt = "";
 
   setVersionTabs(1);
+  renderMetaSummary(null);
   runSeoAudit(null);
   setStatus("");
   setError("");
@@ -951,6 +1130,7 @@ els.clearBtn.addEventListener("click", clearAll);
 els.copyPromptBtn.addEventListener("click", () =>
   copyToClipboard(els.generatedPrompt.value || "")
 );
+els.applyMetaBtn.addEventListener("click", applyMetaToForm);
 els.saveStyleNotesBtn.addEventListener("click", saveStyleNotes);
 els.learnStyleTextBtn.addEventListener("click", learnStyleFromText);
 els.learnStyleUrlBtn.addEventListener("click", learnStyleFromUrl);
@@ -1059,6 +1239,7 @@ els.twoVariants.addEventListener("change", () => {
 setStep(1);
 runSeoAudit(null);
 loadStyleMemory();
+loadAccessInfo();
 
 // Check server capabilities (hide auto-generate if Puppeteer not available)
 fetch("/api/health")
@@ -1071,3 +1252,52 @@ fetch("/api/health")
   .catch(() => {
     // Server not reachable — keep all buttons visible
   });
+
+// ── 에이전트 브릿지: 에이전트에서 넘어온 데이터 자동 적용 ──────
+(function loadAgentBridge() {
+  const BRIDGE_KEY = 'agent:bridge';
+  const raw = localStorage.getItem(BRIDGE_KEY);
+  if (!raw) return;
+
+  let bridge;
+  try { bridge = JSON.parse(raw); } catch { return; }
+
+  // 5분 이상 지난 데이터는 무시
+  if (Date.now() - (bridge.savedAt || 0) > 5 * 60 * 1000) {
+    localStorage.removeItem(BRIDGE_KEY);
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  if (!params.get('from')) return; // 에이전트에서 직접 클릭한 경우만
+
+  // 폼 필드 채우기
+  if (bridge.topic)          { els.topic.value         = bridge.topic; }
+  if (bridge.focusKeyword)   { els.focusKeyword.value   = bridge.focusKeyword; }
+  if (bridge.lsiKeywords)    { els.lsiKeywords.value    = bridge.lsiKeywords; }
+  if (bridge.targetAudience) { els.targetAudience.value = bridge.targetAudience; }
+  if (bridge.seoLevel)       { els.seoLevel.value       = bridge.seoLevel; }
+
+  // 고급 옵션 열기
+  openAdvancedOptions();
+
+  // 프롬프트 자동 생성 (스토리 필드가 비어있지 않으면)
+  if (bridge.topic) {
+    // story가 비어있으면 topic을 story에도 채워줌
+    if (!els.story.value.trim()) {
+      els.story.value = `[에이전트 자동 생성] ${bridge.topic}에 대한 콘텐츠입니다.`;
+    }
+  }
+
+  // JSON 결과도 있으면 자동 붙여넣기
+  if (params.get('json') && bridge.resultJson) {
+    els.resultJson.value = bridge.resultJson;
+    showToast('에이전트에서 JSON 결과를 불러왔어요! "결과 불러오기"를 눌러주세요.');
+    setStep(2);
+  } else {
+    showToast('에이전트 데이터를 불러왔어요! 내용을 확인하고 프롬프트를 생성해 주세요.');
+  }
+
+  // 사용한 데이터 지우기 (재사용 방지)
+  localStorage.removeItem(BRIDGE_KEY);
+})();

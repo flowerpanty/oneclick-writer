@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>블로그글 생성기</title>
+  <meta name="description" content="외부 글감이나 직접 작성한 글 구성을 바탕으로 STEP 7 블로그 글을 만드는 독립형 도구" />
+  <meta name="theme-color" content="#0b0e18" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/strategy.css" />
+  <link rel="stylesheet" href="/step7-writer.css" />
+</head>
+
+<body class="strategy-page step7-writer-page">
+  <header class="header">
+    <div class="header-inner">
+      <h1>✦ 블로그글 생성기</h1>
+      <div class="header-actions">
+        <a href="/agent" class="header-link header-link-agent">
+          <span class="header-link-label">🤖 AI 에이전트</span>
+          <span class="header-link-meta">/agent</span>
+        </a>
+        <a href="/strategy" class="header-link">
+          <span class="header-link-label">📋 2.컨텐츠</span>
+          <span class="header-link-meta">/strategy</span>
+        </a>
+        <a href="/step7-writer" class="header-link">
+          <span class="header-link-label">STEP 7 전용 글 생성기</span>
+          <span class="header-link-meta">/step7-writer</span>
+        </a>
+        <a href="/research" class="header-link">
+          <span class="header-link-label">🔍 1.리서치</span>
+          <span class="header-link-meta">/research</span>
+        </a>
+        <a href="/" class="header-link">
+          <span class="header-link-label">📱 SNS</span>
+          <span class="header-link-meta">/</span>
+        </a>
+        <span class="badge"><span class="dot"></span> 독립형 블로그 글 작성</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="steps-bar">
+      <div class="step-item active">
+        <span class="step-number">1</span>
+        <span class="step-label">기본 정보 입력</span>
+      </div>
+      <div class="step-connector done"></div>
+      <div class="step-item active">
+        <span class="step-number">2</span>
+        <span class="step-label">글 구성 & 참고 정보</span>
+      </div>
+      <div class="step-connector done"></div>
+      <div class="step-item active">
+        <span class="step-number">3</span>
+        <span class="step-label">블로그 글 생성</span>
+      </div>
+    </div>
+
+    <div class="guide-banner">
+      <span class="guide-icon">💡</span>
+      <span><strong>기본 정보</strong>를 입력하고 → <strong>글 구성 & 참고 정보</strong>를 직접 작성하거나 외부에서 가져온 뒤 → <strong>블로그 글 생성</strong>으로 바로 글을 만들 수 있습니다. 콘텐츠 기획 툴 없이 독립적으로 사용 가능합니다.</span>
+    </div>
+
+    <section class="section-block">
+      <details>
+        <summary class="section-header brand-summary" style="list-style:none;cursor:pointer;">
+          <div class="section-title">
+            <span class="section-icon">📝</span>
+            <h2>기본 정보</h2>
+            <span class="brand-summary-toggle-hint">클릭해서 펼치기 / 접기</span>
+          </div>
+        </summary>
+
+        <div class="card" style="margin-top:12px;">
+          <div class="grid-2 strategy-grid mt-12">
+            <div class="field">
+              <label for="brandNameInput">브랜드명</label>
+              <input id="brandNameInput" type="text" placeholder="예: 시논감성" />
+            </div>
+            <div class="field">
+              <label for="blogTypeInput">블로그 성격</label>
+              <input id="blogTypeInput" type="text" placeholder="예: 브랜드 블로그 / 정보형 블로그" />
+            </div>
+            <div class="field">
+              <label for="primaryCategoryInput">주력 카테고리</label>
+              <select id="primaryCategoryInput">
+                <option value="">글 내용에서 자동 유추</option>
+                <option value="가방">가방</option>
+                <option value="쿠키">쿠키</option>
+                <option value="일반">일반</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="targetAudienceInput">타겟 독자</label>
+              <input id="targetAudienceInput" type="text" placeholder="예: 20~40대 여성 / 답례품 찾는 고객" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="toneInput">원하는 톤앤매너</label>
+            <input id="toneInput" type="text" placeholder="예: 자연스럽고 감각적 / 친근한 정보형" />
+          </div>
+
+          <div class="field">
+            <label for="avoidInput">피하고 싶은 방향</label>
+            <input id="avoidInput" type="text" placeholder="예: 광고 티 강한 글 / 기계적인 SEO 말투" />
+          </div>
+
+          <div class="field">
+            <label for="goalsInput">이번 작업 목적</label>
+            <textarea id="goalsInput" class="compact-textarea" placeholder="예:&#10;실제 발행 가능한 글 1개 완성&#10;STEP 7 블로그 글 만들기"></textarea>
+          </div>
+
+          <details class="research-edit-details">
+            <summary>리서치 수집결과 직접 입력 (선택 사항)</summary>
+            <div class="field mt-12">
+              <label for="researchDataInput">리서치 수집 결과</label>
+              <textarea id="researchDataInput" class="research-textarea compact-area" placeholder="별도로 수집한 리서치 데이터가 있으면 여기에 직접 붙여넣으세요."></textarea>
+            </div>
+          </details>
+        </div>
+      </details>
+    </section>
+
+    <section class="section-block">
+      <details>
+        <summary class="section-header brand-summary" style="list-style:none;cursor:pointer;">
+          <div class="section-title">
+            <span class="section-icon">📋</span>
+            <h2>글 구성 & 참고 정보</h2>
+            <span class="brand-summary-toggle-hint">클릭해서 펼치기 / 접기</span>
+          </div>
+        </summary>
+
+        <div class="card" style="margin-top:12px;">
+          <div class="compact-action-card" style="margin-bottom: 16px;">
+            콘텐츠 기획 툴 없이 <strong>직접 글의 주제, 목차, 키워드, 참고 내용 등을 자유롭게 작성</strong>하면 됩니다. 외부에서 가져온 글감을 붙여넣어도 됩니다.
+          </div>
+
+          <div class="field">
+            <label for="writingPlanInput">글 구성 & 참고 정보 (필수)</label>
+            <textarea id="writingPlanInput" class="research-textarea compact-area" placeholder="예:&#10;[주제] 봄맞이 답례품 추천 BEST 5&#10;&#10;[키워드] 답례품, 봄 선물, 수제쿠키, 돌잔치 답례품&#10;&#10;[목차 구성]&#10;1. 도입 – 봄에 어울리는 답례품이란?&#10;2. 본문 – 추천 답례품 5가지 소개&#10;3. 마무리 – 주문 안내 & CTA&#10;&#10;[참고 내용]&#10;- 시논감성 수제쿠키 세트: 12,000원, 6종 맛보기&#10;- 돌잔치 답례품으로 인기 많음&#10;- 개별 포장 가능, 대량 주문 할인"></textarea>
+            <div class="hint">주제, 키워드, 목차 구성, 참고 내용 등을 자유 형식으로 작성하세요. 글 생성의 핵심 입력입니다.</div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <section class="section-block">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">✍️</span>
+          <h2>블로그글 생성기</h2>
+        </div>
+        <div class="section-actions">
+          <button id="clearPromptBtn" class="btn-secondary" type="button">🧹 프롬프트 비우기</button>
+          <button id="autoGenerateBtn" class="btn-auto hidden-flow" type="button" style="display:none!important">블로그 자동 생성</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div id="statusText" class="status-bar"></div>
+        <div id="errorText" class="status-bar error mt-8"></div>
+
+        <div id="progressContainer" class="progress-container">
+          <div class="progress-bar-track">
+            <div id="progressBar" class="progress-bar-fill"></div>
+          </div>
+          <div id="progressLog" class="progress-log"></div>
+        </div>
+
+        <div class="prompt-btn-row">
+          <button id="buildPromptBtn" class="prompt-main-btn prompt-build-btn" type="button">
+            <span class="prompt-btn-icon">⚡</span>
+            <span class="prompt-btn-text">블로그 프롬프트 만들기</span>
+            <span class="prompt-btn-sub">클릭 한 번으로 생성</span>
+          </button>
+          <button id="copyPromptBtn" class="prompt-main-btn prompt-copy-btn" type="button" disabled>
+            <span class="prompt-btn-icon">📋</span>
+            <span class="prompt-btn-text">블로그 프롬프트 복사</span>
+            <span class="prompt-btn-sub">ChatGPT에 붙여넣기</span>
+          </button>
+        </div>
+
+        <textarea id="promptOutput" class="prompt-storage" readonly aria-hidden="true" tabindex="-1"></textarea>
+
+        <div class="divider"></div>
+
+        <div class="section-actions">
+          <button id="copyResultBtn" class="btn-copy" type="button" disabled>📋 블로그 결과 복사</button>
+          <button id="clearResultBtn" class="btn-secondary" type="button">🧹 블로그 결과 지우기</button>
+        </div>
+
+        <div class="field result-paste-field">
+          <label for="resultOutput" class="result-paste-label">
+            <span class="result-paste-badge">✦ 여기에 붙여넣기</span>
+            블로그 글 결과 (ChatGPT에서 받은 JSON)
+          </label>
+          <div class="result-paste-glow-wrap">
+            <textarea id="resultOutput" class="result-paste-line result-paste-glow" placeholder="📋 ChatGPT 결과를 여기에 붙여넣으세요 → 바로 아래에서 정리됩니다"></textarea>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <label for="resultPreview">보기 좋게 정리된 결과</label>
+          <p id="resultPreviewHint" class="field-hint">블로그 결과를 붙여넣으면 제목 후보, 메타 정보, HTML 본문까지 보기 좋게 정리해서 보여줍니다.</p>
+          <div id="resultPreview" class="result-preview empty">블로그 결과가 들어오면 여기서 최종 블로그 글 구조를 확인할 수 있습니다.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/blog-writer.js" type="module"></script>
+</body>
+
+</html>
