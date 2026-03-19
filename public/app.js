@@ -977,6 +977,7 @@ async function applyResultJson(options = {}) {
 
     setVersionTabs(count);
     fillOutputs();
+    setResultsVisible(true);
     activateTab("instagram");
     setStep(3);
     setStatus(
@@ -1112,6 +1113,7 @@ async function autoGenerate() {
 
       setVersionTabs(count);
       fillOutputs();
+      setResultsVisible(true);
       activateTab("instagram");
       setStep(3);
       if (resultData?.__meta?.repairApplied) {
