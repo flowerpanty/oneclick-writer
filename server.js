@@ -434,19 +434,19 @@ function buildOutputSchema(variantCount) {
   return z.object({
     meta: OutputMetaSchema,
     instagram: z.object({
-      versions: z.array(InstagramVersionSchema).min(1).max(safeVariantCount)
+      versions: z.array(InstagramVersionSchema).length(safeVariantCount)
     }),
     naver: z.object({
-      versions: z.array(NaverVersionSchema).min(1).max(safeVariantCount)
+      versions: z.array(NaverVersionSchema).length(safeVariantCount)
     }),
     wordpress: z.object({
-      versions: z.array(WordPressVersionSchema).min(1).max(safeVariantCount)
+      versions: z.array(WordPressVersionSchema).length(safeVariantCount)
     }),
     threads: z.object({
-      versions: z.array(ThreadsVersionSchema).min(1).max(safeVariantCount)
+      versions: z.array(ThreadsVersionSchema).length(safeVariantCount)
     }),
     sns_summary: z.object({
-      versions: z.array(SnsSummaryVersionSchema).min(1).max(safeVariantCount)
+      versions: z.array(SnsSummaryVersionSchema).length(safeVariantCount)
     })
   });
 }
@@ -4620,51 +4620,6 @@ function normalizeChannelVersions(channelValue, knownFields, normalizeVersion) {
   return [];
 }
 
-function pickChannelValue(source, keys) {
-  for (const key of keys) {
-    const value = source?.[key];
-    if (Array.isArray(value)) return value;
-    if (isPlainObject(value)) return value;
-  }
-  return undefined;
-}
-
-function unwrapGeneratedOutputRoot(parsedObject) {
-  if (!isPlainObject(parsedObject)) {
-    return parsedObject;
-  }
-
-  const directKeys = ["instagram", "naver", "wordpress", "threads", "sns_summary"];
-  if (directKeys.some((key) => Object.prototype.hasOwnProperty.call(parsedObject, key))) {
-    return parsedObject;
-  }
-
-  const wrapped = [parsedObject.data, parsedObject.result, parsedObject.output];
-  return wrapped.find((value) => isPlainObject(value)) || parsedObject;
-}
-
-function inferVariantCountFromOutput(parsedObject) {
-  if (!isPlainObject(parsedObject)) {
-    return 1;
-  }
-
-  const lengths = [
-    parsedObject.instagram?.versions?.length,
-    parsedObject.naver?.versions?.length,
-    parsedObject.wordpress?.versions?.length,
-    parsedObject.threads?.versions?.length,
-    parsedObject.sns_summary?.versions?.length,
-  ]
-    .map((value) => parseInt(value, 10))
-    .filter((value) => Number.isFinite(value) && value > 0);
-
-  if (lengths.length === 0) {
-    return 1;
-  }
-
-  return lengths.some((value) => value >= 2) ? 2 : 1;
-}
-
 function normalizeOutputMeta(metaValue) {
   const inputType = (metaValue?.input_type || "").toString().trim();
   const line = (metaValue?.line || "").toString().trim();
@@ -4684,13 +4639,12 @@ function normalizeGeneratedOutputShape(parsedObject) {
     return parsedObject;
   }
 
-  const source = unwrapGeneratedOutputRoot(parsedObject);
-  const normalized = { ...source };
-  normalized.meta = normalizeOutputMeta(source.meta);
+  const normalized = { ...parsedObject };
+  normalized.meta = normalizeOutputMeta(parsedObject.meta);
 
   normalized.instagram = {
     versions: normalizeChannelVersions(
-      pickChannelValue(source, ["instagram", "insta", "ig"]),
+      parsedObject.instagram,
       ["caption", "hashtags", "alt_text"],
       (version) => ({
         caption: (version?.caption || "").toString(),
@@ -4702,7 +4656,7 @@ function normalizeGeneratedOutputShape(parsedObject) {
 
   normalized.naver = {
     versions: normalizeChannelVersions(
-      pickChannelValue(source, ["naver", "naver_blog", "naverBlog", "blog"]),
+      parsedObject.naver,
       ["title", "body", "hashtags"],
       (version) => ({
         title: (version?.title || "").toString(),
@@ -4714,7 +4668,7 @@ function normalizeGeneratedOutputShape(parsedObject) {
 
   normalized.wordpress = {
     versions: normalizeChannelVersions(
-      pickChannelValue(source, ["wordpress", "wordPress", "wp"]),
+      parsedObject.wordpress,
       ["seo", "body"],
       (version) => ({
         seo: {
@@ -4731,7 +4685,7 @@ function normalizeGeneratedOutputShape(parsedObject) {
 
   normalized.threads = {
     versions: normalizeChannelVersions(
-      pickChannelValue(source, ["threads", "thread"]),
+      parsedObject.threads,
       ["text", "hashtags", "alt_text"],
       (version) => ({
         text: (version?.text || "").toString(),
@@ -4743,7 +4697,7 @@ function normalizeGeneratedOutputShape(parsedObject) {
 
   normalized.sns_summary = {
     versions: normalizeChannelVersions(
-      pickChannelValue(source, ["sns_summary", "snsSummary", "summary"]),
+      parsedObject.sns_summary,
       ["threads_text", "instagram_text", "hashtags"],
       (version) => ({
         threads_text: (version?.threads_text || "").toString(),
@@ -4934,8 +4888,7 @@ function extractJsonObject(raw) {
 
 function parseGeneratedContent(raw, variantCount) {
   const { data, meta } = extractJsonObject(raw);
-  const inferredVariantCount = inferVariantCountFromOutput(data);
-  const schema = buildOutputSchema(inferredVariantCount || variantCount);
+  const schema = buildOutputSchema(variantCount);
   const parsed = schema.parse(data);
 
   assertNoTemplateValues(parsed);
@@ -4957,7 +4910,6 @@ function parseGeneratedContent(raw, variantCount) {
     parsed,
     meta: {
       ...meta,
-      inferredVariantCount,
       normalizedJson: JSON.stringify(parsed, null, 2),
     },
   };
