@@ -1,5 +1,8 @@
 /* ===== OneClick Writer — Client Application ===== */
 const $ = (id) => document.getElementById(id);
+const on = (el, event, handler) => {
+  if (el) el.addEventListener(event, handler);
+};
 
 // ===== Element References =====
 const els = {
@@ -523,6 +526,7 @@ function openAdvancedOptions() {
 
 // ===== Tab Switching =====
 function activateTab(name) {
+  if (!document.querySelector(".channel-tab[data-tab]")) return;
   document.querySelectorAll(".channel-tab[data-tab]").forEach((b) => {
     b.classList.toggle("active", b.dataset.tab === name);
   });
@@ -574,6 +578,7 @@ function extractWordPressHeadings(body) {
 }
 
 function runSeoAudit(v) {
+  if (!els.seoAudit) return;
   if (!v) {
     els.seoAudit.textContent =
       "결과를 불러오면 핵심 키워드 기반 SEO 체크가 표시됩니다.";
@@ -674,6 +679,7 @@ function runSeoAudit(v) {
 
 // ===== Version Tabs =====
 function setVersionTabs(count) {
+  if (!els.versionTabs) return;
   els.versionTabs.innerHTML = "";
   if (count <= 1) {
     els.versionTabs.classList.add("hidden");
@@ -704,6 +710,9 @@ function getActiveVersion(channel) {
 }
 
 function renderMetaSummary(meta) {
+  if (!els.metaSummaryCard || !els.metaInputType || !els.metaLine || !els.metaCoreAngle || !els.metaMissingInfo || !els.applyMetaBtn) {
+    return;
+  }
   const missingInfo = Array.isArray(meta?.missing_info) ? meta.missing_info : [];
   const hasMeta =
     Boolean(meta?.input_type) ||
@@ -772,7 +781,7 @@ function applyMetaToForm() {
 }
 
 function fillOutputs() {
-  if (!state.parsed) return;
+  if (!state.parsed || !els.igCaption) return;
 
   const ig = getActiveVersion("instagram") || {};
   const nv = getActiveVersion("naver") || {};
@@ -872,7 +881,7 @@ async function applyResultJson() {
   }
 
   els.applyJsonBtn.disabled = true;
-  setStatus("결과 검증/적용 중…");
+  setStatus("JSON 확인 중…");
 
   try {
     const res = await fetch("/api/parse", {
@@ -883,7 +892,7 @@ async function applyResultJson() {
 
     const json = await res.json();
     if (!res.ok) {
-      throw new Error(json?.error || "결과 검증 실패");
+      throw new Error(json?.error || "JSON 확인 실패");
     }
 
     state.parsed = json;
@@ -903,7 +912,7 @@ async function applyResultJson() {
         ? `JSON 작은 오류를 자동 보정해서 반영했습니다. (${json.__meta.extractionMode || "auto"})`
         : "",
     );
-    showToast(json?.__meta?.repairApplied ? "✅ 자동 보정 후 반영 완료!" : "✅ 결과 반영 완료!");
+    showToast(json?.__meta?.repairApplied ? "✅ 자동 보정 후 JSON 확인 완료!" : "✅ JSON 확인 완료!");
   } catch (err) {
     setError(err?.message || "오류가 발생했어요.");
   } finally {
@@ -997,7 +1006,7 @@ async function autoGenerate() {
             } else if (data.type === "result") {
               resultData = data.data;
               setProgress(100);
-              addProgressLog("완료! 결과를 표시합니다…");
+              addProgressLog("완료! JSON을 정리합니다…");
             } else if (data.type === "error") {
               throw new Error(data.message);
             }
@@ -1031,7 +1040,7 @@ async function autoGenerate() {
         addProgressLog(`JSON 작은 오류 자동 보정 ✓ (${resultData.__meta.extractionMode || "auto"})`);
         setStatus("자동 생성 결과의 JSON 작은 오류를 자동 보정해 반영했습니다.");
       }
-      showToast(resultData?.__meta?.repairApplied ? "🎉 자동 생성 완료! 자동 보정 포함" : "🎉 자동 생성 완료!");
+      showToast(resultData?.__meta?.repairApplied ? "🎉 자동 생성 완료! JSON 정리 포함" : "🎉 자동 생성 완료!");
     } else {
       throw new Error("결과를 받지 못했어요. 다시 시도해주세요.");
     }
@@ -1092,7 +1101,7 @@ function clearAll() {
     els.styleSampleText,
     els.styleUrl,
   ].forEach((el) => {
-    el.value = "";
+    if (el) el.value = "";
   });
 
   els.category.value = "";
@@ -1120,21 +1129,21 @@ function clearAll() {
 }
 
 // ===== Event Listeners =====
-els.generateBtn.addEventListener("click", buildPrompt);
-els.autoGenerateBtn.addEventListener("click", autoGenerate);
-els.openChatgptBtn.addEventListener("click", () => {
+on(els.generateBtn, "click", buildPrompt);
+on(els.autoGenerateBtn, "click", autoGenerate);
+on(els.openChatgptBtn, "click", () => {
   window.open("https://chatgpt.com", "_blank", "noopener,noreferrer");
 });
-els.applyJsonBtn.addEventListener("click", applyResultJson);
-els.clearBtn.addEventListener("click", clearAll);
-els.copyPromptBtn.addEventListener("click", () =>
+on(els.applyJsonBtn, "click", applyResultJson);
+on(els.clearBtn, "click", clearAll);
+on(els.copyPromptBtn, "click", () =>
   copyToClipboard(els.generatedPrompt.value || "")
 );
-els.applyMetaBtn.addEventListener("click", applyMetaToForm);
-els.saveStyleNotesBtn.addEventListener("click", saveStyleNotes);
-els.learnStyleTextBtn.addEventListener("click", learnStyleFromText);
-els.learnStyleUrlBtn.addEventListener("click", learnStyleFromUrl);
-els.clearStyleMemoryBtn.addEventListener("click", clearStyleMemory);
+on(els.applyMetaBtn, "click", applyMetaToForm);
+on(els.saveStyleNotesBtn, "click", saveStyleNotes);
+on(els.learnStyleTextBtn, "click", learnStyleFromText);
+on(els.learnStyleUrlBtn, "click", learnStyleFromUrl);
+on(els.clearStyleMemoryBtn, "click", clearStyleMemory);
 
 // Channel tabs
 Array.from(document.querySelectorAll(".channel-tab[data-tab]")).forEach((btn) => {
@@ -1155,14 +1164,14 @@ if (styleSection) {
 // Copy buttons with feedback animation
 document.querySelectorAll(".btn-copy").forEach(attachCopyFeedback);
 
-els.copyIg.addEventListener("click", () => {
+on(els.copyIg, "click", () => {
   const text = [els.igCaption.value.trim(), els.igHashtags.value.trim()]
     .filter(Boolean)
     .join("\n\n");
   copyToClipboard(text);
 });
 
-els.copyNvAll.addEventListener("click", () => {
+on(els.copyNvAll, "click", () => {
   const text = [
     els.nvTitle.value.trim(),
     els.nvBody.value.trim(),
@@ -1173,54 +1182,54 @@ els.copyNvAll.addEventListener("click", () => {
   copyToClipboard(text);
 });
 
-els.copyNvTitle.addEventListener("click", () =>
+on(els.copyNvTitle, "click", () =>
   copyToClipboard(els.nvTitle.value.trim())
 );
-els.copyWpSeoTitle.addEventListener("click", () =>
+on(els.copyWpSeoTitle, "click", () =>
   copyToClipboard(els.wpSeoTitle.value.trim())
 );
-els.copyWpSlug.addEventListener("click", () =>
+on(els.copyWpSlug, "click", () =>
   copyToClipboard(els.wpSlug.value.trim())
 );
-els.copyWpMeta.addEventListener("click", () =>
+on(els.copyWpMeta, "click", () =>
   copyToClipboard(els.wpMeta.value.trim())
 );
-els.copyWpFocus.addEventListener("click", () =>
+on(els.copyWpFocus, "click", () =>
   copyToClipboard(els.wpFocus.value.trim())
 );
-els.copyWpLsi.addEventListener("click", () =>
+on(els.copyWpLsi, "click", () =>
   copyToClipboard(els.wpLsi.value.trim())
 );
-els.copyWpBody.addEventListener("click", () =>
+on(els.copyWpBody, "click", () =>
   copyToClipboard(els.wpBody.value.trim())
 );
 
-els.copyThA.addEventListener("click", () => {
+on(els.copyThA, "click", () => {
   const text = [els.thTextA.value.trim(), els.thHashtagsA.value.trim()]
     .filter(Boolean)
     .join("\n\n");
   copyToClipboard(text);
 });
 
-els.copyThB.addEventListener("click", () => {
+on(els.copyThB, "click", () => {
   const text = [els.thTextB.value.trim(), els.thHashtagsB.value.trim()]
     .filter(Boolean)
     .join("\n\n");
   copyToClipboard(text);
 });
 
-els.copySsThreads.addEventListener("click", () =>
+on(els.copySsThreads, "click", () =>
   copyToClipboard(els.ssThreadsText.value.trim())
 );
-els.copySsInstagram.addEventListener("click", () =>
+on(els.copySsInstagram, "click", () =>
   copyToClipboard(els.ssInstagramText.value.trim())
 );
-els.copySsHashtags.addEventListener("click", () =>
+on(els.copySsHashtags, "click", () =>
   copyToClipboard(els.ssHashtags.value.trim())
 );
 
 // Ctrl/Cmd + Enter -> build prompt
-els.story.addEventListener("keydown", (e) => {
+on(els.story, "keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
     e.preventDefault();
     buildPrompt();
@@ -1228,7 +1237,7 @@ els.story.addEventListener("keydown", (e) => {
 });
 
 // Toggle A/B version tabs when checkbox changes
-els.twoVariants.addEventListener("change", () => {
+on(els.twoVariants, "change", () => {
   const count = els.twoVariants.checked ? 2 : 1;
   state.variantCount = count;
   setVersionTabs(count);
