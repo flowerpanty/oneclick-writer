@@ -571,6 +571,14 @@ function setResultsVisible(visible) {
   }
 }
 
+function revealResultsSection() {
+  setResultsVisible(true);
+  if (!els.resultsSection) return;
+  requestAnimationFrame(() => {
+    els.resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
 function canAutoApplyResult(raw) {
   const value = (raw || "").trim();
   return value.length > 20 && value.includes("{") && value.includes("}");
@@ -977,7 +985,7 @@ async function applyResultJson(options = {}) {
 
     setVersionTabs(count);
     fillOutputs();
-    setResultsVisible(true);
+    revealResultsSection();
     activateTab("instagram");
     setStep(3);
     setStatus(
@@ -1113,7 +1121,7 @@ async function autoGenerate() {
 
       setVersionTabs(count);
       fillOutputs();
-      setResultsVisible(true);
+      revealResultsSection();
       activateTab("instagram");
       setStep(3);
       if (resultData?.__meta?.repairApplied) {
