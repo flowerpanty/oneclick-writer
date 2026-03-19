@@ -42,7 +42,6 @@ const els = {
 
   generateBtn: $("generateBtn"),
   autoGenerateBtn: $("autoGenerateBtn"),
-  openChatgptBtn: $("openChatgptBtn"),
   applyJsonBtn: $("applyJsonBtn"),
   clearResultBtn: $("clearResultBtn"),
   clearBtn: $("clearBtn"),
@@ -1176,9 +1175,6 @@ function clearResultOnly() {
 // ===== Event Listeners =====
 on(els.generateBtn, "click", buildPrompt);
 on(els.autoGenerateBtn, "click", autoGenerate);
-on(els.openChatgptBtn, "click", () => {
-  window.open("https://chatgpt.com", "_blank", "noopener,noreferrer");
-});
 on(els.applyJsonBtn, "click", applyResultJson);
 on(els.clearResultBtn, "click", clearResultOnly);
 on(els.clearBtn, "click", clearAll);

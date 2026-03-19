@@ -653,6 +653,37 @@ button {
   background: var(--success-bg);
 }
 
+.prompt-main-btn {
+  flex: 1 1 240px;
+  min-height: 56px;
+  justify-content: center;
+  padding: 16px 22px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 14px;
+}
+
+#copyPromptBtn {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.16) 0%, rgba(99, 102, 241, 0.16) 100%);
+  color: #dbeafe;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.12);
+}
+
+#copyPromptBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 40px rgba(59, 130, 246, 0.2);
+  color: #fff;
+  border-color: rgba(96, 165, 250, 0.5);
+}
+
+#copyPromptBtn.copied {
+  color: #fff;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.25);
+}
+
 button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -695,6 +726,7 @@ button:disabled {
   margin-top: 20px;
   padding-top: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+  align-items: stretch;
 }
 
 /* ===== Chip / Toggle ===== */
