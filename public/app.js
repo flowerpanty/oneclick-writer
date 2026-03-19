@@ -44,6 +44,7 @@ const els = {
   autoGenerateBtn: $("autoGenerateBtn"),
   openChatgptBtn: $("openChatgptBtn"),
   applyJsonBtn: $("applyJsonBtn"),
+  clearResultBtn: $("clearResultBtn"),
   clearBtn: $("clearBtn"),
   copyPromptBtn: $("copyPromptBtn"),
 
@@ -1128,6 +1129,50 @@ function clearAll() {
   showToast("초기화 완료");
 }
 
+function clearResultOnly() {
+  [
+    els.resultJson,
+    els.metaInputType,
+    els.metaLine,
+    els.metaCoreAngle,
+    els.metaMissingInfo,
+    els.igCaption,
+    els.igHashtags,
+    els.igAlt,
+    els.nvTitle,
+    els.nvBody,
+    els.nvHashtags,
+    els.wpSeoTitle,
+    els.wpSlug,
+    els.wpMeta,
+    els.wpFocus,
+    els.wpLsi,
+    els.wpBody,
+    els.thTextA,
+    els.thHashtagsA,
+    els.thTextB,
+    els.thHashtagsB,
+    els.thAltB,
+    els.ssThreadsText,
+    els.ssInstagramText,
+    els.ssHashtags,
+  ].forEach((el) => {
+    if (el) el.value = "";
+  });
+
+  state.parsed = null;
+  state.activeVersion = 0;
+  state.variantCount = els.twoVariants.checked ? 2 : 1;
+
+  setVersionTabs(state.variantCount);
+  renderMetaSummary(null);
+  runSeoAudit(null);
+  setError("");
+  setStatus("");
+  setStep((els.generatedPrompt.value || "").trim() ? 2 : 1);
+  showToast("결과 내용 삭제 완료");
+}
+
 // ===== Event Listeners =====
 on(els.generateBtn, "click", buildPrompt);
 on(els.autoGenerateBtn, "click", autoGenerate);
@@ -1135,6 +1180,7 @@ on(els.openChatgptBtn, "click", () => {
   window.open("https://chatgpt.com", "_blank", "noopener,noreferrer");
 });
 on(els.applyJsonBtn, "click", applyResultJson);
+on(els.clearResultBtn, "click", clearResultOnly);
 on(els.clearBtn, "click", clearAll);
 on(els.copyPromptBtn, "click", () =>
   copyToClipboard(els.generatedPrompt.value || "")

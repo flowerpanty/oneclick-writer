@@ -242,7 +242,10 @@
         <div class="field" style="margin-bottom: 0;">
           <label for="resultJson" style="display:flex; justify-content:space-between; align-items:center;">
             <span>ChatGPT 결과 JSON 붙여넣기</span>
-            <button id="applyJsonBtn" class="btn-primary" style="padding: 6px 14px; font-size: 12px;">✅ 결과 불러오기</button>
+            <span style="display:flex; gap:8px; align-items:center;">
+              <button id="clearResultBtn" class="btn-secondary" type="button" style="padding: 6px 14px; font-size: 12px;">내용 지우기</button>
+              <button id="applyJsonBtn" class="btn-primary" style="padding: 6px 14px; font-size: 12px;">✅ 결과 불러오기</button>
+            </span>
           </label>
           <textarea id="resultJson" class="result-paste-line"
             placeholder='여기에 {"instagram":{...}} 형식의 결과를 붙여넣으세요.'></textarea>
