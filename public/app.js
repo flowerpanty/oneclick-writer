@@ -226,6 +226,13 @@ async function copyToClipboard(text, options = {}) {
   return copied;
 }
 
+function selectPromptText() {
+  if (!els.generatedPrompt) return;
+  els.generatedPrompt.focus();
+  els.generatedPrompt.select();
+  els.generatedPrompt.setSelectionRange(0, els.generatedPrompt.value.length);
+}
+
 // ===== Copy button feedback =====
 function attachCopyFeedback(btn) {
   btn.addEventListener("click", () => {
@@ -894,13 +901,16 @@ async function buildPrompt() {
       toast: true,
       successMessage: "📋 프롬프트 자동 복사 완료!",
     });
+    if (!copied) {
+      selectPromptText();
+    }
     const styleMessage =
       json?.styleApplied && json?.styleSampleCount
         ? ` 스타일 메모리 ${json.styleSampleCount}개도 반영됐습니다.`
         : "";
     const copyMessage = copied
       ? " 프롬프트는 자동 복사됐어요."
-      : " 자동 복사는 브라우저가 막아서 아래 '프롬프트 복사' 버튼을 써주세요.";
+      : " 자동 복사가 막혀서 프롬프트를 바로 복사할 수 있게 선택해뒀어요.";
     setStatus(`프롬프트 준비 완료! ChatGPT에 붙여넣고 생성하세요.${styleMessage}${copyMessage}`);
     setStep(2);
   } catch (err) {
