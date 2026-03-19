@@ -331,6 +331,255 @@
       </details>
     </section>
 
+    <!-- ═══════════════════════════════════════════
+         SECTION 4: 생성 결과
+    ═══════════════════════════════════════════ -->
+    <section class="section-block section-results" id="resultsSection">
+      <div class="section-header">
+        <span class="section-icon">📊</span>
+        <h2>생성 결과</h2>
+      </div>
+
+      <div id="metaSummaryCard" class="card hidden" style="margin-bottom: 18px;">
+        <div class="field">
+          <label style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+            <span>프롬프트 메타</span>
+            <button id="applyMetaBtn" class="btn-secondary" type="button" disabled>메타 입력폼에 적용</button>
+          </label>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="metaInputType">입력 분류</label>
+            <input id="metaInputType" type="text" readonly />
+          </div>
+          <div class="field">
+            <label for="metaLine">라인 분류</label>
+            <input id="metaLine" type="text" readonly />
+          </div>
+        </div>
+        <div class="field">
+          <label for="metaCoreAngle">핵심 장면/감정</label>
+          <textarea id="metaCoreAngle" style="min-height:90px;" readonly></textarea>
+        </div>
+        <div class="field">
+          <label for="metaMissingInfo">검토 필요 정보</label>
+          <textarea id="metaMissingInfo" style="min-height:90px;" readonly></textarea>
+        </div>
+      </div>
+
+      <div id="versionTabs" class="tabs hidden" aria-label="버전 탭"></div>
+
+      <div class="channel-tabs" aria-label="채널 탭">
+        <button class="channel-tab active" data-tab="instagram">
+          <span class="channel-tab-dot ig"></span>
+          <span>Instagram</span>
+        </button>
+        <button class="channel-tab" data-tab="naver">
+          <span class="channel-tab-dot nv"></span>
+          <span>Naver Blog</span>
+        </button>
+        <button class="channel-tab" data-tab="wordpress">
+          <span class="channel-tab-dot wp"></span>
+          <span>WordPress</span>
+        </button>
+        <button class="channel-tab" data-tab="threads">
+          <span class="channel-tab-dot th"></span>
+          <span>Threads</span>
+        </button>
+        <button class="channel-tab" data-tab="sns_summary">
+          <span class="channel-tab-dot ss"></span>
+          <span>SNS 요약</span>
+        </button>
+      </div>
+
+      <section class="panel active" id="panel-instagram">
+        <div class="panel-header">
+          <span class="channel-dot ig"></span>
+          <h3>Instagram 결과</h3>
+        </div>
+        <div class="field">
+          <label>캡션</label>
+          <textarea id="igCaption" style="min-height:160px;" placeholder="생성 결과가 여기에 표시됩니다."></textarea>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>해시태그</label>
+            <input id="igHashtags" type="text" />
+          </div>
+          <div class="field">
+            <label>ALT 텍스트 (사진 설명)</label>
+            <input id="igAlt" type="text" />
+          </div>
+        </div>
+        <div class="btn-row mt-8">
+          <button class="btn-copy" id="copyIg">📋 복사 (캡션+해시태그)</button>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-naver">
+        <div class="panel-header">
+          <span class="channel-dot nv"></span>
+          <h3>네이버 블로그 결과</h3>
+        </div>
+        <div class="field">
+          <label>제목</label>
+          <div class="input-row">
+            <input id="nvTitle" type="text" />
+            <button class="btn-copy" id="copyNvTitle" type="button">복사</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>본문</label>
+          <textarea id="nvBody" style="min-height:200px;" placeholder="생성 결과가 여기에 표시됩니다."></textarea>
+        </div>
+        <div class="field">
+          <label>해시태그</label>
+          <input id="nvHashtags" type="text" />
+        </div>
+        <div class="btn-row mt-8">
+          <button class="btn-copy" id="copyNvAll">📋 복사 (제목+본문+해시태그)</button>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-wordpress">
+        <div class="panel-header">
+          <span class="channel-dot wp"></span>
+          <h3>WordPress 결과</h3>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label>SEO Title</label>
+            <div class="input-row">
+              <input id="wpSeoTitle" type="text" />
+              <button class="btn-copy" id="copyWpSeoTitle" type="button">복사</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Slug</label>
+            <div class="input-row">
+              <input id="wpSlug" type="text" />
+              <button class="btn-copy" id="copyWpSlug" type="button">복사</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label>Focus Keyphrase</label>
+            <div class="input-row">
+              <input id="wpFocus" type="text" />
+              <button class="btn-copy" id="copyWpFocus" type="button">복사</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>LSI Keywords</label>
+            <div class="input-row">
+              <input id="wpLsi" type="text" placeholder="콤마 구분" />
+              <button class="btn-copy" id="copyWpLsi" type="button">복사</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Meta Description</label>
+          <div class="input-row">
+            <input id="wpMeta" type="text" />
+            <button class="btn-copy" id="copyWpMeta" type="button">복사</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>본문 (워드프레스 편집기에 붙여넣기)</label>
+          <textarea id="wpBody" style="min-height:240px;" placeholder="생성 결과가 여기에 표시됩니다."></textarea>
+          <div class="btn-row mt-8">
+            <button class="btn-copy" id="copyWpBody">📋 복사 (본문)</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>SEO 체크</label>
+          <div id="seoAudit" class="seo-audit">결과를 불러오면 핵심 키워드 기반 SEO 체크가 표시됩니다.</div>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-threads">
+        <div class="panel-header">
+          <span class="channel-dot th"></span>
+          <h3>Threads 결과</h3>
+        </div>
+
+        <div class="threads-version-block">
+          <div class="threads-version-label">A 버전 — 일상/고민형</div>
+          <div class="field">
+            <label>텍스트</label>
+            <textarea id="thTextA" style="min-height:100px;" placeholder="A버전 결과가 여기에 표시됩니다."></textarea>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label>해시태그</label>
+              <input id="thHashtagsA" type="text" />
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button class="btn-copy" id="copyThA" type="button">📋 A버전 복사</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="threads-version-block">
+          <div class="threads-version-label">B 버전 — 스포일러형</div>
+          <div class="field">
+            <label>텍스트</label>
+            <textarea id="thTextB" style="min-height:100px;" placeholder="B버전 결과가 여기에 표시됩니다."></textarea>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label>해시태그</label>
+              <input id="thHashtagsB" type="text" />
+            </div>
+            <div class="field">
+              <label>ALT 텍스트 (사진 설명)</label>
+              <input id="thAltB" type="text" />
+            </div>
+          </div>
+          <div class="btn-row mt-8">
+            <button class="btn-copy" id="copyThB" type="button">📋 B버전 복사</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-sns_summary">
+        <div class="panel-header">
+          <span class="channel-dot ss"></span>
+          <h3>SNS 요약 결과</h3>
+        </div>
+        <div class="field">
+          <label>쓰레드용 (Threads)</label>
+          <textarea id="ssThreadsText" style="min-height:120px;" placeholder="쓰레드 요약이 여기에 표시됩니다."></textarea>
+          <div class="btn-row mt-8">
+            <button class="btn-copy" id="copySsThreads" type="button">📋 쓰레드용 복사</button>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="field">
+          <label>인스타그램용 (Instagram)</label>
+          <textarea id="ssInstagramText" style="min-height:160px;" placeholder="인스타그램 요약이 여기에 표시됩니다."></textarea>
+          <div class="btn-row mt-8">
+            <button class="btn-copy" id="copySsInstagram" type="button">📋 인스타그램용 복사</button>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="field">
+          <label>해시태그 추천</label>
+          <input id="ssHashtags" type="text" placeholder="#해시태그" />
+          <div class="btn-row mt-8">
+            <button class="btn-copy" id="copySsHashtags" type="button">📋 해시태그 복사</button>
+          </div>
+        </div>
+      </section>
+    </section>
+
     <!-- Footer -->
     <footer class="footer">
       원클릭 전용 주소: <code>http://localhost:8787/oneclick-writer</code>
