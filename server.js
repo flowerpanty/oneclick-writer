@@ -429,24 +429,22 @@ const Step7WriterSchema = z.object({
 });
 
 function buildOutputSchema(variantCount) {
-  const safeVariantCount = getSafeVariantCount(variantCount);
-
   return z.object({
     meta: OutputMetaSchema,
     instagram: z.object({
-      versions: z.array(InstagramVersionSchema).length(safeVariantCount)
+      versions: z.array(InstagramVersionSchema).min(1).max(2)
     }),
     naver: z.object({
-      versions: z.array(NaverVersionSchema).length(safeVariantCount)
+      versions: z.array(NaverVersionSchema).min(1).max(2)
     }),
     wordpress: z.object({
-      versions: z.array(WordPressVersionSchema).length(safeVariantCount)
+      versions: z.array(WordPressVersionSchema).min(1).max(2)
     }),
     threads: z.object({
-      versions: z.array(ThreadsVersionSchema).length(safeVariantCount)
+      versions: z.array(ThreadsVersionSchema).min(1).max(2)
     }),
     sns_summary: z.object({
-      versions: z.array(SnsSummaryVersionSchema).length(safeVariantCount)
+      versions: z.array(SnsSummaryVersionSchema).min(1).max(2)
     })
   });
 }
